@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/article.dart';
 import '../models/vocabulary_item.dart';
-import '../models/article_paragraph.dart';
+import '../models/article_content.dart';
 import '../constants/app_colors.dart';
 
 class ArticleReadingPage extends StatefulWidget {
@@ -88,7 +88,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
             ),
             
             // Bottom playback controls
-            _buildPlaybackControls(),
+            if (_selectedTabIndex == 0) _buildPlaybackControls(),
           ],
         ),
       ),
@@ -238,8 +238,8 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
   }
 
   Widget _buildArticleContent() {
-    final paragraphs = widget.article.paragraphs;
-    if (paragraphs.isEmpty) {
+    final content = widget.article.content;
+    if (content.isEmpty) {
       return const Center(
         child: Text('No content available'),
       );
@@ -249,26 +249,26 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: paragraphs.map((paragraph) {
-          return _buildParagraph(paragraph);
+        children: content.map((content) {
+          return _buildContent(content);
         }).toList(),
       ),
     );
   }
 
-  Widget _buildParagraph(ArticleParagraph paragraph) {
+  Widget _buildContent(ArticleContent content) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Original text (e.g., French)
-          _buildHighlightedText(paragraph.originalText),
+          _buildHighlightedText(content.originalText),
           const SizedBox(height: 12),
           // Translation text (e.g., English)
           if (_showTranslation)
             Text(
-              paragraph.translationText,
+              content.translationText,
               style: TextStyle(
                 fontSize: _fontSize,
                 color: AppColors.textSecondary,
@@ -391,7 +391,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.word,
+                  '${item.word} (${item.type}) ',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
