@@ -1,9 +1,11 @@
 import 'vocabulary_item.dart';
 import 'grammar_point.dart';
-import 'article_paragraph.dart';
+import 'article_content.dart';
 
 class Article {
-  final String id;
+  final String 
+  
+  id;
   final String title;
   final String description;
   final String imageUrl;
@@ -11,7 +13,8 @@ class Article {
   final String category;
   final List<VocabularyItem> vocabulary;
   final List<GrammarPoint> grammarPoints;
-  final List<ArticleParagraph> paragraphs;
+  final List<ArticleContent> content;
+  final List<ArticleContent> translatedContent;
   final String? audioUrl;
   bool isFavorite;
 
@@ -24,7 +27,8 @@ class Article {
     required this.category,
     this.vocabulary = const [],
     this.grammarPoints = const [],
-    this.paragraphs = const [],
+    this.content = const [],
+    this.translatedContent = const [],
     this.audioUrl,
     this.isFavorite = false,
   });

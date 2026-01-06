@@ -1,7 +1,7 @@
 import '../models/article.dart';
 import '../models/vocabulary_item.dart';
 import '../models/grammar_point.dart';
-import '../models/article_paragraph.dart';
+import '../models/article_content.dart';
 
 List<Article> getSampleArticles() {
   return [
@@ -29,8 +29,8 @@ List<Article> getSampleArticles() {
           description: 'The passive voice is formed with être + past participle...',
         ),
       ],
-      paragraphs: [
-        ArticleParagraph(
+      content: [
+        ArticleContent(
           originalText: "Le 17 décembre 2025, Arianespace a mis en orbite deux satellites Galileo avec Ariane 6 pour l'Agence spatiale européenne (ESA), au nom de la Commission européenne et de l'Agence de l'Union européenne pour le programme spatial (EUSPA).",
           translationText: "On December 17, 2025, Arianespace launched two Galileo satellites with Ariane 6 for the European Space Agency (ESA), on behalf of the European Commission and the European Union Space Programme Agency (EUSPA).",
         ),
@@ -56,8 +56,8 @@ List<Article> getSampleArticles() {
           description: 'The passé composé is formed with avoir/être + past participle...',
         ),
       ],
-      paragraphs: [
-        ArticleParagraph(
+      content: [
+        ArticleContent(
           originalText: "Le 31 décembre 2024, un incendie s'est déclaré dans un immeuble résidentiel à Genève, en Suisse. Les pompiers sont arrivés rapidement sur les lieux, mais malheureusement, dix personnes ont perdu la vie dans cette tragédie.",
           translationText: "On December 31, 2024, a fire broke out in a residential building in Geneva, Switzerland. Firefighters arrived quickly at the scene, but unfortunately, ten people lost their lives in this tragedy.",
         ),
@@ -83,8 +83,8 @@ List<Article> getSampleArticles() {
           description: 'Definite articles: le, la, les. Indefinite: un, une, des...',
         ),
       ],
-      paragraphs: [
-        ArticleParagraph(
+      content: [
+        ArticleContent(
           originalText: "Le café est l'une des boissons les plus populaires au monde. Pour préparer un bon espresso, il faut utiliser des grains de café frais et de l'eau chaude.",
           translationText: "Coffee is one of the most popular drinks in the world. To make a good espresso, you need to use fresh coffee beans and hot water.",
         ),
