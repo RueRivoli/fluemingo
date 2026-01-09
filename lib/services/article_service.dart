@@ -33,7 +33,6 @@ class ArticleService {
     try {
       // Construct the full public URL
       final url = _supabase.storage.from(_storageBucket).getPublicUrl(cleanPath);
-      print('Storage URL constructed: $url (from path: $path)');
       return url;
     } catch (e) {
       print('Error constructing storage URL: $e');
@@ -85,7 +84,6 @@ class ArticleService {
           .single();
 
       if (articleResponse == null) return null;
-      print("Article response: $articleResponse");
       // Fetch related vocabulary from vocabulary_fr table
       final vocabularyResponse = await _supabase
           .from('vocabulary_fr')
@@ -100,12 +98,14 @@ class ArticleService {
             isSaved: false, // vocabulary_fr doesn't have is_saved field
           )).toList();
       final grammarPoints = <GrammarPoint>[];
-      print('vocabulary: $vocabulary');
       
       // Convert string content to List<ArticleContent>
       final contentString = articleResponse['content'] ?? '';
       final contentEnString = articleResponse['content_en'] ?? '';
       final contentList = _parseContentToArticleContent(contentString, contentEnString);
+      
+      // Get content_timestamps from database
+      final contentTimestamps = articleResponse['content_timestamps'];
       
       // Create article with all related data
       return Article(
@@ -119,6 +119,9 @@ class ArticleService {
         content: contentList,
         translatedContent: [], // Not used separately, translations are in ArticleContent objects
         vocabulary: vocabulary,
+        contentTimestamps: contentTimestamps != null 
+            ? Map<String, dynamic>.from(contentTimestamps as Map) 
+            : null,
         isFavorite: false, // content_fr doesn't have is_favorite field
         grammarPoints: grammarPoints,
       );
@@ -194,6 +197,9 @@ class ArticleService {
       grammarPoints: [],
       content: contentList,
       translatedContent: [],
+      contentTimestamps: json['content_timestamps'] != null 
+          ? Map<String, dynamic>.from(json['content_timestamps'] as Map) 
+          : null,
     );
   }
 
@@ -205,7 +211,6 @@ class ArticleService {
       // content_fr table doesn't have is_favorite field
       // If favorite functionality is needed, consider adding it to the table
       // or using a separate user_favorites table
-      print('Warning: toggleFavorite called but content_fr table has no is_favorite field');
       // await _supabase
       //     .from('content_fr')
       //     .update({'is_favorite': isFavorite})

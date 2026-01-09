@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 import '../models/article.dart';
 import '../models/vocabulary_item.dart';
 import '../models/article_content.dart';
 import '../constants/app_colors.dart';
+import '../widgets/vocabulary_item_card.dart';
 
 class ArticleReadingPage extends StatefulWidget {
   final Article article;
@@ -19,14 +21,17 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
   int _selectedTabIndex = 0;
   
   // Audio playback state
+  late AudioPlayer _audioPlayer;
   bool _isPlaying = false;
   double _playbackSpeed = 1.0;
   bool _repeatMode = false;
   
-  // Font size state
-  double _fontSize = 16.0;
+  // Highlighting state for audio synchronization
+  int? _currentHighlightedIndex;
+  final ScrollController _scrollController = ScrollController();
+  final Map<int, GlobalKey> _contentKeys = {};
   
-  // Settings
+  double _fontSize = 16.0;
   bool _showTranslation = true;
 
   @override
@@ -38,11 +43,110 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
         _selectedTabIndex = _tabController.index;
       });
     });
+    
+    // Initialize audio player
+    _audioPlayer = AudioPlayer();
+    _audioPlayer.playerStateStream.listen((state) {
+      if (state.playing != _isPlaying) {
+        setState(() {
+          _isPlaying = state.playing;
+        });
+      }
+      // Reset playing state when audio completes
+      if (state.processingState == ProcessingState.completed) {
+        setState(() {
+          _isPlaying = false;
+          _currentHighlightedIndex = null;
+        });
+      }
+    });
+    
+    // Listen to audio position for word highlighting
+    _audioPlayer.positionStream.listen((position) {
+      _updateHighlightedSegment(position);
+    });
+    
+    // Initialize content keys for scrolling
+    for (int i = 0; i < widget.article.content.length; i++) {
+      _contentKeys[i] = GlobalKey();
+    }
+    
+    // Load audio if available
+    _loadAudio();
+  }
+  
+  // Update highlighted segment based on audio position
+  void _updateHighlightedSegment(Duration position) {
+    if (!_isPlaying) return;
+    
+    final positionSeconds = position.inMilliseconds / 1000.0;
+    int? newHighlightedIndex;
+    
+    // Find the content segment that matches the current audio position
+    for (int i = 0; i < widget.article.content.length; i++) {
+      final content = widget.article.content[i];
+      if (content.startTime != null && content.endTime != null) {
+        if (positionSeconds >= content.startTime! && 
+            positionSeconds < content.endTime!) {
+          newHighlightedIndex = i;
+          break;
+        }
+      }
+    }
+    
+    // Update highlight if it changed
+    if (newHighlightedIndex != _currentHighlightedIndex) {
+      setState(() {
+        _currentHighlightedIndex = newHighlightedIndex;
+      });
+      
+      // Auto-scroll to keep highlighted content visible
+      if (newHighlightedIndex != null) {
+        _scrollToContent(newHighlightedIndex);
+      }
+    }
+  }
+  
+  // Scroll to a specific content segment
+  void _scrollToContent(int index) {
+    final key = _contentKeys[index];
+    if (key?.currentContext != null) {
+      Scrollable.ensureVisible(
+        key!.currentContext!,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        alignment: 0.2,
+      );
+    }
+  }
+  
+  Future<void> _loadAudio() async {
+    if (widget.article.audioUrl != null && widget.article.audioUrl!.isNotEmpty) {
+      try {
+        await _audioPlayer.setUrl(widget.article.audioUrl!);
+        await _updatePlaybackSpeed();
+        if (_repeatMode) {
+          await _audioPlayer.setLoopMode(LoopMode.one);
+        }
+      } catch (e) {
+        print('Error loading audio: $e');
+      }
+    }
+  }
+  
+  Future<void> _updatePlaybackSpeed() async {
+    try {
+      await _audioPlayer.setSpeed(_playbackSpeed);
+    } catch (e) {
+      print('Error updating playback speed: $e');
+    }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _audioPlayer.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -246,24 +350,51 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     }
 
     return SingleChildScrollView(
+      controller: _scrollController,
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: content.map((content) {
-          return _buildContent(content);
+        children: content.asMap().entries.map((entry) {
+          return _buildContent(entry.value, entry.key);
         }).toList(),
       ),
     );
   }
 
-  Widget _buildContent(ArticleContent content) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
+  Widget _buildContent(ArticleContent content, int index) {
+    final isHighlighted = _currentHighlightedIndex == index;
+    
+    return AnimatedContainer(
+      key: _contentKeys[index],
+      duration: const Duration(milliseconds: 200),
+      padding: EdgeInsets.only(
+        bottom: 24,
+        left: isHighlighted ? 8 : 0,
+        right: isHighlighted ? 8 : 0,
+        top: isHighlighted ? 8 : 0,
+      ),
+      decoration: BoxDecoration(
+        color: isHighlighted 
+            ? AppColors.primary.withOpacity(0.15) 
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: isHighlighted 
+            ? Border.all(color: AppColors.primary.withOpacity(0.3), width: 2)
+            : null,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Original text (e.g., French)
-          _buildHighlightedText(content.originalText),
+          Text(
+            content.originalText,
+            style: TextStyle(
+              fontSize: _fontSize,
+              color: AppColors.textPrimary,
+              height: 1.6,
+              fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
           const SizedBox(height: 12),
           // Translation text (e.g., English)
           if (_showTranslation)
@@ -271,8 +402,11 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
               content.translationText,
               style: TextStyle(
                 fontSize: _fontSize,
-                color: AppColors.textSecondary,
+                color: isHighlighted 
+                    ? AppColors.textPrimary.withOpacity(0.7) 
+                    : AppColors.textSecondary,
                 height: 1.6,
+                fontStyle: FontStyle.italic,
               ),
             ),
         ],
@@ -280,150 +414,19 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     );
   }
 
-  Widget _buildHighlightedText(String text) {
-    // Extract dates and highlight them (handles "Le 17 décembre 2025" and "On December 17, 2025")
-    final datePattern = RegExp(r'(Le\s+|On\s+)?\d{1,2}[,\s]+\w+\s+\d{4}', caseSensitive: false);
-    final matches = datePattern.allMatches(text);
-    
-    if (matches.isEmpty) {
-      return Text(
-        text,
-        style: TextStyle(
-          fontSize: _fontSize,
-          color: AppColors.textPrimary,
-          height: 1.6,
-        ),
-      );
-    }
-
-    // Build text spans with highlighted dates
-    final textSpans = <TextSpan>[];
-    int lastEnd = 0;
-
-    for (final match in matches) {
-      // Add text before match
-      if (match.start > lastEnd) {
-        textSpans.add(TextSpan(
-          text: text.substring(lastEnd, match.start),
-          style: TextStyle(
-            fontSize: _fontSize,
-            color: AppColors.textPrimary,
-            height: 1.6,
-          ),
-        ));
-      }
-
-      // Add highlighted date
-      textSpans.add(TextSpan(
-        text: text.substring(match.start, match.end),
-        style: TextStyle(
-          fontSize: _fontSize,
-          color: const Color(0xFF6B5CE6), // Darker purple for dates
-          fontWeight: FontWeight.w600,
-          height: 1.6,
-        ),
-      ));
-
-      lastEnd = match.end;
-    }
-
-    // Add remaining text
-    if (lastEnd < text.length) {
-      textSpans.add(TextSpan(
-        text: text.substring(lastEnd),
-        style: TextStyle(
-          fontSize: _fontSize,
-          color: AppColors.textPrimary,
-          height: 1.6,
-        ),
-      ));
-    }
-
-    return RichText(
-      text: TextSpan(children: textSpans),
-    );
-  }
-
   Widget _buildVocabularyContent() {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: widget.article.vocabulary.map((item) {
-        return _buildVocabularyItem(item);
-      }).toList(),
-    );
-  }
-
-  Widget _buildVocabularyItem(VocabularyItem item) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Play button
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: item.isSaved ? AppColors.primary : AppColors.textPrimary,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.play_arrow,
-              color: Colors.white,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 14),
-          // Word and translation
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${item.word} (${item.type}) ',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '(${item.type}) ${item.translation}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Bookmark button
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                item.isSaved = !item.isSaved;
-              });
-            },
-            child: Icon(
-              item.isSaved ? Icons.bookmark : Icons.bookmark_border,
-              size: 26,
-              color: item.isSaved ? AppColors.primary : Colors.grey[400],
-            ),
-          ),
-        ],
-      ),
+      return VocabularyItemCard(
+        item: item,
+        onBookmarkToggle: () {
+          setState(() {
+            item.isSaved = !item.isSaved;
+          });
+        },
+      );
+    }).toList(),
     );
   }
 
@@ -462,11 +465,40 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
           children: [
             // Play button
             GestureDetector(
-              onTap: () {
-                setState(() {
-                  _isPlaying = !_isPlaying;
-                });
-                // TODO: Toggle audio playback
+              onTap: () async {
+                if (widget.article.audioUrl == null || widget.article.audioUrl!.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('No audio available for this article')),
+                  );
+                  return;
+                }
+                
+                try {
+                  if (_isPlaying) {
+                    await _audioPlayer.pause();
+                  } else {
+                    // Check if audio has completed - if so, restart from beginning
+                    final processingState = _audioPlayer.processingState;
+                    if (processingState == ProcessingState.completed) {
+                      await _audioPlayer.seek(Duration.zero);
+                    }
+                    
+                    // Ensure audio is loaded before playing
+                    if (processingState == ProcessingState.idle ||
+                        processingState == ProcessingState.loading) {
+                      await _loadAudio();
+                    }
+                    
+                    // Ensure speed is set before playing
+                    await _updatePlaybackSpeed();
+                    await _audioPlayer.play();
+                  }
+                } catch (e) {
+                  print('Error toggling playback: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error playing audio: $e')),
+                  );
+                }
               },
               child: Container(
                 width: 56,
@@ -503,11 +535,18 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
             ),
             // Repeat button
             GestureDetector(
-              onTap: () {
+              onTap: () async {
                 setState(() {
                   _repeatMode = !_repeatMode;
                 });
-                // TODO: Toggle repeat mode
+                // Toggle repeat mode
+                try {
+                  await _audioPlayer.setLoopMode(
+                    _repeatMode ? LoopMode.one : LoopMode.off,
+                  );
+                } catch (e) {
+                  print('Error setting repeat mode: $e');
+                }
               },
               child: Container(
                 width: 56,
@@ -552,7 +591,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
                 ),
               ),
               const SizedBox(height: 20),
-              ...([0.75, 1.0, 1.25, 1.5].map((speed) {
+              ...([0.5, 0.75, 1.0, 1.25, 1.5].map((speed) {
                 final isSelected = _playbackSpeed == speed;
                 return ListTile(
                   title: Text(
@@ -566,10 +605,12 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
                   trailing: isSelected
                       ? Icon(Icons.check, color: AppColors.primary)
                       : null,
-                  onTap: () {
+                  onTap: () async {
                     setState(() {
                       _playbackSpeed = speed;
                     });
+                    // Update playback speed
+                    await _updatePlaybackSpeed();
                     Navigator.pop(context);
                   },
                 );
@@ -662,4 +703,3 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     );
   }
 }
-

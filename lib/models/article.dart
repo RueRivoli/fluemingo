@@ -3,9 +3,7 @@ import 'grammar_point.dart';
 import 'article_content.dart';
 
 class Article {
-  final String 
-  
-  id;
+  final String id;
   final String title;
   final String description;
   final String imageUrl;
@@ -16,6 +14,7 @@ class Article {
   final List<ArticleContent> content;
   final List<ArticleContent> translatedContent;
   final String? audioUrl;
+  final Map<String, dynamic>? contentTimestamps; // JSON timestamps from database
   bool isFavorite;
 
   Article({
@@ -30,6 +29,7 @@ class Article {
     this.content = const [],
     this.translatedContent = const [],
     this.audioUrl,
+    this.contentTimestamps,
     this.isFavorite = false,
   });
 }

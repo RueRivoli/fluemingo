@@ -59,16 +59,36 @@ class _AppInitializerState extends State<AppInitializer> {
   @override
   void initState() {
     super.initState();
-    _checkFirstTime();
+    _checkAuthAndOnboarding();
   }
 
-  Future<void> _checkFirstTime() async {
+  Future<void> _checkAuthAndOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
+    
+    // En mode debug avec _forceOnboarding, réinitialiser les préférences
+    if (kDebugMode && _forceOnboarding) {
+      await prefs.remove('has_seen_welcome');
+      debugPrint('🔄 Debug mode: Reset has_seen_welcome');
+    }
+    
     final hasSeenWelcome = prefs.getBool('has_seen_welcome') ?? false;
     
-    // En mode debug, forcer l'affichage si _forceOnboarding est true
+    // Vérifier l'état d'authentification Supabase
+    final supabase = Supabase.instance.client;
+    final session = supabase.auth.currentSession;
+    final isAuthenticated = session != null;
+    
+    debugPrint('📱 Auth check - hasSeenWelcome: $hasSeenWelcome, isAuthenticated: $isAuthenticated, session: ${session?.user.email}');
+    
+    // Afficher l'onboarding si:
+    // 1. L'utilisateur n'a jamais vu le welcome, OU
+    // 2. L'utilisateur n'est pas authentifié (même s'il a vu le welcome), OU
+    // 3. En mode debug avec _forceOnboarding activé
     final shouldShowOnboarding = !hasSeenWelcome || 
+        !isAuthenticated ||
         (kDebugMode && _forceOnboarding);
+    
+    debugPrint('📱 shouldShowOnboarding: $shouldShowOnboarding');
     
     setState(() {
       _isFirstTime = shouldShowOnboarding;
