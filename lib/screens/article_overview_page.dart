@@ -6,6 +6,7 @@ import '../models/grammar_point.dart';
 import '../constants/app_colors.dart';
 import '../services/article_service.dart';
 import 'article_reading_page.dart';
+import '../widgets/vocabulary_item_card.dart';
 
 class ArticleOverviewPage extends StatefulWidget {
   final Article article;
@@ -132,11 +133,23 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                                 ),
                               ),
                             ),
-                            const Icon(
-                              Icons.chevron_right,
-                              size: 28,
-                              color: AppColors.textPrimary,
-                            ),
+                                     GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ArticleReadingPage(
+                            article: _fullArticle ?? widget.article,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Icon(
+                      Icons.chevron_right,
+                      size: 28,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -287,7 +300,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                     height: 52,
                     decoration: BoxDecoration(
                       color: AppColors.textGrey,
-                      borderRadius: BorderRadius.circular(26),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -328,7 +341,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                       height: 52,
                       decoration: BoxDecoration(
                         color: AppColors.secondary,
-                        borderRadius: BorderRadius.circular(26),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -361,94 +374,14 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
   }
 
   Widget _buildVocabularyItem(VocabularyItem item) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Play button
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: item.isSaved ? AppColors.primary : AppColors.textPrimary,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.play_arrow,
-              color: Colors.white,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 14),
-
-          // Word and translation
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${item.word} (${item.type})',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  )),
-                const SizedBox(height: 2),
-                Text(
-                  '${item.translation}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Bookmark button
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                item.isSaved = !item.isSaved;
-              });
-            },
-            child: Column(
-              children: [
-                Icon(
-                  item.isSaved ? Icons.bookmark : Icons.bookmark_border,
-                  size: 26,
-                  color: item.isSaved
-                      ? AppColors.primary
-                      : Colors.grey[400],
-                ),
-                Text(
-                  item.isSaved ? 'Saved' : 'Save',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: item.isSaved
-                        ? AppColors.primary
-                        : Colors.grey[500],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    return VocabularyItemCard(
+    item: item,
+    onBookmarkToggle: () {
+      setState(() {
+        item.isSaved = !item.isSaved;
+      });
+    },
+  );
   }
 
   Widget _buildGrammarItem(GrammarPoint point) {
