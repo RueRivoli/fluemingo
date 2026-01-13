@@ -1,7 +1,11 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../constants/app_colors.dart';
+import '../../config/supabase_config.dart';
 import '../home_page.dart';
 
 class RegistrationPage extends StatefulWidget {
@@ -21,7 +25,9 @@ class RegistrationPage extends StatefulWidget {
 }
 
 class _RegistrationPageState extends State<RegistrationPage> {
-  bool _isLoading = false;
+  bool _isLoadingApple = false;
+  bool _isLoadingGoogle = false;
+  bool _isLoadingFacebook = false;
   StreamSubscription<AuthState>? _authSubscription;
 
   @override
@@ -43,7 +49,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
             }).then((_) {
               if (mounted) {
                 setState(() {
-                  _isLoading = false;
+                  _isLoadingFacebook = false;
+                  _isLoadingApple = false;
+                  _isLoadingGoogle = false;
                 });
                 widget.onComplete?.call();
                 Navigator.of(context).pushAndRemoveUntil(
@@ -56,7 +64,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
               debugPrint('Error ensuring/updating profile: $error');
               if (mounted) {
                 setState(() {
-                  _isLoading = false;
+                  _isLoadingFacebook = false;
+                  _isLoadingApple = false;
+                  _isLoadingGoogle = false;
                 });
                 widget.onComplete?.call();
                 Navigator.of(context).pushAndRemoveUntil(
@@ -72,7 +82,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
         debugPrint('Auth state change error: $error');
         if (mounted) {
           setState(() {
-            _isLoading = false;
+            _isLoadingFacebook = false;
+            _isLoadingApple = false;
+            _isLoadingGoogle = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -126,24 +138,24 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     context: context,
                     icon: _buildLogoIcon('assets/logo/google.jpg'),
                     label: 'Google',
-                    onTap: _isLoading ? null : () => _handleGoogleLogin(context),
-                    isLoading: _isLoading,
+                    onTap: _isLoadingGoogle ? null : () => _handleGoogleLogin(context),
+                    isLoading: _isLoadingGoogle,
                   ),
                   const SizedBox(height: 16),
                   _buildSocialButton(
                     context: context,
                     icon: _buildLogoIcon('assets/logo/apple.png'),
                     label: 'Apple',
-                    onTap: _isLoading ? null : () => _handleSocialLogin(context, 'apple'),
-                    isLoading: _isLoading,
+                    onTap: _isLoadingApple ? null : () => _handleAppleLogin(context),
+                    isLoading: _isLoadingApple,
                   ),
                   const SizedBox(height: 16),
                   _buildSocialButton(
                     context: context,
                     icon: _buildLogoIcon('assets/logo/facebook.png'),
                     label: 'Facebook',
-                    onTap: _isLoading ? null : () => _handleSocialLogin(context, 'facebook'),
-                    isLoading: _isLoading,
+                    onTap: _isLoadingFacebook ? null : () => _handleFacebookLogin(context),
+                    isLoading: _isLoadingFacebook,
                   ),
                 ],
               ),
@@ -253,35 +265,64 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
   Future<void> _handleGoogleLogin(BuildContext context) async {
     setState(() {
-      _isLoading = true;
+      _isLoadingGoogle = true;
     });
 
     try {
       final supabase = Supabase.instance.client;
+    
+      // The iOS clientId is configured in Info.plist (GIDClientID)
+      final googleSignIn = GoogleSignIn.instance;
+      await googleSignIn.initialize(
+          serverClientId: SupabaseConfig.googleWebClientId,
+          clientId: SupabaseConfig.iosClientId
+        );
       
-      // Configure the redirect URL
-      // For mobile apps, use a custom URL scheme
-      // Make sure this URL is also configured in your Supabase dashboard
-      // under Authentication > URL Configuration > Redirect URLs
-      const redirectUrl = 'com.fluemingo.app://login-callback';
+      // Sign in with Google using the new authenticate() method
+      final GoogleSignInAccount googleUser;
+      try {
+        googleUser = await googleSignIn.authenticate();
+      } on GoogleSignInException catch (e) {
+        // User cancelled or other sign-in issue
+        if (e.code == GoogleSignInExceptionCode.canceled) {
+          if (mounted) {
+            setState(() {
+              _isLoadingGoogle = false;
+            });
+          }
+          return;
+        }
+        rethrow;
+      }
       
-      await supabase.auth.signInWithOAuth(
-        OAuthProvider.google,
-        redirectTo: redirectUrl,
-        authScreenLaunchMode: LaunchMode.externalApplication,
+      // Obtain the auth details from the account
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      
+      // Extract ID token (accessToken is no longer available in v7+)
+      final String? idToken = googleAuth.idToken;
+      
+      if (idToken == null) {
+        throw Exception('Impossible d\'obtenir le token ID de Google');
+      }
+      
+      // Sign in to Supabase with the Google ID token
+      await supabase.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
       );
-
-      // Note: The auth state listener in initState will handle the callback
-      // when the user returns from the OAuth flow
+      
+      // The auth state listener in initState will handle the callback
+      // and profile creation/update
+      
     } catch (e) {
       if (mounted) {
         setState(() {
-          _isLoading = false;
+          _isLoadingGoogle = false;
         });
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur lors de la connexion: ${e.toString()}'),
+            content: Text('Erreur lors de la connexion Google: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -289,50 +330,125 @@ class _RegistrationPageState extends State<RegistrationPage> {
     }
   }
 
-  Future<void> _handleSocialLogin(BuildContext context, String provider) async {
+  Future<void> _handleAppleLogin(BuildContext context) async {
     setState(() {
-      _isLoading = true;
+      _isLoadingApple = true;
     });
 
     try {
       final supabase = Supabase.instance.client;
       
-      // Configure the redirect URL
-      // For mobile apps, use a custom URL scheme
-      // Make sure this URL is also configured in your Supabase dashboard
-      // under Authentication > URL Configuration > Redirect URLs
-      const redirectUrl = 'com.fluemingo.app://login-callback';
-      
-      // Map provider string to OAuthProvider enum
-      OAuthProvider oauthProvider;
-      switch (provider.toLowerCase()) {
-        case 'facebook':
-          oauthProvider = OAuthProvider.facebook;
-          break;
-        case 'apple':
-          oauthProvider = OAuthProvider.apple;
-          break;
-        default:
-          throw Exception('Provider non supporté: $provider');
+      // On Android, use OAuth flow directly (native Apple Sign In requires webAuthenticationOptions)
+      // On iOS, check if native Apple Sign In is available
+      if (defaultTargetPlatform == TargetPlatform.android || !await SignInWithApple.isAvailable()) {
+        // Fallback to OAuth flow if native Apple Sign In is not available or on Android
+        const redirectUrl = 'com.fluemingo.app://login-callback';
+        await supabase.auth.signInWithOAuth(
+          OAuthProvider.apple,
+          redirectTo: redirectUrl,
+          authScreenLaunchMode: LaunchMode.externalApplication,
+        );
+        return;
       }
       
-      await supabase.auth.signInWithOAuth(
-        oauthProvider,
-        redirectTo: redirectUrl,
-        authScreenLaunchMode: LaunchMode.externalApplication,
+      // Use native Apple Sign In (iOS only)
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
       );
-
-      // Note: The auth state listener in initState will handle the callback
-      // when the user returns from the OAuth flow
+      
+      // Extract full name if available (only on first sign-in)
+      String? fullName;
+      if (credential.givenName != null || credential.familyName != null) {
+        fullName = '${credential.givenName ?? ''} ${credential.familyName ?? ''}'.trim();
+        if (fullName.isEmpty) {
+          fullName = null;
+        }
+      }
+      
+      // Sign in to Supabase with the Apple ID token
+      await supabase.auth.signInWithIdToken(
+        provider: OAuthProvider.apple,
+        idToken: credential.identityToken!,
+      );
+      
+      // Update profile with full name if available
+      // Note: fullName is only provided on first sign-in with Apple
+      if (fullName != null) {
+        try {
+          final currentUser = supabase.auth.currentUser;
+          if (currentUser != null) {
+            // Store fullName in the profile
+            // The auth state listener will also call _ensureProfileExists,
+            // but we update it here to ensure the fullName is saved
+            try {
+              // Try to update existing profile
+              await supabase.from('profiles').update({
+                'full_name': fullName,
+                'updated_at': DateTime.now().toIso8601String(),
+              }).eq('id', currentUser.id);
+            } catch (e) {
+              // If update fails, try to insert (profile might not exist yet)
+              debugPrint('Profile update failed, will be created by listener: $e');
+            }
+          }
+        } catch (e) {
+          debugPrint('Error updating profile with fullName: $e');
+          // Continue anyway - _ensureProfileExists will handle it
+        }
+      }
+      
+      // The auth state listener in initState will handle the callback
+      // and profile creation/update
+      
     } catch (e) {
       if (mounted) {
         setState(() {
-          _isLoading = false;
+          _isLoadingApple = false;
+        });
+        
+        // Handle user cancellation gracefully
+        if (e is SignInWithAppleAuthorizationException) {
+          if (e.code == AuthorizationErrorCode.canceled) {
+            return; // User canceled, don't show error
+          }
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la connexion Apple: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleFacebookLogin(BuildContext context) async {
+    setState(() {
+      _isLoadingFacebook = true;
+    });
+
+    try {
+      final supabase = Supabase.instance.client;
+      const redirectUrl = 'com.fluemingo.app://login-callback';
+        await supabase.auth.signInWithOAuth(
+          OAuthProvider.facebook,
+          redirectTo: redirectUrl,
+          authScreenLaunchMode: LaunchMode.inAppBrowserView,
+        );
+        
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingFacebook = false;
         });
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur lors de la connexion $provider: ${e.toString()}'),
+            content: Text('Erreur lors de la connexion Facebook: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -359,20 +475,22 @@ class _RegistrationPageState extends State<RegistrationPage> {
         
         // Extract user data from metadata (handles different OAuth providers)
         final metadata = user.userMetadata ?? {};
-        final appMetadata = user.appMetadata ?? {};
         
         // Facebook uses different field names
-        final fullName = metadata['full_name'] ?? 
-                        metadata['name'] ?? 
-                        metadata['user_name'] ??
-                        '${metadata['first_name'] ?? ''} ${metadata['last_name'] ?? ''}'.trim() ??
+        final nameFromMetadata = metadata['full_name'] ?? 
+                                 metadata['name'] ?? 
+                                 metadata['user_name'];
+        final firstName = metadata['first_name'] ?? '';
+        final lastName = metadata['last_name'] ?? '';
+        final nameFromParts = '$firstName $lastName'.trim();
+        final fullName = nameFromMetadata ?? 
+                        (nameFromParts.isNotEmpty ? nameFromParts : null) ??
                         user.email?.split('@').first ??
                         'User';
         
         final avatarUrl = metadata['avatar_url'] ?? 
                          metadata['picture'] ??
-                         metadata['picture_url'] ??
-                         null;
+                         metadata['picture_url'];
         
         await supabase.from('profiles').insert({
           'id': user.id,
@@ -412,17 +530,20 @@ class _RegistrationPageState extends State<RegistrationPage> {
       // If update fails, try to create the profile with all data
       try {
         final metadata = user.userMetadata ?? {};
-        final fullName = metadata['full_name'] ?? 
-                        metadata['name'] ?? 
-                        metadata['user_name'] ??
-                        '${metadata['first_name'] ?? ''} ${metadata['last_name'] ?? ''}'.trim() ??
+        final nameFromMetadata = metadata['full_name'] ?? 
+                                 metadata['name'] ?? 
+                                 metadata['user_name'];
+        final firstName = metadata['first_name'] ?? '';
+        final lastName = metadata['last_name'] ?? '';
+        final nameFromParts = '$firstName $lastName'.trim();
+        final fullName = nameFromMetadata ?? 
+                        (nameFromParts.isNotEmpty ? nameFromParts : null) ??
                         user.email?.split('@').first ??
                         'User';
         
         final avatarUrl = metadata['avatar_url'] ?? 
                          metadata['picture'] ??
-                         metadata['picture_url'] ??
-                         null;
+                         metadata['picture_url'];
         
         await supabase.from('profiles').insert({
           'id': user.id,

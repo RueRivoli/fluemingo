@@ -86,6 +86,15 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
                       letterSpacing: -0.5,
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Levels',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -113,8 +122,8 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: isSelected ? AppColors.secondary : AppColors.neutral,
-                            border: isSelected ? Border.all(color: AppColors.borderBlack) : Border.all(color: AppColors.surface),
+                            color: isSelected ? AppColors.secondary : AppColors.white,
+                            border: isSelected ? Border.all(color: AppColors.borderBlack) : Border.all(color: AppColors.white),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(

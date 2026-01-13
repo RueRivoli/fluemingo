@@ -18,7 +18,7 @@ class VocabularyItemCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -35,7 +35,7 @@ class VocabularyItemCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: item.isSaved ? AppColors.primary : AppColors.textPrimary,
+              color: item.isSaved ? AppColors.primary : Colors.grey[600],
               shape: BoxShape.circle,
             ),
             child: const Icon(

@@ -7,6 +7,7 @@ import 'screens/home_page.dart';
 import 'screens/welcome_page.dart';
 import 'constants/app_colors.dart';
 import 'config/supabase_config.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

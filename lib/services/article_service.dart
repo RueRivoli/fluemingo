@@ -3,6 +3,7 @@ import '../models/article.dart';
 import '../models/vocabulary_item.dart';
 import '../models/grammar_point.dart';
 import '../models/article_content.dart';
+import '../models/word_timestamp.dart';
 
 class ArticleService {
   final SupabaseClient _supabase;
@@ -92,6 +93,7 @@ class ArticleService {
           .eq('content_type', 1);
             
       final vocabulary = (vocabularyResponse as List).map((json) => VocabularyItem(
+            audioUrl: _getAudioUrl(json['audio_url']) ?? '',
             word: json['text'] ?? '',
             translation: json['text_en'] ?? '',
             type: json['function'] ?? 'n',
@@ -104,9 +106,9 @@ class ArticleService {
       final contentEnString = articleResponse['content_en'] ?? '';
       final contentList = _parseContentToArticleContent(contentString, contentEnString);
       
-      // Get content_timestamps from database
+      // Get content_timestamps from database and parse it
       final contentTimestamps = articleResponse['content_timestamps'];
-      
+      final parsedTimestamps = _parseContentTimestamps(contentTimestamps);
       // Create article with all related data
       return Article(
         id: articleResponse['id']?.toString() ?? '',
@@ -119,14 +121,80 @@ class ArticleService {
         content: contentList,
         translatedContent: [], // Not used separately, translations are in ArticleContent objects
         vocabulary: vocabulary,
-        contentTimestamps: contentTimestamps != null 
-            ? Map<String, dynamic>.from(contentTimestamps as Map) 
-            : null,
+        contentTimestamps: parsedTimestamps,
         isFavorite: false, // content_fr doesn't have is_favorite field
         grammarPoints: grammarPoints,
       );
     } catch (e) {
       print('Error fetching article: $e');
+      return null;
+    }
+  }
+
+  /// Parse contentTimestamps JSON to extract a list of words with timestamps
+  /// Expected structure: {"results":{"channels":[{"alternatives":[{"words":[...]}]}]}}
+  List<WordTimestamp>? _parseContentTimestamps(dynamic contentTimestamps) {
+    if (contentTimestamps == null) {
+      return null;
+    }
+
+    try {
+      // Convert to Map if it's not already
+      Map<String, dynamic> timestampsMap;
+      if (contentTimestamps is Map) {
+        timestampsMap = Map<String, dynamic>.from(contentTimestamps);
+      } else {
+        return null;
+      }
+
+      // Navigate through the nested structure: results -> channels -> alternatives -> words
+      final results = timestampsMap['results'];
+      if (results == null || results is! Map) {
+        return null;
+      }
+
+      final channels = results['channels'];
+      if (channels == null || channels is! List || channels.isEmpty) {
+        return null;
+      }
+
+      final channel = channels[0];
+      if (channel == null || channel is! Map) {
+        return null;
+      }
+
+      final alternatives = channel['alternatives'];
+      if (alternatives == null || alternatives is! List || alternatives.isEmpty) {
+        return null;
+      }
+
+      final alternative = alternatives[0];
+      if (alternative == null || alternative is! Map) {
+        return null;
+      }
+
+      final words = alternative['words'];
+      if (words == null || words is! List) {
+        return null;
+      }
+
+      // Parse each word into a WordTimestamp object
+      return (words as List)
+          .map((wordJson) {
+            try {
+              if (wordJson is Map) {
+                return WordTimestamp.fromJson(Map<String, dynamic>.from(wordJson));
+              }
+              return null;
+            } catch (e) {
+              print('Error parsing word timestamp: $e');
+              return null;
+            }
+          })
+          .whereType<WordTimestamp>()
+          .toList();
+    } catch (e) {
+      print('Error parsing content timestamps: $e');
       return null;
     }
   }
@@ -197,9 +265,7 @@ class ArticleService {
       grammarPoints: [],
       content: contentList,
       translatedContent: [],
-      contentTimestamps: json['content_timestamps'] != null 
-          ? Map<String, dynamic>.from(json['content_timestamps'] as Map) 
-          : null,
+      contentTimestamps: _parseContentTimestamps(json['content_timestamps']),
     );
   }
 

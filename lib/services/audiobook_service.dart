@@ -112,6 +112,7 @@ class AudiobookService {
             word: json['text'] ?? '',
             translation: json['text_en'] ?? '',
             type: json['function'] ?? 'n',
+            audioUrl: _getAudioUrl(json['audio_url']) ?? '',
             isSaved: false,
           )).toList();
 

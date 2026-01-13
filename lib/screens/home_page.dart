@@ -16,7 +16,7 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = [
     const LibraryPage(),
     const AudiobooksPage(),
-    const PlaceholderPage(title: 'Downloads'),
+    const PlaceholderPage(title: 'Flashcards'),
     const PlaceholderPage(title: 'Profile'),
   ];
 
@@ -42,8 +42,8 @@ class _HomePageState extends State<HomePage> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildNavItem(Icons.format_list_bulleted, 0),
-                _buildNavItem(Icons.mic, 1),
-                _buildNavItem(Icons.download_outlined, 2),
+                _buildNavItem(Icons.headphones, 1),
+                _buildNavItem(Icons.style_outlined, 2),
                 _buildNavItem(Icons.person_outline, 3),
               ],
             ),
@@ -97,6 +97,7 @@ class PlaceholderPage extends StatelessWidget {
     );
   }
 }
+
 
 
 
