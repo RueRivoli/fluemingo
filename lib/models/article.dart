@@ -1,6 +1,7 @@
 import 'vocabulary_item.dart';
 import 'grammar_point.dart';
 import 'article_content.dart';
+import 'word_timestamp.dart';
 
 class Article {
   final String id;
@@ -14,7 +15,7 @@ class Article {
   final List<ArticleContent> content;
   final List<ArticleContent> translatedContent;
   final String? audioUrl;
-  final Map<String, dynamic>? contentTimestamps; // JSON timestamps from database
+  final List<WordTimestamp>? contentTimestamps; // Parsed list of words with timestamps
   bool isFavorite;
 
   Article({

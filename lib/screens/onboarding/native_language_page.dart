@@ -143,7 +143,7 @@ class _NativeLanguagePageState extends State<NativeLanguagePage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.play_arrow,
+                        Icons.arrow_forward,
                         size: 22,
                         color: _selectedLanguage != null
                             ? AppColors.textPrimary

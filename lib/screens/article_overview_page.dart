@@ -97,15 +97,16 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                         child: GestureDetector(
                           onTap: () => Navigator.pop(context),
                           child: Container(
-                            padding: const EdgeInsets.all(8),
+                            width: 40,
+                            height: 40,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(8),
+                              color: AppColors.white,
+                              shape: BoxShape.circle,
                             ),
                             child: const Icon(
-                              Icons.arrow_back_ios_new,
-                              size: 20,
+                              Icons.chevron_left,
                               color: AppColors.textPrimary,
+                              size: 24,
                             ),
                           ),
                         ),
@@ -160,12 +161,12 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                             // Level tag with dotted border
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
+                                horizontal: 14,
+                                vertical: 8,
                               ),
                               decoration: BoxDecoration(
                                 color: AppColors.neutral,
-                                borderRadius: BorderRadius.circular(6),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 widget.article.level,

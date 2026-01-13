@@ -93,8 +93,8 @@ class ArticleCard extends StatelessWidget {
                       ),
                       child: Icon(
                         article.isFavorite
-                            ? Icons.star
-                            : Icons.star_border,
+                            ? Icons.favorite
+                            : Icons.favorite_border,
                         size: 22,
                         color: article.isFavorite
                             ? AppColors.secondary
@@ -199,6 +199,7 @@ class ArticleCard extends StatelessWidget {
     );
   }
 }
+
 
 
 
