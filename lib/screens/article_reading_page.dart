@@ -3,12 +3,15 @@ import 'package:just_audio/just_audio.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/article.dart';
 import '../models/vocabulary_item.dart';
-import '../models/article_content.dart';
-import '../models/quiz_question.dart';
+import '../models/article_paragraph.dart';
+import '../models/sentence_timestamp.dart';
+import '../models/article_paragraph.dart';
+import '../models/article_sentence.dart';
 import '../constants/app_colors.dart';
 import '../widgets/vocabulary_item_card.dart';
 import '../widgets/quiz_content_widget.dart';
 import '../services/quiz_service.dart';
+import '../controllers/quiz_controller.dart';
 
 class ArticleReadingPage extends StatefulWidget {
   final Article article;
@@ -30,27 +33,18 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
   bool _repeatMode = false;
   
   // Highlighting state for audio synchronization
-  int? _currentHighlightedIndex; // Content segment index (legacy)
-  int? _currentHighlightedWordIndex; // Word index from contentTimestamps
+  int? _currentHighlightedSentenceIndex; // Index in contentTimestamps list
   final ScrollController _scrollController = ScrollController();
-  final Map<int, GlobalKey> _contentKeys = {};
   
-  // Precomputed word ranges for each content segment
-  // Maps segment index to (startWordIndex, endWordIndex) in contentTimestamps
-  Map<int, (int, int)> _segmentWordRanges = {};
+  // Keys for each sentence to enable scrolling
+  final Map<int, GlobalKey> _sentenceKeys = {};
   
   double _fontSize = 16.0;
   bool _showTranslation = true;
-  bool _showTranslationAfterParagraph = true;
+  bool _showTranslationAfterParagraph = false;
 
   // Quiz state
-  late QuizService _quizService;
-  List<QuizQuestion> _quizModelQuestions = [];
-  bool _isLoadingQuiz = true;
-  int? _quizResultId;
-  bool _quizCompleted = false;
-  int _correctAnswersCount = 0;
-  Map<int, int> _userAnswers = {}; // questionIndex -> answerIndex
+  late QuizController _quizController;
 
   @override
   void initState() {
@@ -62,8 +56,14 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
       });
     });
     
-    // Initialize quiz service
-    _quizService = QuizService(Supabase.instance.client);
+    // Initialize quiz controller
+    _quizController = QuizController(
+      quizService: QuizService(Supabase.instance.client),
+      articleId: widget.article.id,
+    );
+    _quizController.addListener(() {
+      setState(() {}); // Rebuild when quiz state changes
+    });
     
     // Initialize audio player
     _audioPlayer = AudioPlayer();
@@ -77,188 +77,28 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
       if (state.processingState == ProcessingState.completed) {
         setState(() {
           _isPlaying = false;
-          _currentHighlightedIndex = null;
-          _currentHighlightedWordIndex = null;
+          _currentHighlightedSentenceIndex = null;
         });
       }
     });
     
-    // Listen to audio position for word highlighting
+    // Listen to audio position for sentence highlighting
     _audioPlayer.positionStream.listen((position) {
-      _updateHighlightedSegment(position);
+      _updateHighlightedSentence(position);
     });
     
-    // Initialize content keys for scrolling
-    for (int i = 0; i < widget.article.content.length; i++) {
-      _contentKeys[i] = GlobalKey();
-    }
-    
-    // Precompute word ranges for each segment
-    _computeSegmentWordRanges();
+    // Initialize sentence keys for scrolling
+    _initializeSentenceKeys();
     
     // Load audio if available
     _loadAudio();
     
     // Load quiz questions and create quiz result
-    _initializeQuiz(false);
+    _quizController.initializeQuiz(false);
   }
+  
 
-  Future<void> _initializeQuiz(bool retry) async {
-    try {
-      final contentId = int.tryParse(widget.article.id);
-      if (contentId == null) {
-        setState(() {
-          _isLoadingQuiz = false;
-        });
-        return;
-      }
-
-      // Fetch quiz questions for this content
-      final questions = await _quizService.getQuizQuestionsForContent(contentId);
-      
-      if (questions.isNotEmpty) {
-        // Get current user
-        final user = Supabase.instance.client.auth.currentUser;
-        
-        if (user != null) {
-          // Create a quiz result entry using the first question's quiz_id
-          final quizId = questions.first.quizId ?? questions.first.id;
-          final result = await _quizService.createQuizResult(
-            referenceId: contentId,
-            quizId: quizId,
-            userId: user.id,
-            type: 1,
-          );
-          print('result: $result');
-          if (result != null && result['filled_out'] == true) {
-            print('already filledout');
-            setState(() {
-              _quizModelQuestions = questions;
-              _quizResultId = result['id'] as int?;
-              _correctAnswersCount = result['number_correct_answers'] as int? ?? 0;
-              _quizCompleted = retry ? false : true;
-              _isLoadingQuiz = false;
-            });
-          } else {
-            setState(() {
-              _quizModelQuestions = questions;
-              _quizResultId = result?['id'] as int?;
-              _isLoadingQuiz = false;
-            });
-          }
-        } else {
-          setState(() {
-            _quizModelQuestions = questions;
-            _isLoadingQuiz = false;
-          });
-        }
-      } else {
-        setState(() {
-          _isLoadingQuiz = false;
-        });
-      }
-    } catch (e) {
-      print('Error initializing quiz: $e');
-      setState(() {
-        _isLoadingQuiz = false;
-      });
-    }
-  }
-  
-  // Update highlighted segment based on audio position
-  void _updateHighlightedSegment(Duration position) {
-    if (!_isPlaying) return;
     
-    final positionSeconds = position.inMilliseconds / 1000.0;
-    
-    // Use word-level timestamps if available (more precise)
-    if (widget.article.contentTimestamps != null && 
-        widget.article.contentTimestamps!.isNotEmpty) {
-      int? newHighlightedWordIndex;
-      print('contentTimestamps: ${widget.article.contentTimestamps}');
-      // Find the word that matches the current audio position
-      for (int i = 0; i < widget.article.contentTimestamps!.length; i++) {
-        final wordTimestamp = widget.article.contentTimestamps![i];
-        if (positionSeconds >= wordTimestamp.start && 
-            positionSeconds < wordTimestamp.end) {
-          newHighlightedWordIndex = i;
-          break;
-        }
-      }
-      
-      // Update highlight if it changed
-      if (newHighlightedWordIndex != _currentHighlightedWordIndex) {
-        setState(() {
-          _currentHighlightedWordIndex = newHighlightedWordIndex;
-        });
-        
-        // Auto-scroll to keep highlighted content visible
-        if (newHighlightedWordIndex != null) {
-          _scrollToHighlightedWord(newHighlightedWordIndex);
-        }
-      }
-      print('content: $widget.article.content.length');
-
-    } else {
-      // Fallback to segment-level highlighting if no word timestamps
-      int? newHighlightedIndex;
-      
-      // Find the content segment that matches the current audio position
-      for (int i = 0; i < widget.article.content.length; i++) {
-        final content = widget.article.content[i];
-        if (content.startTime != null && content.endTime != null) {
-          if (positionSeconds >= content.startTime! && 
-              positionSeconds < content.endTime!) {
-            newHighlightedIndex = i;
-            break;
-          }
-        }
-      }
-      
-      // Update highlight if it changed
-      if (newHighlightedIndex != _currentHighlightedIndex) {
-        setState(() {
-          _currentHighlightedIndex = newHighlightedIndex;
-        });
-        
-        // Auto-scroll to keep highlighted content visible
-        if (newHighlightedIndex != null) {
-          _scrollToContent(newHighlightedIndex);
-        }
-      }
-    }
-  }
-  
-  // Scroll to a specific content segment
-  void _scrollToContent(int index) {
-    final key = _contentKeys[index];
-    if (key?.currentContext != null) {
-      Scrollable.ensureVisible(
-        key!.currentContext!,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        alignment: 0.2,
-      );
-    }
-  }
-  
-  // Scroll to the content segment containing the highlighted word
-  void _scrollToHighlightedWord(int wordIndex) {
-    if (widget.article.contentTimestamps == null || 
-        wordIndex >= widget.article.contentTimestamps!.length) {
-      return;
-    }
-    
-    // Find which content segment contains this word
-    // We'll estimate based on word index relative to total words
-    final totalWords = widget.article.contentTimestamps!.length;
-    final wordsPerSegment = totalWords / widget.article.content.length;
-    final segmentIndex = (wordIndex / wordsPerSegment).floor();
-    final clampedIndex = segmentIndex.clamp(0, widget.article.content.length - 1);
-    
-    _scrollToContent(clampedIndex);
-  }
-  
   Future<void> _loadAudio() async {
     if (widget.article.audioUrl != null && widget.article.audioUrl!.isNotEmpty) {
       try {
@@ -273,77 +113,70 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     }
   }
   
-  /// Precompute word ranges for each content segment by matching words
-  /// This creates a mapping from segment index to (startWordIndex, endWordIndex)
-  void _computeSegmentWordRanges() {
-    if (widget.article.contentTimestamps == null || 
-        widget.article.contentTimestamps!.isEmpty) {
-      return;
-    }
+  void _initializeSentenceKeys() {
+    final paragraphs = widget.article.paragraphs;
+    if (paragraphs.isEmpty) return;
     
-    _segmentWordRanges = {};
-    int currentTimestampIndex = 0;
-    final timestamps = widget.article.contentTimestamps!;
-    
-    for (int segmentIndex = 0; segmentIndex < widget.article.content.length; segmentIndex++) {
-      final segmentText = widget.article.content[segmentIndex].originalText;
-      final segmentWords = _extractWordsNormalized(segmentText);
-      
-      if (segmentWords.isEmpty) {
-        continue;
+    int globalIndex = 0;
+    for (final paragraph in paragraphs) {
+      for (final sentence in paragraph.sentences) {
+        _sentenceKeys[globalIndex] = GlobalKey();
+        globalIndex++;
       }
-      
-      final startIndex = currentTimestampIndex;
-      int matchedWords = 0;
-      
-      // Match words from timestamps to segment words
-      while (currentTimestampIndex < timestamps.length && 
-             matchedWords < segmentWords.length) {
-        final timestampWord = _normalizeWord(timestamps[currentTimestampIndex].word);
-        final expectedWord = segmentWords[matchedWords];
-        
-        // Check if words match (allowing for some flexibility)
-        if (_wordsMatch(timestampWord, expectedWord)) {
-          matchedWords++;
+    }
+  }
+  
+  // Update highlighted sentence based on audio position
+  void _updateHighlightedSentence(Duration position) {
+    final paragraphs = widget.article.paragraphs;
+    if (paragraphs.isEmpty) return;
+    
+    final positionSeconds = position.inMilliseconds / 1000.0;
+    
+    // Find the sentence that contains the current audio position
+    int? newHighlightedIndex;
+    int globalIndex = 0;
+    
+    for (final paragraph in paragraphs) {
+      for (final sentence in paragraph.sentences) {
+        if (sentence.startTime != null && sentence.endTime != null) {
+          if (positionSeconds >= sentence.startTime! && positionSeconds <= sentence.endTime!) {
+            newHighlightedIndex = globalIndex;
+            break;
+          }
         }
-        currentTimestampIndex++;
+        globalIndex++;
       }
+      if (newHighlightedIndex != null) break;
+    }
+    
+    // Only update if the highlighted sentence changed
+    if (newHighlightedIndex != _currentHighlightedSentenceIndex) {
+      setState(() {
+        _currentHighlightedSentenceIndex = newHighlightedIndex;
+      });
       
-      // Store the range for this segment
-      final endIndex = currentTimestampIndex - 1;
-      if (startIndex <= endIndex && startIndex < timestamps.length) {
-        _segmentWordRanges[segmentIndex] = (startIndex, endIndex);
+      // Scroll to keep the highlighted sentence centered
+      if (newHighlightedIndex != null) {
+        _scrollToSentence(newHighlightedIndex);
       }
     }
   }
   
-  /// Normalize a word for matching (lowercase, remove punctuation)
-  String _normalizeWord(String word) {
-    return word.toLowerCase().replaceAll(RegExp(r'[^\w\sàâäéèêëïîôùûüœæç]'), '').trim();
-  }
-  
-  /// Extract words from text and normalize them
-  List<String> _extractWordsNormalized(String text) {
-    return text
-        .split(RegExp(r'\s+'))
-        .where((w) => w.isNotEmpty)
-        .map((w) => _normalizeWord(w))
-        .where((w) => w.isNotEmpty)
-        .toList();
-  }
-  
-  /// Check if two words match (with some flexibility for punctuation differences)
-  bool _wordsMatch(String word1, String word2) {
-    if (word1 == word2) return true;
-    // Allow partial match if one contains the other (for contractions etc.)
-    if (word1.contains(word2) || word2.contains(word1)) return true;
-    // Check if first few characters match (for variations)
-    if (word1.length >= 3 && word2.length >= 3) {
-      return word1.substring(0, 3) == word2.substring(0, 3);
+  // Scroll to center the highlighted sentence on screen
+  void _scrollToSentence(int sentenceIndex) {
+    final key = _sentenceKeys[sentenceIndex];
+    if (key?.currentContext != null) {
+      Scrollable.ensureVisible(
+        key!.currentContext!,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+        alignment: 0.4, // 0.4 means the sentence will be ~40% from the top (roughly centered)
+      );
     }
-    return false;
   }
   
+      
   Future<void> _updatePlaybackSpeed() async {
     try {
       await _audioPlayer.setSpeed(_playbackSpeed);
@@ -357,6 +190,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     _tabController.dispose();
     _audioPlayer.dispose();
     _scrollController.dispose();
+    _quizController.dispose();
     super.dispose();
   }
 
@@ -394,7 +228,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _buildArticleContent(),
+                  _buildArticleParagraphs(),
                   _buildVocabularyContent(),
                   _buildQuizContent(),
                 ],
@@ -563,334 +397,257 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     );
   }
 
-  Widget _buildArticleContent() {
-    final content = widget.article.content;
-    if (content.isEmpty) {
+  Widget _buildArticleParagraphs() {
+    final paragraphs = widget.article.paragraphs;
+    print('paragraphs: ${paragraphs}');
+    if (paragraphs.isEmpty) {
       return const Center(
-        child: Text('No content available'),
+        child: Text('No paragraphs available'),
       );
     }
-
+    
     return SingleChildScrollView(
       controller: _scrollController,
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: content.asMap().entries.map((entry) {
-          return _buildContent(entry.value, entry.key);
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildContent(ArticleContent content, int index) {
-    final isHighlighted = _currentHighlightedIndex == index;
-    
-    return AnimatedContainer(
-      key: _contentKeys[index],
-      duration: const Duration(milliseconds: 200),
-      padding: EdgeInsets.only(
-        bottom: 24,
-        left: isHighlighted ? 8 : 0,
-        right: isHighlighted ? 8 : 0,
-        top: isHighlighted ? 8 : 0,
-      ),
-      decoration: BoxDecoration(
-        color: isHighlighted 
-            ? AppColors.primary.withOpacity(0.15) 
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        border: isHighlighted 
-            ? Border.all(color: AppColors.primary.withOpacity(0.3), width: 2)
-            : null,
-      ),
-      child: _showTranslationAfterParagraph
-          ? Column(
+        children: [
+          // Render paragraphs with their sentences
+          ...paragraphs.asMap().entries.map((paragraphEntry) {
+            final paragraphIndex = paragraphEntry.key;
+            final paragraph = paragraphEntry.value;
+            
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Original text (e.g., French) with word-level highlighting
-                _buildTextWithWordHighlighting(
-                  content.originalText,
-                  index,
-                  isHighlighted,
-                ),
-                const SizedBox(height: 12),
-                // Translation text (e.g., English)
-                if (_showTranslation)
+                // Render sentences in this paragraph
+                if (_showTranslationAfterParagraph)
+                  // Inline rendering when translations are shown after paragraph
+                  _buildInlineParagraphSentences(paragraph, paragraphIndex, paragraphs)
+                else
+                  // Normal rendering with line breaks
+                  ...paragraph.sentences.asMap().entries.map((sentenceEntry) {
+                    final sentenceIndexInParagraph = sentenceEntry.key;
+                    final sentence = sentenceEntry.value;
+                    
+                    // Calculate global sentence index
+                    int globalSentenceIndex = 0;
+                    for (int i = 0; i < paragraphIndex; i++) {
+                      globalSentenceIndex += paragraphs[i].sentences.length;
+                    }
+                    globalSentenceIndex += sentenceIndexInParagraph;
+                    
+                    return _buildArticleSentenceWidget(sentence, globalSentenceIndex);
+                  }),
+                // Show translations at the end of paragraph if enabled
+                if (_showTranslation && _showTranslationAfterParagraph) ...[
+                  const SizedBox(height: 16),
                   Text(
-                    content.translationText,
+                    paragraph.sentences
+                        .where((sentence) => sentence.translationText.isNotEmpty)
+                        .map((sentence) => sentence.translationText)
+                        .join(' '),
                     style: TextStyle(
                       fontSize: _fontSize,
-                      color: isHighlighted 
-                          ? AppColors.textPrimary.withOpacity(0.7) 
-                          : AppColors.textSecondary,
+                      color: AppColors.textSecondary,
                       height: 1.6,
-                      fontStyle: FontStyle.italic,
+                      fontStyle: FontStyle.normal,
                     ),
                   ),
+                ],
+                // Add spacing between paragraphs
+                if (paragraphIndex < paragraphs.length - 1)
+                  const SizedBox(height: 24),
               ],
-            )
-          : _buildPhraseByPhraseContent(content, index, isHighlighted),
+            );
+          }),
+        ],
+      ),
     );
   }
   
-  // Build content showing each phrase with translation below
-  Widget _buildPhraseByPhraseContent(ArticleContent content, int index, bool isHighlighted) {
-    // Split text into sentences/phrases
-    final originalPhrases = _splitIntoPhrases(content.originalText);
-    final translationPhrases = _splitIntoPhrases(content.translationText);
-    
-    // Use the maximum length to show all phrases
-    final maxPhraseCount = originalPhrases.length > translationPhrases.length
-        ? originalPhrases.length
-        : translationPhrases.length;
-    
-    // Calculate word offsets for each phrase within this segment
-    final phraseWordOffsets = <int>[];
-    int cumulativeWordCount = 0;
-    for (int i = 0; i < originalPhrases.length; i++) {
-      phraseWordOffsets.add(cumulativeWordCount);
-      // Count words in this phrase
-      final wordsInPhrase = originalPhrases[i]
-          .split(RegExp(r'\s+'))
-          .where((w) => w.trim().isNotEmpty)
-          .length;
-      cumulativeWordCount += wordsInPhrase;
-    }
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: List.generate(maxPhraseCount, (phraseIndex) {
-        final hasOriginal = phraseIndex < originalPhrases.length;
-        final hasTranslation = phraseIndex < translationPhrases.length;
-        
-        // Skip if neither exists (shouldn't happen, but safe guard)
-        if (!hasOriginal && !hasTranslation) {
-          return const SizedBox.shrink();
-        }
-        
-        // Get word offset for this phrase
-        final wordOffset = phraseIndex < phraseWordOffsets.length 
-            ? phraseWordOffsets[phraseIndex] 
-            : 0;
-        
-        return Padding(
-          padding: EdgeInsets.only(bottom: phraseIndex < maxPhraseCount - 1 ? 16 : 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Original phrase with word-level highlighting
-              if (hasOriginal)
-                _buildTextWithWordHighlighting(
-                  originalPhrases[phraseIndex],
-                  index,
-                  isHighlighted,
-                  wordOffsetInSegment: wordOffset,
-                ),
-              if (hasOriginal && hasTranslation && _showTranslation)
-                const SizedBox(height: 8),
-              // Translation phrase
-              if (hasTranslation && _showTranslation)
-                Text(
-                  translationPhrases[phraseIndex],
-                  style: TextStyle(
-                    fontSize: _fontSize,
-                    color: isHighlighted 
-                        ? AppColors.textPrimary.withOpacity(0.7) 
-                        : AppColors.textSecondary,
-                    height: 1.6,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-            ],
-          ),
-        );
-      }),
-    );
-  }
-  
-  // Split text into phrases (sentences)
-  List<String> _splitIntoPhrases(String text) {
-    if (text.trim().isEmpty) return [];
-    
-    // Use regex to match sentences: content ending with . ! or ? followed by space or end
-    // This pattern matches: one or more characters (non-whitespace or whitespace) ending with sentence punctuation
-    final regex = RegExp(r'[^.!?]*[.!?]+(?:\s+|$)', multiLine: true);
-    final matches = regex.allMatches(text);
-    
-    final phrases = <String>[];
-    int lastEnd = 0;
-    
-    for (final match in matches) {
-      final phrase = match.group(0)?.trim();
-      if (phrase != null && phrase.isNotEmpty) {
-        phrases.add(phrase);
-        lastEnd = match.end;
-      }
-    }
-    
-    // If no matches found or there's remaining text, handle it
-    if (lastEnd < text.length) {
-      final remaining = text.substring(lastEnd).trim();
-      if (remaining.isNotEmpty) {
-        // If we found some phrases, add remaining as last phrase
-        // If no phrases found, return whole text as single phrase
-        if (phrases.isEmpty) {
-          return [text.trim()];
-        } else {
-          phrases.add(remaining);
-        }
-      }
-    }
-    
-    // If no phrases were found (e.g., no sentence-ending punctuation), return whole text
-    if (phrases.isEmpty) {
-      return [text.trim()];
-    }
-    
-    return phrases;
-  }
-  
-  // Build text with word-level highlighting based on timestamps
-  // wordOffsetInSegment: offset to add to the word index within this segment (for phrase-by-phrase mode)
-  Widget _buildTextWithWordHighlighting(
-    String text, 
-    int contentIndex, 
-    bool isSegmentHighlighted, 
-    {int wordOffsetInSegment = 0}
+  // Build inline paragraph sentences (no line breaks between sentences)
+  Widget _buildInlineParagraphSentences(
+    ArticleParagraph paragraph,
+    int paragraphIndex,
+    List<ArticleParagraph> allParagraphs,
   ) {
-    // If no word timestamps available, fall back to regular text
-    if (widget.article.contentTimestamps == null || 
-        widget.article.contentTimestamps!.isEmpty ||
-        !_segmentWordRanges.containsKey(contentIndex)) {
-      return Text(
-        text,
-        style: TextStyle(
-          fontSize: _fontSize,
-          color: AppColors.textPrimary,
-          height: 1.6,
-          fontWeight: isSegmentHighlighted ? FontWeight.w600 : FontWeight.normal,
+    // Calculate the starting global index for this paragraph
+    int startingGlobalIndex = 0;
+    for (int i = 0; i < paragraphIndex; i++) {
+      startingGlobalIndex += allParagraphs[i].sentences.length;
+    }
+    
+    // Build TextSpans for each sentence with highlighting support
+    final textSpans = <TextSpan>[];
+    for (int i = 0; i < paragraph.sentences.length; i++) {
+      final sentence = paragraph.sentences[i];
+      final globalIndex = startingGlobalIndex + i;
+      final isHighlighted = _currentHighlightedSentenceIndex == globalIndex;
+      
+      textSpans.add(
+        TextSpan(
+          text: sentence.originalText + (i < paragraph.sentences.length - 1 ? ' ' : ''),
+          style: TextStyle(
+            fontSize: _fontSize,
+            color: isHighlighted 
+                ? AppColors.primary 
+                : AppColors.textPrimary,
+            fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.normal,
+            height: 1.6,
+          ),
         ),
       );
     }
     
-    // Get precomputed word range for this content segment
-    final (startWordIndex, endWordIndex) = _segmentWordRanges[contentIndex]!;
-    
-    // Split text into parts (words + spaces) while preserving layout
-    final parts = _splitTextPreservingLayout(text);
-    
-    // Build text spans with highlighting
-    final textSpans = <TextSpan>[];
-    int currentWordInText = 0;
-    
-    for (final part in parts) {
-      // Check if this part is a word (not whitespace)
-      final trimmed = part.trim();
-      final isWord = trimmed.isNotEmpty;
-      
-      if (isWord) {
-        // Calculate which word timestamp index this corresponds to
-        // Use the wordOffsetInSegment to account for words in previous phrases
-        final actualWordIndex = startWordIndex + wordOffsetInSegment + currentWordInText;
-        
-        // Ensure we don't exceed bounds
-        if (actualWordIndex <= endWordIndex && 
-            actualWordIndex < widget.article.contentTimestamps!.length) {
-          final isWordHighlighted = actualWordIndex == _currentHighlightedWordIndex;
-          
-          textSpans.add(
-            TextSpan(
-              text: part,
-              style: TextStyle(
-                fontSize: _fontSize,
-                color: isWordHighlighted 
-                    ? AppColors.textPrimary 
-                    : AppColors.textPrimary,
-                fontWeight: FontWeight.normal,
-                // fontWeight: isWordHighlighted 
-                //     ? FontWeight.w700 
-                //     : (isSegmentHighlighted ? FontWeight.w600 : FontWeight.normal),
-                backgroundColor: isWordHighlighted 
-                    ? AppColors.primary.withOpacity(0.2) 
-                    : Colors.transparent,
-                decoration: TextDecoration.none,
-              ),
-            ),
-          );
-          currentWordInText++;
-        } else {
-          // Word index out of bounds, just render normally
-          textSpans.add(
-            TextSpan(
-              text: part,
-              style: TextStyle(
-                fontSize: _fontSize,
-                color: AppColors.textPrimary,
-                fontWeight: isSegmentHighlighted ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          );
-        }
-      } else {
-        // Whitespace - render normally without highlighting
-        textSpans.add(
-          TextSpan(
-            text: part,
-            style: TextStyle(
-              fontSize: _fontSize,
-              color: AppColors.textPrimary,
-            ),
-          ),
-        );
-      }
-    }
-    
-    return RichText(
-      text: TextSpan(
-        children: textSpans,
-        style: TextStyle(
-          height: 1.6,
-          color: AppColors.textPrimary,
-        ),
+    return Container(
+      key: _sentenceKeys[startingGlobalIndex], // Use first sentence key for scrolling
+      child: RichText(
+        text: TextSpan(children: textSpans),
       ),
     );
   }
   
-  // Split text into parts (words + spaces) while preserving layout
-  List<String> _splitTextPreservingLayout(String text) {
-    final parts = <String>[];
-    final buffer = StringBuffer();
+  // Build a single article sentence widget with highlighting support
+  Widget _buildArticleSentenceWidget(ArticleSentence sentence, int globalIndex) {
+    final isHighlighted = _currentHighlightedSentenceIndex == globalIndex;
+    final displayText = sentence.originalText;
+    final translation = _showTranslation ? sentence.translationText : null;
     
-    for (int i = 0; i < text.length; i++) {
-      final char = text[i];
-      
-      // Check if current char is whitespace
-      final isWhitespace = char == ' ' || char == '\n' || char == '\t';
-      
-      if (isWhitespace && buffer.isNotEmpty) {
-        // End of word, add word then whitespace
-        parts.add(buffer.toString());
-        buffer.clear();
-        buffer.write(char);
-      } else if (!isWhitespace && buffer.toString().trim().isEmpty && buffer.isNotEmpty) {
-        // End of whitespace, add whitespace then start word
-        parts.add(buffer.toString());
-        buffer.clear();
-        buffer.write(char);
-      } else {
-        buffer.write(char);
-      }
-    }
-    
-    // Add remaining part
-    if (buffer.isNotEmpty) {
-      parts.add(buffer.toString());
-    }
-    
-    return parts;
+    return AnimatedContainer(
+      key: _sentenceKeys[globalIndex],
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: isHighlighted ? 12 : 4,
+        vertical: isHighlighted ? 10 : 4,
+      ),
+      decoration: BoxDecoration(
+        color: isHighlighted 
+            ? AppColors.primary.withOpacity(0.15)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: isHighlighted 
+            ? Border.all(color: AppColors.primary.withOpacity(0.4), width: 2)
+            : null,
+        boxShadow: isHighlighted 
+            ? [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Original sentence
+          AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 200),
+            style: TextStyle(
+              fontSize: _fontSize,
+              color: isHighlighted 
+                  ? AppColors.primary 
+                  : AppColors.textPrimary,
+              height: 1.6,
+              fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.normal,
+            ),
+            child: Text(displayText),
+          ),
+          // Translation if enabled and available
+          if (translation != null && !_showTranslationAfterParagraph) ...[
+            const SizedBox(height: 8),
+            Text(
+              translation,
+              style: TextStyle(
+                fontSize: _fontSize,
+                color: isHighlighted 
+                    ? AppColors.textPrimary.withOpacity(0.7) 
+                    : AppColors.textSecondary,
+                height: 1.6,
+                fontStyle: FontStyle.normal,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
-
+  
+  
+  // Build a single sentence widget with highlighting support
+  Widget _buildSentenceWidget(ArticleSentence sentence, int index) {
+    final isHighlighted = _currentHighlightedSentenceIndex == index;
+    final displayText = sentence.originalText;
+    final translation = _showTranslation ? sentence.translationText : null;
+    
+    return AnimatedContainer(
+      key: _sentenceKeys[index],
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: isHighlighted ? 12 : 4,
+        vertical: isHighlighted ? 10 : 4,
+      ),
+      decoration: BoxDecoration(
+        color: isHighlighted 
+            ? AppColors.primary.withOpacity(0.15)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: isHighlighted 
+            ? Border.all(color: AppColors.primary.withOpacity(0.4), width: 2)
+            : null,
+        boxShadow: isHighlighted 
+            ? [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Original sentence
+          AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 200),
+            style: TextStyle(
+              fontSize: _fontSize,
+              color: isHighlighted 
+                  ? AppColors.primary 
+                  : AppColors.textPrimary,
+              height: 1.6,
+              fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.normal,
+            ),
+            child: Text(displayText),
+          ),
+          // Translation if enabled and available
+          if (translation != null && !_showTranslationAfterParagraph) ...[
+            const SizedBox(height: 8),
+            Text(
+              translation,
+              style: TextStyle(
+                fontSize: _fontSize,
+                color: isHighlighted 
+                    ? AppColors.textPrimary.withOpacity(0.7) 
+                    : AppColors.textSecondary,
+                height: 1.6,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+  
+  
   Widget _buildVocabularyContent() {
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -908,7 +665,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
   }
 
   Widget _buildQuizContent() {
-    if (_isLoadingQuiz) {
+    if (_quizController.isLoading) {
       return const Center(
         child: CircularProgressIndicator(
           color: AppColors.white,
@@ -916,11 +673,11 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
       );
     }
 
-    if (_quizCompleted) {
+    if (_quizController.isCompleted) {
       return _buildQuizCompletedView();
     }
 
-    if (_quizModelQuestions.isEmpty) {
+    if (!_quizController.hasQuestions) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(20),
@@ -936,36 +693,14 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     }
 
     return QuizContentWidget(
-      questions: _quizModelQuestions,
-      onQuizComplete: _onQuizComplete,
+      questions: _quizController.questions,
+      onQuizComplete: _quizController.onQuizComplete,
     );
   }
 
-  void _onQuizComplete(int correctAnswers, Map<int, int> userAnswers) async {
-    setState(() {
-      _quizCompleted = true;
-      _correctAnswersCount = correctAnswers;
-      _userAnswers = userAnswers;
-    });
-
-    // Update quiz result in database
-    if (_quizResultId != null) {
-      try {
-        await _quizService.updateQuizResult(
-          resultId: _quizResultId!,
-          numberCorrectAnswers: correctAnswers,
-        );
-      } catch (e) {
-        print('Error updating quiz result: $e');
-      }
-    }
-  }
-
   Widget _buildQuizCompletedView() {
-    final totalQuestions = _quizModelQuestions.length;
-    final percentage = totalQuestions > 0 
-        ? (_correctAnswersCount / totalQuestions * 100).round() 
-        : 0;
+    final totalQuestions = _quizController.totalQuestions;
+    final percentage = _quizController.percentageScore;
 
     return SingleChildScrollView(
       child: Center(
@@ -1001,7 +736,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
             
             // Score
             Text(
-              '$_correctAnswersCount / $totalQuestions',
+              '${_quizController.correctAnswersCount} / $totalQuestions',
               style: const TextStyle(
                 fontSize: 48,
                 fontWeight: FontWeight.w800,
@@ -1021,15 +756,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
             
             // Retry button
             GestureDetector(
-              onTap: () {
-                setState(() {
-                  _quizCompleted = false;
-                  _correctAnswersCount = 0;
-                  _userAnswers = {};
-                });
-                // Create new quiz result for retry
-                _initializeQuiz(true);
-              },
+              onTap: _quizController.resetQuiz,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 decoration: BoxDecoration(
@@ -1051,7 +778,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
               ),
             ),
             const SizedBox(height: 40),
-            if (_quizModelQuestions.isNotEmpty && _userAnswers.isNotEmpty) ...[
+            if (_quizController.hasQuestions && _quizController.userAnswers.isNotEmpty) ...[
             Text(
               'Answers',
               style: TextStyle(
@@ -1060,10 +787,10 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
               ),
             ),
             const SizedBox(height: 20),
-            ..._quizModelQuestions.asMap().entries.map((entry) {
+            ..._quizController.questions.asMap().entries.map((entry) {
               final questionIndex = entry.key;
               final question = entry.value;
-              final userAnswerIndex = _userAnswers[questionIndex];
+              final userAnswerIndex = _quizController.userAnswers[questionIndex];
               final isCorrect = userAnswerIndex != null && 
                   question.isCorrectAnswer(userAnswerIndex);
               final labels = ['A', 'B', 'C', 'D'];
