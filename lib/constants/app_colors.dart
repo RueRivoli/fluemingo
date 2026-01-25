@@ -5,6 +5,8 @@ class AppColors {
   static const Color primary = Color(0xFF8A8BDE);
   static const Color secondary = Color(0xFFF6D75A);
   static const Color background = Color(0xFFF5F5F5);
+  static const Color success = Color(0xFF55AD61);
+  static const Color error = Color(0xFFEF3A5D);
 
   static const Color neutral = Color(0xFFE8E8E8);
 
@@ -18,4 +20,5 @@ class AppColors {
   // Border colors
   static const Color borderBlack = Color(0xFF000000);
 }
+
 

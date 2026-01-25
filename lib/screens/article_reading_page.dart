@@ -7,6 +7,7 @@ import '../models/article_paragraph.dart';
 import '../models/sentence_timestamp.dart';
 import '../models/article_paragraph.dart';
 import '../models/article_sentence.dart';
+import '../models/unit.dart';
 import '../constants/app_colors.dart';
 import '../widgets/vocabulary_item_card.dart';
 import '../widgets/quiz_content_widget.dart';
@@ -46,10 +47,13 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
   // Quiz state
   late QuizController _quizController;
 
+  late List<String> _listOfVocabularyItems;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _listOfVocabularyItems = widget.article.listOfVocabularyItems;
     _tabController.addListener(() {
       setState(() {
         _selectedTabIndex = _tabController.index;
@@ -249,12 +253,12 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => Navigator.pop(context),
+            onTap: () => Navigator.pop(context, widget.article),
             child: Container(
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: Colors.white,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -284,7 +288,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
               'Article',
               0,
               AppColors.secondary,
-              AppColors.black,
+              Colors.black,
             ),
           ),
           Expanded(
@@ -292,15 +296,15 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
               'Vocabulary',
               1,
               AppColors.primary,
-              AppColors.white,
+              Colors.white,
             ),
           ),
           Expanded(
             child: _buildTabButton(
               'Quiz',
               2,
-              AppColors.white,
-            AppColors.black,
+              Colors.white,
+            Colors.black,
             ),
           ),
         ],
@@ -478,26 +482,59 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
       startingGlobalIndex += allParagraphs[i].sentences.length;
     }
     
-    // Build TextSpans for each sentence with highlighting support
-    final textSpans = <TextSpan>[];
+    // Build TextSpans for each sentence with units
+    final textSpans = <InlineSpan>[];
     for (int i = 0; i < paragraph.sentences.length; i++) {
       final sentence = paragraph.sentences[i];
       final globalIndex = startingGlobalIndex + i;
       final isHighlighted = _currentHighlightedSentenceIndex == globalIndex;
       
-      textSpans.add(
-        TextSpan(
-          text: sentence.originalText + (i < paragraph.sentences.length - 1 ? ' ' : ''),
-          style: TextStyle(
-            fontSize: _fontSize,
-            color: isHighlighted 
-                ? AppColors.primary 
-                : AppColors.textPrimary,
-            fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.normal,
-            height: 1.6,
+      // Build spans for each unit in this sentence
+      for (int j = 0; j < sentence.units.length; j++) {
+        final unit = sentence.units[j];
+        final isLastUnitInSentence = j == sentence.units.length - 1;
+        final isLastSentence = i == paragraph.sentences.length - 1;
+        
+        final hasPunctuation = unit.punctuation == true;
+        textSpans.add(
+          WidgetSpan(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: hasPunctuation 
+                  ? null 
+                  : () {
+                      _showVocabularyBottomSheet(unit);
+                    },
+              child: Container(
+                margin: EdgeInsets.only(
+                  right: (isLastUnitInSentence && !isLastSentence) ? 0 : 4,
+                  bottom: 2,
+                ),
+                padding: hasPunctuation 
+                    ? EdgeInsets.zero 
+                    : EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+                decoration: hasPunctuation 
+                    ? null 
+                    : BoxDecoration(
+                        color: isHighlighted 
+                            ? AppColors.primary.withOpacity(0.3)
+                            : AppColors.neutral.withOpacity(0.45),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                child: Text(
+                  unit.text + (isLastUnitInSentence && !isLastSentence ? ' ' : ''),
+                  style: TextStyle(
+                    fontSize: _fontSize,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.normal,
+                    height: 1.8,
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-      );
+        );
+      }
     }
     
     return Container(
@@ -511,62 +548,73 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
   // Build a single article sentence widget with highlighting support
   Widget _buildArticleSentenceWidget(ArticleSentence sentence, int globalIndex) {
     final isHighlighted = _currentHighlightedSentenceIndex == globalIndex;
-    final displayText = sentence.originalText;
     final translation = _showTranslation ? sentence.translationText : null;
     
-    return AnimatedContainer(
-      key: _sentenceKeys[globalIndex],
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: EdgeInsets.symmetric(
-        horizontal: isHighlighted ? 12 : 4,
-        vertical: isHighlighted ? 10 : 4,
-      ),
-      decoration: BoxDecoration(
-        color: isHighlighted 
-            ? AppColors.primary.withOpacity(0.15)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        border: isHighlighted 
-            ? Border.all(color: AppColors.primary.withOpacity(0.4), width: 2)
-            : null,
-        boxShadow: isHighlighted 
-            ? [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+    // Build TextSpans for each unit
+    final unitSpans = <InlineSpan>[];
+    for (int i = 0; i < sentence.units.length; i++) {
+      final unit = sentence.units[i];
+      final isLastUnit = i == sentence.units.length - 1;
+      
+      final hasPunctuation = unit.punctuation == true;
+      unitSpans.add(
+        WidgetSpan(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: hasPunctuation 
+                ? null 
+                : () {
+                    _showVocabularyBottomSheet(unit);
+                  },
+            child: Container(
+              margin: EdgeInsets.only(
+                right: isLastUnit ? 0 : 4,
+                bottom: 2,
+              ),
+              padding: hasPunctuation 
+                  ? EdgeInsets.zero 
+                  : EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+              decoration: hasPunctuation 
+                  ? null 
+                  : BoxDecoration(
+                      color: isHighlighted 
+                          ? AppColors.primary.withOpacity(0.3)
+                          : AppColors.neutral.withOpacity(0.45),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+              child: Text(
+                unit.text + (isLastUnit ? '' : ' '),
+                style: TextStyle(
+                  fontSize: _fontSize,
+                  color: AppColors.textPrimary,
+                  height: 1.8,
+                  fontWeight: FontWeight.normal,
                 ),
-              ]
-            : null,
-      ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    
+    return Container(
+      key: _sentenceKeys[globalIndex],
+      margin: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Original sentence
-          AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 200),
-            style: TextStyle(
-              fontSize: _fontSize,
-              color: isHighlighted 
-                  ? AppColors.primary 
-                  : AppColors.textPrimary,
-              height: 1.6,
-              fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.normal,
-            ),
-            child: Text(displayText),
+          // Original sentence with units
+          RichText(
+            text: TextSpan(children: unitSpans),
           ),
           // Translation if enabled and available
           if (translation != null && !_showTranslationAfterParagraph) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               translation,
               style: TextStyle(
                 fontSize: _fontSize,
-                color: isHighlighted 
-                    ? AppColors.textPrimary.withOpacity(0.7) 
-                    : AppColors.textSecondary,
+                color: AppColors.textSecondary,
                 height: 1.6,
                 fontStyle: FontStyle.normal,
               ),
@@ -647,20 +695,235 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     );
   }
   
+  // Save or unsave vocabulary item to flashcards_fr table in Supabase
+  Future<void> _updateVocabularyItemInFlashcards(VocabularyItem item) async {
+    print('🔄 _updateVocabularyItemInFlashcards called: word="${item.word}", status=${item.status}');
+    try {
+      final supabase = Supabase.instance.client;
+      final user = supabase.auth.currentUser;
+      
+      if (user == null) {
+        print('❌ User not authenticated, cannot save vocabulary item');
+        return;
+      }
+      
+      final flashcardId = item.flashcardId;
+      if (flashcardId == null) {
+        print('Flashcard ID is null update');
+        final vocabularyResponse = await supabase
+              .from('flashcards_fr')
+              .insert({
+                'user_id': user.id,
+                'text': item.word,
+                'text_translation': item.translation,
+                'function': item.type,
+                'content_id': int.parse(widget.article.id),
+                'status': null,
+              })
+              .select()
+              .single();
+          setState(() {
+            final vocabItem = VocabularyItem(
+              audioUrl: '',
+              flashcardId: vocabularyResponse['id'],
+              word: vocabularyResponse['text'],
+              translation: vocabularyResponse['text_translation'],
+              type: vocabularyResponse['function'],
+              isAddedByUser: true,
+            );
+            item.isAddedByUser = true;
+            widget.article.vocabulary.add(vocabItem);
+          });
+          print('✅ Flashcard $flashcardId updated: status=null');
+        return;
+      }
+      
+      if (item.status != null) {
+         print('Unsave flashcard $flashcardId');
+          final vocabularyResponse = await supabase
+              .from('flashcards_fr')
+              .update({
+                'status': null,
+              })
+              .eq('id', flashcardId);
+          setState(() {
+            final vocabItem = widget.article.vocabulary.firstWhere((element) => element.flashcardId == flashcardId);
+            vocabItem.status = null;
+          });
+          print('✅ Flashcard $flashcardId updated: status=null');
+      } else {
+        print('Save flashcard $flashcardId');
+          final vocabularyResponse = await supabase
+              .from('flashcards_fr')
+              .update({
+                'status': 'saved',
+              })
+              .eq('id', flashcardId);
+          setState(() {
+            final vocabItem = widget.article.vocabulary.firstWhere((element) => element.flashcardId == flashcardId);
+            vocabItem.status = 'saved';
+          });
+          print('✅ Flashcard $flashcardId updated: status=saved');
+      }
+    } catch (e) {
+      print('Error updating flashcard ${item.flashcardId}: $e');
+    }
+  }
+
+  // Check if a vocabulary item is saved in flashcards_fr for the current user
+  Future<bool> _isVocabularyItemSaved(String word) async {
+    try {
+      final supabase = Supabase.instance.client;
+      final user = supabase.auth.currentUser;
+      if (user == null) return false;
+      
+      final response = await supabase
+          .from('flashcards_fr')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('text', word)
+          .eq('content_id', int.parse(widget.article.id))
+          .maybeSingle();
+      
+      return response != null;
+    } catch (e) {
+      print('Error checking if vocabulary item is saved: $e');
+      return false;
+    }
+  }
+
+  // Show bottom sheet with unit information
+  void _showVocabularyBottomSheet(Unit unit) async {
+    // Check if the vocabulary item is already saved
+    final isSaved = await _isVocabularyItemSaved(unit.text);
+    final isAlreadyInList = _listOfVocabularyItems.contains(unit.text + ' (' + unit.type + ')');
+    // Create a VocabularyItem from the Unit's properties
+    final vocabularyItem = VocabularyItem(
+      word: unit.text,
+      translation: unit.translatedText,
+      type: unit.type,
+      audioUrl: '', // Units don't have audio URLs
+      isAddedByUser: isAlreadyInList ? true : false,
+      status: null,
+    );
+    
+    if (!mounted) return;
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            // Title
+            const Text(
+              'Definition',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+                        Text(
+                          isAlreadyInList ? 'Click on x to remove this expression from your vocabulary' : 'Click on + to add this expression to your vocabulary',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.grey[600],
+                            height: 1.5,
+                          ),
+                        ),
+            const SizedBox(height: 16),
+            // Vocabulary item card
+            VocabularyItemCard(
+              item: vocabularyItem,
+              displayType: 'text',
+              onIconToggle: () async {
+                // isSaved is already toggled by the card
+                await _updateVocabularyItemInFlashcards(vocabularyItem);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   
   Widget _buildVocabularyContent() {
     return ListView(
       padding: const EdgeInsets.all(20),
-      children: widget.article.vocabulary.map((item) {
-      return VocabularyItemCard(
-        item: item,
-        onBookmarkToggle: () {
-          setState(() {
-            item.isSaved = !item.isSaved;
-          });
-        },
-      );
-    }).toList(),
+      children: [
+        // Section "Personnal" pour les flashcards ajoutées par l'utilisateur
+        if (widget.article.hasAddedByUserVocabularyItems) ...[
+          Text(
+            'Personal',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...widget.article.addedByUserVocabularyItems.map((item) {
+            return VocabularyItemCard(
+              item: VocabularyItem(
+                id: item.id,
+                word: item.word,
+                translation: item.translation,
+                type: item.type,
+                exampleSentence: item.exampleSentence,
+                exampleTranslation: item.exampleTranslation,
+                audioUrl: item.audioUrl,
+                status: item.status,
+                isAddedByUser: item.isAddedByUser,
+              ),
+              onIconToggle: () async {
+                await _updateVocabularyItemInFlashcards(item);
+              },
+            );
+          }),
+          const SizedBox(height: 24),
+        ],
+        // Section "Main" pour le vocabulaire standard
+        if (widget.article.hasAddedByUserVocabularyItems) ...[
+          Text(
+            'Main',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...widget.article.mainVocabularyItems.map((item) {
+            return VocabularyItemCard(
+              item: item,
+              onIconToggle: () async {
+                await _updateVocabularyItemInFlashcards(item);
+              },
+            );
+          }),
+        ],
+      ],
     );
   }
 
@@ -668,7 +931,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     if (_quizController.isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          color: AppColors.white,
+          color: Colors.white,
         ),
       );
     }
@@ -685,7 +948,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
             'No quiz available for this article',
             style: TextStyle(
               fontSize: 18,
-              color: AppColors.white,
+              color: Colors.white,
             ),
           ),
         ),
@@ -729,7 +992,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
-                color: AppColors.white,
+                color: Colors.white,
               ),
             ),
             const SizedBox(height: 16),
@@ -749,7 +1012,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
               '$percentage% correct',
               style: TextStyle(
                 fontSize: 18,
-                color: AppColors.white.withOpacity(0.8),
+                color: Colors.white.withOpacity(0.8),
               ),
             ),
             const SizedBox(height: 40),
@@ -783,7 +1046,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
               'Answers',
               style: TextStyle(
                 fontSize: 28,
-                color: AppColors.white.withOpacity(0.8),
+                color: Colors.white.withOpacity(0.8),
               ),
             ),
             const SizedBox(height: 20),
@@ -830,7 +1093,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
                             '${questionIndex + 1}. ${question.question}',
                             style: TextStyle(
                               fontSize: 18,
-                              color: AppColors.white,
+                              color: Colors.white,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -848,7 +1111,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
                                 '$userAnswerLabel. $userAnswerText',
                                 style: const TextStyle(
                                   fontSize: 16,
-                                  color: AppColors.white,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
@@ -863,7 +1126,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
                                 '$correctAnswerLabel. $correctAnswerText',
                                 style: const TextStyle(
                                   fontSize: 16,
-                                  color: AppColors.white,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
@@ -889,7 +1152,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -1011,7 +1274,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
   void _showSpeedDialog() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.white,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -1065,7 +1328,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
   void _showFontSizeDialog() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.white,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

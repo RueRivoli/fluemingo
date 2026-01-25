@@ -113,8 +113,8 @@ class _LibraryPageState extends State<LibraryPage> {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: isSelected ? AppColors.secondary : AppColors.white,
-                            border: isSelected ? Border.all(color: AppColors.borderBlack) : Border.all(color: AppColors.white),
+                            color: isSelected ? AppColors.secondary : Colors.white,
+                            border: isSelected ? Border.all(color: AppColors.borderBlack) : Border.all(color: Colors.white),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(

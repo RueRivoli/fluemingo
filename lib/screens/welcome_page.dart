@@ -98,7 +98,7 @@ class WelcomePage extends StatelessWidget {
                     color: AppColors.secondary,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.black,
+                      color: Colors.black,
                       width: 1,
                     ),
                   ),
