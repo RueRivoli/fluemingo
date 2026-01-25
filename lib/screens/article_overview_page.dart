@@ -19,6 +19,8 @@ class ArticleOverviewPage extends StatefulWidget {
 
 class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
   late List<VocabularyItem> vocabulary;
+  late List<VocabularyItem> mainVocabulary;
+  late List<VocabularyItem> addedByUserVocabulary;
   bool _isLoadingVocabulary = true;
   Article? _fullArticle;
   late final ArticleService _articleService;
@@ -42,6 +44,8 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
         setState(() {
           _fullArticle = fullArticle;
           vocabulary = fullArticle.vocabulary;
+          mainVocabulary = fullArticle.mainVocabularyItems;
+          addedByUserVocabulary = fullArticle.addedByUserVocabularyItems;
           _isLoadingVocabulary = false;
         });
       } else {
@@ -100,7 +104,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: AppColors.white,
+                              color: Colors.white,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -135,8 +139,8 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                               ),
                             ),
                                      GestureDetector(
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => ArticleReadingPage(
@@ -144,6 +148,13 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                           ),
                         ),
                       );
+                      // Force rebuild to reflect any vocabulary status changes
+                      setState(() {
+                        final currentArticle = _fullArticle ?? widget.article;
+                        vocabulary = currentArticle.vocabulary;
+                        mainVocabulary = currentArticle.mainVocabularyItems;
+                        addedByUserVocabulary = currentArticle.addedByUserVocabularyItems;
+                      });
                     },
                     child: const Icon(
                       Icons.chevron_right,
@@ -243,10 +254,31 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                                     ),
                                   )
                                 : Column(
-                                    children: vocabulary.asMap().entries.map((entry) {
-                                      final item = entry.value;
-                                      return _buildVocabularyItem(item);
-                                    }).toList(),
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Main vocabulary items
+                                      if (mainVocabulary.isNotEmpty) ...[
+                                        ...mainVocabulary.map((item) {
+                                          return _buildVocabularyItem(item);
+                                        }),
+                                      ],
+                                      // Personal vocabulary section
+                                      if (addedByUserVocabulary.isNotEmpty) ...[
+                                        const SizedBox(height: 24),
+                                        Text(
+                                          'Personal',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w500,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        ...addedByUserVocabulary.map((item) {
+                                          return _buildVocabularyItem(item);
+                                        }),
+                                      ],
+                                    ],
                                   ),
 
                         const SizedBox(height: 24),
@@ -327,8 +359,8 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
 
                   // Let's Read It button
                   GestureDetector(
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => ArticleReadingPage(
@@ -336,6 +368,13 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                           ),
                         ),
                       );
+                      // Force rebuild to reflect any vocabulary status changes
+                      setState(() {
+                        final currentArticle = _fullArticle ?? widget.article;
+                        vocabulary = currentArticle.vocabulary;
+                        mainVocabulary = currentArticle.mainVocabularyItems;
+                        addedByUserVocabulary = currentArticle.addedByUserVocabularyItems;
+                      });
                     },
                     child: Container(
                       width: double.infinity,
@@ -376,12 +415,11 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
 
   Widget _buildVocabularyItem(VocabularyItem item) {
     return VocabularyItemCard(
-    item: item,
-    onBookmarkToggle: () {
-      setState(() {
-        item.isSaved = !item.isSaved;
-      });
-    },
+      item: item,
+      onIconToggle: () async {
+        // Card handles state toggle internally
+        // TODO: Add Supabase save here if needed
+      },
   );
   }
 

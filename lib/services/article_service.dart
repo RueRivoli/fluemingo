@@ -9,6 +9,7 @@ import '../models/word_timestamp.dart';
 import '../models/sentence_timestamp.dart';
 import '../models/unit.dart';
 
+
 class ArticleService {
   final SupabaseClient _supabase;
   static const String _storageBucket = 'content'; // Main storage bucket
@@ -77,8 +78,31 @@ class ArticleService {
     }
   }
 
+  /// Check if a vocabulary item is saved in flashcards_fr for the current user
+  Future<bool> _isVocabularyItemSaved(String word, String articleId) async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return false;
+      
+      final response = await _supabase
+          .from('flashcards_fr')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('text', word)
+          .eq('content_id', int.parse(articleId))
+          .maybeSingle();
+      
+      return response != null;
+    } catch (e) {
+      print('Error checking if vocabulary item is saved: $e');
+      return false;
+    }
+  }
+
   /// Fetch a single article by ID with all related data
   Future<Article?> getArticleById(String id) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return null;
     try {
       // Fetch article from content_fr table
       final articleResponse = await _supabase
@@ -89,25 +113,64 @@ class ArticleService {
           .single();
 
       if (articleResponse == null) return null;
-      // Fetch related vocabulary from vocabulary_fr table
+
+      // Fetch proposed vocabulary saved in flashcards
       final vocabularyResponse = await _supabase
           .from('vocabulary_fr')
-          .select()
+          .select('*, flashcards_fr!vocabulary_id(*)')
           .eq('reference_id', int.parse(id))
           .eq('content_type', 1);
-            
-      final vocabulary = (vocabularyResponse as List).map((json) => VocabularyItem(
-            audioUrl: _getAudioUrl(json['audio_url']) ?? '',
-            word: json['text'] ?? '',
-            translation: json['text_en'] ?? '',
-            type: json['function'] ?? 'n',
-            isSaved: false, // vocabulary_fr doesn't have is_saved field
-          )).toList();
-      final grammarPoints = <GrammarPoint>[];
+
+      // Fetch vocabulary added by user to flashcards
+      final vocabularyAddedByUser = await _supabase
+          .from('flashcards_fr')
+          .select('*')
+          .eq('content_id', int.parse(id))
+          .eq('user_id', user.id)
+          .filter('vocabulary_id', 'is', 'null');
+
+      final vocabulary = (vocabularyResponse as List).map((json) {
+        String? status;
+        bool isAddedByUser = false;
+        if (json['flashcards_fr'] is List && (json['flashcards_fr'] as List).isNotEmpty) {
+          final flashcards = json['flashcards_fr'] as List;
+          status = flashcards[0]?['status'];
+        }
+        return VocabularyItem(
+          id: json['id'],
+          word: json['text'] ?? '',
+          translation: json['text_en'] ?? '',
+          type: json['function'] ?? 'expr',
+          exampleSentence: json['example'] ?? '',
+          exampleTranslation: json['example_translation'] ?? '',
+          audioUrl: _getAudioUrl(json['audio_url']) ?? '',
+          flashcardId: json['id'],
+          status: status,
+          isAddedByUser: false,
+        );
+      }).toList();
+
+      vocabulary.addAll(vocabularyAddedByUser.map((item) => VocabularyItem(
+        id: item['id'],
+        word: item['text'] ?? '',
+        translation: item['text_translation'] ?? '',
+        type: item['function'] ?? 'expr',
+        exampleSentence: item['example'] ?? '',
+        exampleTranslation: item['example_translation'] ?? '',
+        audioUrl: '',
+        flashcardId: item['id'],
+        status: item['status'],
+        isAddedByUser: true,
+      )));
+      
+      vocabulary.forEach((item) {
+        print('Vocabulary item - added by user: ${item.word} - ${item.isAddedByUser} - ${item.flashcardId}');
+      });
+      
       final contentMulti = articleResponse['content_multi'] ?? '';
       final paragraphs = _parseContentToArticleParagraphs(contentMulti);
-
-
+      final grammarPoints = <GrammarPoint>[];
+      
       return Article(
         id: articleResponse['id']?.toString() ?? '',
         title: articleResponse['title'] ?? '',
@@ -115,10 +178,11 @@ class ArticleService {
         imageUrl: _getImageUrl(articleResponse['img_url']),
         level: articleResponse['level'] ?? 'A1',
         category: articleResponse['category'] ?? '',
-        audioUrl: _getAudioUrl(articleResponse['audio_url']),
         vocabulary: vocabulary,
-        paragraphs: paragraphs,
         grammarPoints: grammarPoints,
+        paragraphs: paragraphs,
+        audioUrl: _getAudioUrl(articleResponse['audio_url']),
+        isFavorite: false,
       );
     } catch (e) {
       print('Error fetching article: $e');
@@ -130,7 +194,6 @@ class ArticleService {
   /// Parse content_multi JSON structure to List<ArticleParagraph>
   /// Expected structure: Object with "paragraphs" array, each paragraph contains "sentences" array
   List<ArticleParagraph> _parseContentToArticleParagraphs(dynamic contentMulti) {
-    print('contentMulti: ${contentMulti}');
     if (contentMulti == null) {
       return [];
     }
@@ -239,6 +302,7 @@ class ArticleService {
     final paragraphs = _parseContentToArticleParagraphs(contentMulti);
     return Article(
       id: json['id']?.toString() ?? '',
+      chapterId: json['chapter_id']?.toString() ?? '',
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       imageUrl: _getImageUrl(json['img_url']),

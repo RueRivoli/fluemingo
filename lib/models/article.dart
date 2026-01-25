@@ -5,6 +5,7 @@ import 'sentence_timestamp.dart';
 
 class Article {
   final String id;
+  final String? chapterId;
   final String title;
   final String description;
   final String imageUrl;
@@ -18,6 +19,7 @@ class Article {
 
   Article({
     required this.id,
+    this.chapterId,
     required this.title,
     required this.description,
     required this.imageUrl,
@@ -29,5 +31,35 @@ class Article {
     this.audioUrl,
     this.isFavorite = false,
   });
+
+  List<VocabularyItem> get addedByUserVocabularyItems {
+    return vocabulary.where((item) => item.isAddedByUser == true).toList();
+  }
+
+ List<VocabularyItem> get mainVocabularyItems {
+    return vocabulary.where((item) => item.isAddedByUser == false).toList();
+  }
+
+    bool get hasAddedByUserVocabularyItems {
+      return addedByUserVocabularyItems.isNotEmpty;
+    }
+
+   List<String> get listOfVocabularyItems {
+    return vocabulary.map((item) => item.word + ' (' + item.type + ')').toList();
+  }
+
+  @override
+  String toString() {
+    return 'Article('
+        'id: $id, '
+        'title: $title, '
+        'level: $level, '
+        'category: $category, '
+        'vocabularyCount: ${vocabulary.length}, '
+        'paragraphsCount: ${paragraphs.length}, '
+        'grammarPointsCount: ${grammarPoints.length}, '
+        'isFavorite: $isFavorite'
+        ')';
+  }
 }
 

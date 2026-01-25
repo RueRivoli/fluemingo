@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'library_page.dart';
 import 'audiobooks_page.dart';
+import 'flashcards_page.dart';
 import '../constants/app_colors.dart';
 
 class HomePage extends StatefulWidget {
@@ -16,7 +17,7 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = [
     const LibraryPage(),
     const AudiobooksPage(),
-    const PlaceholderPage(title: 'Flashcards'),
+    const FlashcardsPage(),
     const PlaceholderPage(title: 'Profile'),
   ];
 
@@ -37,14 +38,14 @@ class _HomePageState extends State<HomePage> {
         ),
         child: SafeArea(
           child: SizedBox(
-            height: 60,
+            height: 75,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem(Icons.format_list_bulleted, 0),
-                _buildNavItem(Icons.headphones, 1),
-                _buildNavItem(Icons.style_outlined, 2),
-                _buildNavItem(Icons.person_outline, 3),
+                _buildNavItem(Icons.format_list_bulleted, 0, 'Library'),
+                _buildNavItem(Icons.headphones, 1, 'Audiobooks'),
+                _buildNavItem(Icons.style_outlined, 2, 'Flashcards'),
+                _buildNavItem(Icons.person_outline, 3, 'Profile'),
               ],
             ),
           ),
@@ -53,7 +54,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildNavItem(IconData icon, int index) {
+  Widget _buildNavItem(IconData icon, int index, String label) {
     final isSelected = _currentIndex == index;
     return GestureDetector(
       onTap: () {
@@ -62,11 +63,26 @@ class _HomePageState extends State<HomePage> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        child: Icon(
-          icon,
-          size: 28,
-          color: isSelected ? AppColors.secondary : Colors.white70,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 24,
+              color: isSelected ? AppColors.secondary : Colors.white70,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected ? AppColors.secondary : Colors.white70,
+              ),
+            ),
+          ],
         ),
       ),
     );

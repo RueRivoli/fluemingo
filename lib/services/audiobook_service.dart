@@ -109,11 +109,11 @@ class AudiobookService {
           .eq('content_type', 2);
 
       final vocabulary = (vocabularyResponse as List).map((json) => VocabularyItem(
+            id: json['id'],
             word: json['text'] ?? '',
             translation: json['text_en'] ?? '',
             type: json['function'] ?? 'n',
             audioUrl: _getAudioUrl(json['audio_url']) ?? '',
-            isSaved: false,
           )).toList();
 
       // Create audiobook with all related data

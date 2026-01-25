@@ -123,7 +123,7 @@ class _QuizContentWidgetState extends State<QuizContentWidget> {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.white,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 12),
@@ -145,7 +145,7 @@ class _QuizContentWidgetState extends State<QuizContentWidget> {
                   width: double.infinity,
                   height: 120,
                 //   decoration: BoxDecoration(
-                //     color: AppColors.white,
+                //     color: Colors.white,
                 //     borderRadius: BorderRadius.circular(16),
                 //   ),
                   child: ClipRRect(
@@ -164,7 +164,7 @@ class _QuizContentWidgetState extends State<QuizContentWidget> {
                   style: const TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.white,
+                    color: Colors.white,
                     height: 1.3,
                   ),
                   textAlign: TextAlign.center,
@@ -178,7 +178,7 @@ class _QuizContentWidgetState extends State<QuizContentWidget> {
                     'Choose your answer',
                     style: TextStyle(
                       fontSize: 14,
-                      color: AppColors.white,
+                      color: Colors.white,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -208,11 +208,11 @@ class _QuizContentWidgetState extends State<QuizContentWidget> {
 
         Color barColor;
         if (isCompleted || (isCurrent && hasAnswer)) {
-          barColor = AppColors.white;
+          barColor = Colors.white;
         } else if (isCurrent) {
-          barColor = AppColors.white.withOpacity(0.7);
+          barColor = Colors.white.withOpacity(0.7);
         } else {
-          barColor = AppColors.white.withOpacity(0.3);
+          barColor = Colors.white.withOpacity(0.3);
         }
 
         return Expanded(
@@ -404,8 +404,8 @@ class _QuizContentWidgetState extends State<QuizContentWidget> {
                     child: Icon(
                       hasTip ? Icons.lightbulb_outline : Icons.percent,
                       color: isJokerDisabled
-                          ? AppColors.white.withOpacity(0.5)
-                          : AppColors.white,
+                          ? Colors.white.withOpacity(0.5)
+                          : Colors.white,
                       size: 24,
                     ),
                   ),
@@ -422,7 +422,7 @@ class _QuizContentWidgetState extends State<QuizContentWidget> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
                     color: _selectedAnswerIndex != null
-                        ? AppColors.white
+                        ? Colors.white
                         : AppColors.neutral,
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(
