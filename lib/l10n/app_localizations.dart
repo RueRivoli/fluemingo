@@ -1,0 +1,861 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations_de.dart';
+import 'app_localizations_en.dart';
+import 'app_localizations_es.dart';
+import 'app_localizations_fr.dart';
+import 'app_localizations_it.dart';
+import 'app_localizations_ja.dart';
+import 'app_localizations_nl.dart';
+import 'app_localizations_pt.dart';
+
+// ignore_for_file: type=lint
+
+/// Callers can lookup localized strings with an instance of AppLocalizations
+/// returned by `AppLocalizations.of(context)`.
+///
+/// Applications need to include `AppLocalizations.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'l10n/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: AppLocalizations.localizationsDelegates,
+///   supportedLocales: AppLocalizations.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the AppLocalizations.supportedLocales
+/// property.
+abstract class AppLocalizations {
+  AppLocalizations(String locale)
+      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+
+  final String localeName;
+
+  static AppLocalizations? of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations);
+  }
+
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
+
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+    delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+  ];
+
+  /// A list of this localizations delegate's supported locales.
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('de'),
+    Locale('en'),
+    Locale('es'),
+    Locale('fr'),
+    Locale('it'),
+    Locale('ja'),
+    Locale('nl'),
+    Locale('pt')
+  ];
+
+  /// No description provided for @activeFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Active filters'**
+  String get activeFilters;
+
+  /// No description provided for @allLevels.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get allLevels;
+
+  /// No description provided for @answers.
+  ///
+  /// In en, this message translates to:
+  /// **'answers'**
+  String get answers;
+
+  /// No description provided for @appTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fluemingo'**
+  String get appTitle;
+
+  /// No description provided for @apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get apply;
+
+  /// No description provided for @areYouSureYouWantToDeleteWord.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete {word} from the vocabulary list?'**
+  String areYouSureYouWantToDeleteWord(Object word);
+
+  /// No description provided for @art.
+  ///
+  /// In en, this message translates to:
+  /// **'Art'**
+  String get art;
+
+  /// No description provided for @article.
+  ///
+  /// In en, this message translates to:
+  /// **'Article'**
+  String get article;
+
+  /// No description provided for @audiobooks.
+  ///
+  /// In en, this message translates to:
+  /// **'Audiobooks'**
+  String get audiobooks;
+
+  /// No description provided for @biography.
+  ///
+  /// In en, this message translates to:
+  /// **'Biography'**
+  String get biography;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @chapters.
+  ///
+  /// In en, this message translates to:
+  /// **'Chapters'**
+  String get chapters;
+
+  /// No description provided for @cinema.
+  ///
+  /// In en, this message translates to:
+  /// **'Cinema'**
+  String get cinema;
+
+  /// No description provided for @chooseYourAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an answer'**
+  String get chooseYourAnswer;
+
+  /// No description provided for @clickOnPlusToAddThisExpressionToYourVocabularyList.
+  ///
+  /// In en, this message translates to:
+  /// **'Click on + to add this expression to your vocabulary'**
+  String get clickOnPlusToAddThisExpressionToYourVocabularyList;
+
+  /// No description provided for @clickOnXToRemoveThisExpressionFromYourVocabularyList.
+  ///
+  /// In en, this message translates to:
+  /// **'Click on x to remove this expression from your vocabulary'**
+  String get clickOnXToRemoveThisExpressionFromYourVocabularyList;
+
+  /// No description provided for @completedQuizzes.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed quizzes'**
+  String get completedQuizzes;
+
+  /// No description provided for @contentInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Content in progress'**
+  String get contentInProgress;
+
+  /// No description provided for @continueReadingToEarnXP.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep reading to earn XP'**
+  String get continueReadingToEarnXP;
+
+  /// No description provided for @culture.
+  ///
+  /// In en, this message translates to:
+  /// **'Culture'**
+  String get culture;
+
+  /// No description provided for @definition.
+  ///
+  /// In en, this message translates to:
+  /// **'Definition'**
+  String get definition;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @deleteVocabularyItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this vocabulary item'**
+  String get deleteVocabularyItem;
+
+  /// No description provided for @difficultVocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Difficult vocabulary'**
+  String get difficultVocabulary;
+
+  /// No description provided for @downloadForOfflineAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Download for offline access'**
+  String get downloadForOfflineAccess;
+
+  /// No description provided for @edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get edit;
+
+  /// No description provided for @education.
+  ///
+  /// In en, this message translates to:
+  /// **'Education'**
+  String get education;
+
+  /// No description provided for @fashion.
+  ///
+  /// In en, this message translates to:
+  /// **'Fashion'**
+  String get fashion;
+
+  /// No description provided for @expressionAddedToFlashcards.
+  ///
+  /// In en, this message translates to:
+  /// **'Expression added to flashcards'**
+  String get expressionAddedToFlashcards;
+
+  /// No description provided for @favoritesArticlesOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite articles only'**
+  String get favoritesArticlesOnly;
+
+  /// No description provided for @favoritesAudiobooksOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite audiobooks only'**
+  String get favoritesAudiobooksOnly;
+
+  /// No description provided for @favoriteContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite content'**
+  String get favoriteContent;
+
+  /// No description provided for @favoriteThemes.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite themes'**
+  String get favoriteThemes;
+
+  /// No description provided for @fiction.
+  ///
+  /// In en, this message translates to:
+  /// **'Fiction'**
+  String get fiction;
+
+  /// No description provided for @filters.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get filters;
+
+  /// No description provided for @finished.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished'**
+  String get finished;
+
+  /// No description provided for @finishedArticles.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished articles'**
+  String get finishedArticles;
+
+  /// No description provided for @finishedAudiobooks.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished audiobooks'**
+  String get finishedAudiobooks;
+
+  /// No description provided for @flashcardsVocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Vocabulary flashcards'**
+  String get flashcardsVocabulary;
+
+  /// No description provided for @fontSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Font size'**
+  String get fontSize;
+
+  /// No description provided for @gastronomy.
+  ///
+  /// In en, this message translates to:
+  /// **'Gastronomy'**
+  String get gastronomy;
+
+  /// No description provided for @grammarPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'Grammar rules'**
+  String get grammarPoints;
+
+  /// No description provided for @greetings.
+  ///
+  /// In en, this message translates to:
+  /// **'Hello'**
+  String get greetings;
+
+  /// No description provided for @health.
+  ///
+  /// In en, this message translates to:
+  /// **'Health'**
+  String get health;
+
+  /// No description provided for @history.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get history;
+
+  /// No description provided for @inProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get inProgress;
+
+  /// No description provided for @includeFinishedArticles.
+  ///
+  /// In en, this message translates to:
+  /// **'Include finished articles'**
+  String get includeFinishedArticles;
+
+  /// No description provided for @includeFinishedAudiobooks.
+  ///
+  /// In en, this message translates to:
+  /// **'Include finished audiobooks'**
+  String get includeFinishedAudiobooks;
+
+  /// No description provided for @interestingContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Content matching your favorite themes'**
+  String get interestingContent;
+
+  /// No description provided for @items.
+  ///
+  /// In en, this message translates to:
+  /// **'Expressions'**
+  String get items;
+
+  /// No description provided for @languages.
+  ///
+  /// In en, this message translates to:
+  /// **'Foreign languages'**
+  String get languages;
+
+  /// No description provided for @languageEn.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEn;
+
+  /// No description provided for @languageFr.
+  ///
+  /// In en, this message translates to:
+  /// **'French'**
+  String get languageFr;
+
+  /// No description provided for @languageEs.
+  ///
+  /// In en, this message translates to:
+  /// **'Spanish'**
+  String get languageEs;
+
+  /// No description provided for @languageDe.
+  ///
+  /// In en, this message translates to:
+  /// **'German'**
+  String get languageDe;
+
+  /// No description provided for @languageNl.
+  ///
+  /// In en, this message translates to:
+  /// **'Dutch'**
+  String get languageNl;
+
+  /// No description provided for @languageIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Italian'**
+  String get languageIt;
+
+  /// No description provided for @languagePt.
+  ///
+  /// In en, this message translates to:
+  /// **'Portuguese'**
+  String get languagePt;
+
+  /// No description provided for @languageJa.
+  ///
+  /// In en, this message translates to:
+  /// **'Japanese'**
+  String get languageJa;
+
+  /// No description provided for @literature.
+  ///
+  /// In en, this message translates to:
+  /// **'Literature'**
+  String get literature;
+
+  /// No description provided for @level.
+  ///
+  /// In en, this message translates to:
+  /// **'Level'**
+  String get level;
+
+  /// No description provided for @mainVocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Main vocabulary'**
+  String get mainVocabulary;
+
+  /// No description provided for @mastered.
+  ///
+  /// In en, this message translates to:
+  /// **'Mastered'**
+  String get mastered;
+
+  /// No description provided for @masteredFlashcards.
+  ///
+  /// In en, this message translates to:
+  /// **'Mastered flashcards'**
+  String get masteredFlashcards;
+
+  /// No description provided for @masteredVocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Mastered vocabulary'**
+  String get masteredVocabulary;
+
+  /// No description provided for @music.
+  ///
+  /// In en, this message translates to:
+  /// **'Music'**
+  String get music;
+
+  /// No description provided for @navAudiobooks.
+  ///
+  /// In en, this message translates to:
+  /// **'Audiobooks'**
+  String get navAudiobooks;
+
+  /// No description provided for @navFlashcards.
+  ///
+  /// In en, this message translates to:
+  /// **'Flashcards'**
+  String get navFlashcards;
+
+  /// No description provided for @navLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Articles'**
+  String get navLibrary;
+
+  /// No description provided for @navProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get navProfile;
+
+  /// No description provided for @noAudiobooksFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No audiobooks found'**
+  String get noAudiobooksFound;
+
+  /// No description provided for @noArticlesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No articles found'**
+  String get noArticlesFound;
+
+  /// No description provided for @noAudioAvailableForThisArticle.
+  ///
+  /// In en, this message translates to:
+  /// **'No audio available for this article'**
+  String get noAudioAvailableForThisArticle;
+
+  /// No description provided for @noQuizAvailableForThisArticle.
+  ///
+  /// In en, this message translates to:
+  /// **'No quiz available for this article'**
+  String get noQuizAvailableForThisArticle;
+
+  /// No description provided for @noVocabularyItemsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No vocabulary items found'**
+  String get noVocabularyItemsFound;
+
+  /// No description provided for @news.
+  ///
+  /// In en, this message translates to:
+  /// **'News'**
+  String get news;
+
+  /// No description provided for @next.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get next;
+
+  /// No description provided for @notStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Not started'**
+  String get notStarted;
+
+  /// No description provided for @people.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get people;
+
+  /// No description provided for @poetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Poetry'**
+  String get poetry;
+
+  /// No description provided for @previous.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get previous;
+
+  /// No description provided for @quiz.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiz'**
+  String get quiz;
+
+  /// No description provided for @quizCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiz completed!'**
+  String get quizCompleted;
+
+  /// No description provided for @readFlashcards.
+  ///
+  /// In en, this message translates to:
+  /// **'Read flashcards'**
+  String get readFlashcards;
+
+  /// No description provided for @repeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice'**
+  String get repeat;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get saved;
+
+  /// No description provided for @science.
+  ///
+  /// In en, this message translates to:
+  /// **'Science'**
+  String get science;
+
+  /// No description provided for @savedVocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved vocabulary'**
+  String get savedVocabulary;
+
+  /// No description provided for @showOnlyFavoriteArticles.
+  ///
+  /// In en, this message translates to:
+  /// **'Show favorite articles only'**
+  String get showOnlyFavoriteArticles;
+
+  /// No description provided for @showOnlyFavoriteAudiobooks.
+  ///
+  /// In en, this message translates to:
+  /// **'Show favorite audiobooks only'**
+  String get showOnlyFavoriteAudiobooks;
+
+  /// No description provided for @society.
+  ///
+  /// In en, this message translates to:
+  /// **'Society'**
+  String get society;
+
+  /// No description provided for @space.
+  ///
+  /// In en, this message translates to:
+  /// **'Space'**
+  String get space;
+
+  /// No description provided for @sport.
+  ///
+  /// In en, this message translates to:
+  /// **'Sport'**
+  String get sport;
+
+  /// No description provided for @startToRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Start reading'**
+  String get startToRead;
+
+  /// No description provided for @tale.
+  ///
+  /// In en, this message translates to:
+  /// **'Tale'**
+  String get tale;
+
+  /// No description provided for @targetLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language I want to learn'**
+  String get targetLanguage;
+
+  /// No description provided for @technology.
+  ///
+  /// In en, this message translates to:
+  /// **'Technology'**
+  String get technology;
+
+  /// No description provided for @testYourKnowledge.
+  ///
+  /// In en, this message translates to:
+  /// **'Test your knowledge'**
+  String get testYourKnowledge;
+
+  /// No description provided for @trainingVocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Training vocabulary'**
+  String get trainingVocabulary;
+
+  /// No description provided for @travel.
+  ///
+  /// In en, this message translates to:
+  /// **'Travel'**
+  String get travel;
+
+  /// No description provided for @themes.
+  ///
+  /// In en, this message translates to:
+  /// **'Themes'**
+  String get themes;
+
+  /// No description provided for @tryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get tryAgain;
+
+  /// No description provided for @sourceLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Source language'**
+  String get sourceLanguage;
+
+  /// No description provided for @vocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Vocabulary'**
+  String get vocabulary;
+
+  /// No description provided for @vocabularyAcquired.
+  ///
+  /// In en, this message translates to:
+  /// **'Acquired vocabulary'**
+  String get vocabularyAcquired;
+
+  /// No description provided for @vocabularyForTraining.
+  ///
+  /// In en, this message translates to:
+  /// **'Training vocabulary'**
+  String get vocabularyForTraining;
+
+  /// No description provided for @watersports.
+  ///
+  /// In en, this message translates to:
+  /// **'Water sports'**
+  String get watersports;
+
+  /// No description provided for @weekProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get weekProgress;
+
+  /// No description provided for @weeklyGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly goal: {goal} XP'**
+  String weeklyGoal(Object goal);
+
+  /// No description provided for @weekGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly goal'**
+  String get weekGoal;
+
+  /// No description provided for @yoga.
+  ///
+  /// In en, this message translates to:
+  /// **'Yoga'**
+  String get yoga;
+
+  /// No description provided for @yourSavedVocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved vocabulary'**
+  String get yourSavedVocabulary;
+
+  /// No description provided for @yourPersonalVocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal vocabulary'**
+  String get yourPersonalVocabulary;
+
+  /// No description provided for @yourProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Overall progress'**
+  String get yourProgress;
+
+  /// No description provided for @yourWeekProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly progress'**
+  String get yourWeekProgress;
+}
+
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
+
+  @override
+  Future<AppLocalizations> load(Locale locale) {
+    return SynchronousFuture<AppLocalizations>(lookupAppLocalizations(locale));
+  }
+
+  @override
+  bool isSupported(Locale locale) => <String>[
+        'de',
+        'en',
+        'es',
+        'fr',
+        'it',
+        'ja',
+        'nl',
+        'pt'
+      ].contains(locale.languageCode);
+
+  @override
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
+
+AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'de':
+      return AppLocalizationsDe();
+    case 'en':
+      return AppLocalizationsEn();
+    case 'es':
+      return AppLocalizationsEs();
+    case 'fr':
+      return AppLocalizationsFr();
+    case 'it':
+      return AppLocalizationsIt();
+    case 'ja':
+      return AppLocalizationsJa();
+    case 'nl':
+      return AppLocalizationsNl();
+    case 'pt':
+      return AppLocalizationsPt();
+  }
+
+  throw FlutterError(
+      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+      'an issue with the localizations generation tool. Please file an issue '
+      'on GitHub with a reproducible sample app and the gen-l10n configuration '
+      'that was used.');
+}

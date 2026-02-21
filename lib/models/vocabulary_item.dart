@@ -7,7 +7,7 @@ class VocabularyItem {
   final String? exampleTranslation;
   final String audioUrl;
   int? flashcardId;
-  String? status; // "saved", "difficult", "training", "acknowledged"
+  String? status; // "saved", "difficult", "training", "mastered"
   bool? isAddedByUser = false;
 
   VocabularyItem({
@@ -24,11 +24,12 @@ class VocabularyItem {
   });
 
   // "bookmarked" means status is not undefined
-  // meaning status is "saved", "difficult", "training" or "acknowledged"
+  // thus status is either "saved", "difficult", "training" or "mastered"
+
   bool get isBookmarked {
     if (status == null) return false;
     
-    const validStatuses = ['saved', 'bookmarked', 'difficult', 'training', 'acknowledged'];
+    const validStatuses = ['saved', 'bookmarked', 'difficult', 'training', 'mastered'];
     return validStatuses.contains(status!.toLowerCase());
   }
 }

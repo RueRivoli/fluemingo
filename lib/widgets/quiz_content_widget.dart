@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/quiz_question.dart';
 import '../constants/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class QuizContentWidget extends StatefulWidget {
   final List<QuizQuestion> questions;
@@ -235,44 +236,50 @@ class _QuizContentWidgetState extends State<QuizContentWidget> {
 
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildAnswerButton(
-                label: labels[0],
-                answer: answers[0],
-                index: 0,
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _buildAnswerButton(
+                  label: labels[0],
+                  answer: answers[0],
+                  index: 0,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildAnswerButton(
-                label: labels[1],
-                answer: answers[1],
-                index: 1,
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildAnswerButton(
+                  label: labels[1],
+                  answer: answers[1],
+                  index: 1,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildAnswerButton(
-                label: labels[2],
-                answer: answers[2],
-                index: 2,
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _buildAnswerButton(
+                  label: labels[2],
+                  answer: answers[2],
+                  index: 2,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildAnswerButton(
-                label: labels[3],
-                answer: answers[3],
-                index: 3,
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildAnswerButton(
+                  label: labels[3],
+                  answer: answers[3],
+                  index: 3,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -313,8 +320,7 @@ class _QuizContentWidgetState extends State<QuizContentWidget> {
                   : AppColors.textPrimary,
             ),
             textAlign: TextAlign.center,
-            maxLines: 3,
-            overflow: TextOverflow.clip,
+            overflow: TextOverflow.visible,
           ),
         ),
       ),
@@ -346,7 +352,7 @@ class _QuizContentWidgetState extends State<QuizContentWidget> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.chevron_left,
+                        FontAwesomeIcons.chevronLeft,
                         color: isFirstQuestion
                             ? AppColors.textSecondary.withOpacity(0.5)
                             : AppColors.primary,
@@ -445,7 +451,7 @@ class _QuizContentWidgetState extends State<QuizContentWidget> {
                       ),
                       const SizedBox(width: 4),
                       Icon(
-                        Icons.chevron_right,
+                        FontAwesomeIcons.chevronRight,
                         color: _selectedAnswerIndex != null
                             ? AppColors.textPrimary
                             : AppColors.textSecondary.withOpacity(0.5),

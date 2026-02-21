@@ -11,8 +11,14 @@ import '../models/unit.dart';
 import '../constants/app_colors.dart';
 import '../widgets/vocabulary_item_card.dart';
 import '../widgets/quiz_content_widget.dart';
+import '../widgets/playback_speed_dialog.dart';
 import '../services/quiz_service.dart';
+import '../services/flashcard_service.dart';
 import '../controllers/quiz_controller.dart';
+import '../utils/flashcards.dart';
+import '../utils/vocabulary_items.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../l10n/app_localizations.dart';
 
 class ArticleReadingPage extends StatefulWidget {
   final Article article;
@@ -48,12 +54,14 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
   late QuizController _quizController;
 
   late List<String> _listOfVocabularyItems;
+  late FlashcardService _flashcardService;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _listOfVocabularyItems = widget.article.listOfVocabularyItems;
+    _flashcardService = FlashcardService(Supabase.instance.client);
     _tabController.addListener(() {
       setState(() {
         _selectedTabIndex = _tabController.index;
@@ -64,6 +72,8 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     _quizController = QuizController(
       quizService: QuizService(Supabase.instance.client),
       articleId: widget.article.id,
+      chapterId: widget.article.chapterId ?? '',
+      contentType: widget.article.contentType,
     );
     _quizController.addListener(() {
       setState(() {}); // Rebuild when quiz state changes
@@ -262,7 +272,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.chevron_left,
+                FontAwesomeIcons.chevronLeft,
                 color: AppColors.textPrimary,
                 size: 24,
               ),
@@ -285,7 +295,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
         children: [
           Expanded(
             child: _buildTabButton(
-              'Article',
+              AppLocalizations.of(context)!.article,
               0,
               AppColors.secondary,
               Colors.black,
@@ -293,7 +303,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
           ),
           Expanded(
             child: _buildTabButton(
-              'Vocabulary',
+              AppLocalizations.of(context)!.vocabulary,
               1,
               AppColors.primary,
               Colors.white,
@@ -301,7 +311,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
           ),
           Expanded(
             child: _buildTabButton(
-              'Quiz',
+              AppLocalizations.of(context)!.quiz,
               2,
               Colors.white,
             Colors.black,
@@ -403,7 +413,6 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
 
   Widget _buildArticleParagraphs() {
     final paragraphs = widget.article.paragraphs;
-    print('paragraphs: ${paragraphs}');
     if (paragraphs.isEmpty) {
       return const Center(
         child: Text('No paragraphs available'),
@@ -695,9 +704,66 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     );
   }
   
+    // Save or unsave vocabulary item to flashcards_fr table in Supabase
+  Future<void> _createFlashcardFromTextExpression(VocabularyItem item) async {
+    try {
+      final supabase = Supabase.instance.client;
+      final user = supabase.auth.currentUser;
+      
+      if (user == null) return;
+      final textExpressionToAdd = VocabularyItem(
+          word: item.word,
+          translation: item.translation,
+          type: item.type,
+          exampleSentence: item.exampleSentence,
+          exampleTranslation: item.exampleTranslation,
+          audioUrl: item.audioUrl,
+          isAddedByUser: true,
+        );
+          final newFlashcardFromTextExpression = await _flashcardService.addFlashcard(textExpressionToAdd, int.parse(widget.article.id), widget.article.chapterId != null ? int.parse(widget.article.chapterId!) : null);        setState(() {
+            if (newFlashcardFromTextExpression != null) {
+              final newVocabularyItem = flashcardRowToVocabularyItem(newFlashcardFromTextExpression);
+              widget.article.vocabulary.add(newVocabularyItem);
+            }
+          });
+        return;
+    } catch (e) {
+      print('Error updating flashcard ${item.flashcardId}: $e');
+    }
+  }
+
+ // Save or unsave vocabulary item to flashcards_fr table in Supabase
+  Future<void> _updateMainVocabularyItemInFlashcards(VocabularyItem item) async {
+    try {
+      final supabase = Supabase.instance.client;
+      final user = supabase.auth.currentUser;
+      
+      if (user == null) return;
+      
+      final flashcardId = item.flashcardId;
+      
+      if (flashcardId != null) {
+          final deletedFlashcard = await _flashcardService.deleteFlashcard(flashcardId);
+          setState(() {
+            item.flashcardId = null;
+            item.status = null;
+          });
+      } else {
+          final createdFlashcard = await _flashcardService.addFlashcard(item, int.parse(widget.article.id), widget.article.chapterId != null ? int.parse(widget.article.chapterId!) : null);
+          setState(() {
+            // createdFlashcard?['id'] is already an int from Supabase, not a String
+            item.flashcardId = createdFlashcard?['id'] as int? ?? 0;
+            item.status = 'saved';
+          });
+      }
+    } catch (e) {
+      print('Error updating flashcard ${item.flashcardId}: $e');
+    }
+  }
+
   // Save or unsave vocabulary item to flashcards_fr table in Supabase
-  Future<void> _updateVocabularyItemInFlashcards(VocabularyItem item) async {
-    print('🔄 _updateVocabularyItemInFlashcards called: word="${item.word}", status=${item.status}');
+  Future<void> _updateAddedByUserVocabularyItemInFlashcards(VocabularyItem item) async {
+    printVocabularyItem(item);
     try {
       final supabase = Supabase.instance.client;
       final user = supabase.auth.currentUser;
@@ -708,38 +774,13 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
       }
       
       final flashcardId = item.flashcardId;
+      
       if (flashcardId == null) {
-        print('Flashcard ID is null update');
-        final vocabularyResponse = await supabase
-              .from('flashcards_fr')
-              .insert({
-                'user_id': user.id,
-                'text': item.word,
-                'text_translation': item.translation,
-                'function': item.type,
-                'content_id': int.parse(widget.article.id),
-                'status': null,
-              })
-              .select()
-              .single();
-          setState(() {
-            final vocabItem = VocabularyItem(
-              audioUrl: '',
-              flashcardId: vocabularyResponse['id'],
-              word: vocabularyResponse['text'],
-              translation: vocabularyResponse['text_translation'],
-              type: vocabularyResponse['function'],
-              isAddedByUser: true,
-            );
-            item.isAddedByUser = true;
-            widget.article.vocabulary.add(vocabItem);
-          });
-          print('✅ Flashcard $flashcardId updated: status=null');
+        print('❌ Flashcard ID is null, cannot update');
         return;
       }
       
       if (item.status != null) {
-         print('Unsave flashcard $flashcardId');
           final vocabularyResponse = await supabase
               .from('flashcards_fr')
               .update({
@@ -750,9 +791,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
             final vocabItem = widget.article.vocabulary.firstWhere((element) => element.flashcardId == flashcardId);
             vocabItem.status = null;
           });
-          print('✅ Flashcard $flashcardId updated: status=null');
       } else {
-        print('Save flashcard $flashcardId');
           final vocabularyResponse = await supabase
               .from('flashcards_fr')
               .update({
@@ -770,32 +809,34 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     }
   }
 
-  // Check if a vocabulary item is saved in flashcards_fr for the current user
-  Future<bool> _isVocabularyItemSaved(String word) async {
+  // Delete vocabulary item from flashcards_fr table in Supabase
+  Future<void> _deleteVocabularyItem(VocabularyItem item) async {
     try {
       final supabase = Supabase.instance.client;
       final user = supabase.auth.currentUser;
-      if (user == null) return false;
+      if (user == null) {
+        return;
+      }
+      final flashcardId = item.flashcardId;
+      if (flashcardId == null) {
+        print('❌ Flashcard ID is null, cannot delete');
+        return;
+      }
+      await _flashcardService.deleteFlashcard(flashcardId);      
+      setState(() {
+        widget.article.vocabulary.removeWhere((element) => element.flashcardId == flashcardId);
+      });
       
-      final response = await supabase
-          .from('flashcards_fr')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('text', word)
-          .eq('content_id', int.parse(widget.article.id))
-          .maybeSingle();
-      
-      return response != null;
     } catch (e) {
-      print('Error checking if vocabulary item is saved: $e');
-      return false;
+      print('❌ Error deleting flashcard ${item.flashcardId}: $e');
     }
   }
 
+
   // Show bottom sheet with unit information
   void _showVocabularyBottomSheet(Unit unit) async {
-    // Check if the vocabulary item is already saved
-    final isSaved = await _isVocabularyItemSaved(unit.text);
+    // Check if there is an item in mainVocabularyItems that has unit.text and unit.type as values
+    final isItemAlreadyInMainVocabulary = widget.article.mainVocabularyItems.any((item) => item.word == unit.text && item.type == unit.type);
     final isAlreadyInList = _listOfVocabularyItems.contains(unit.text + ' (' + unit.type + ')');
     // Create a VocabularyItem from the Unit's properties
     final vocabularyItem = VocabularyItem(
@@ -803,7 +844,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
       translation: unit.translatedText,
       type: unit.type,
       audioUrl: '', // Units don't have audio URLs
-      isAddedByUser: isAlreadyInList ? true : false,
+      isAddedByUser: isItemAlreadyInMainVocabulary ? false : isAlreadyInList ? true : false,
       status: null,
     );
     
@@ -835,8 +876,8 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
               ),
             ),
             // Title
-            const Text(
-              'Definition',
+            Text(
+              AppLocalizations.of(context)!.definition,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -844,22 +885,23 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
               ),
             ),
             const SizedBox(height: 8),
-                        Text(
-                          isAlreadyInList ? 'Click on x to remove this expression from your vocabulary' : 'Click on + to add this expression to your vocabulary',
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: Colors.grey[600],
-                            height: 1.5,
-                          ),
-                        ),
+            Text(
+            isItemAlreadyInMainVocabulary ? AppLocalizations.of(context)!.mainVocabulary : isAlreadyInList ? AppLocalizations.of(context)!.clickOnXToRemoveThisExpressionFromYourVocabularyList : AppLocalizations.of(context)!.clickOnPlusToAddThisExpressionToYourVocabularyList,
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.grey[600],
+                height: 1.5,
+              ),
+            ),
             const SizedBox(height: 16),
             // Vocabulary item card
             VocabularyItemCard(
               item: vocabularyItem,
               displayType: 'text',
+              hideAddAction: isItemAlreadyInMainVocabulary ? true : false,
               onIconToggle: () async {
                 // isSaved is already toggled by the card
-                await _updateVocabularyItemInFlashcards(vocabularyItem);
+                isAlreadyInList ? await _deleteVocabularyItem(vocabularyItem) : await _createFlashcardFromTextExpression(vocabularyItem);
               },
             ),
           ],
@@ -872,57 +914,133 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        // Section "Personnal" pour les flashcards ajoutées par l'utilisateur
-        if (widget.article.hasAddedByUserVocabularyItems) ...[
-          Text(
-            'Personal',
+        Row(
+          children: [
+        Icon(
+          Icons.bookmark,
+          color: AppColors.primary,
+          size: 26,
+        ),
+        Icon(
+          Icons.arrow_right_alt,
+          color: AppColors.primary,
+          size: 26,
+        ),
+         Text(
+            AppLocalizations.of(context)!.expressionAddedToFlashcards,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
+              color: AppColors.textSecondary,
             ),
-          ),
+          ),  
+          ],
+        ),
+        const SizedBox(height: 18),
+        // Section "Personnal" pour les flashcards ajoutées par l'utilisateur
+        if (widget.article.hasAddedByUserVocabularyItems) ...[
           const SizedBox(height: 12),
           ...widget.article.addedByUserVocabularyItems.map((item) {
-            return VocabularyItemCard(
-              item: VocabularyItem(
-                id: item.id,
-                word: item.word,
-                translation: item.translation,
-                type: item.type,
-                exampleSentence: item.exampleSentence,
-                exampleTranslation: item.exampleTranslation,
-                audioUrl: item.audioUrl,
-                status: item.status,
-                isAddedByUser: item.isAddedByUser,
+            final vocabularyItem = VocabularyItem(
+              id: item.id,
+              word: item.word,
+              translation: item.translation,
+              type: item.type,
+              exampleSentence: item.exampleSentence,
+              exampleTranslation: item.exampleTranslation,
+              audioUrl: item.audioUrl,
+              flashcardId: item.flashcardId,
+              status: item.status,
+              isAddedByUser: item.isAddedByUser,
+            );
+            
+            return Dismissible(
+              key: Key('personal_vocab_${item.flashcardId ?? item.word}_${item.type}'),
+              direction: DismissDirection.endToStart,
+              background: Container(
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(right: 20),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.delete,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
-              onIconToggle: () async {
-                await _updateVocabularyItemInFlashcards(item);
+              confirmDismiss: (direction) async {
+                // Show confirmation dialog
+                return await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(AppLocalizations.of(context)!.deleteVocabularyItem),
+                    content: Text(AppLocalizations.of(context)!.areYouSureYouWantToDeleteWord(item.word)),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: Text(AppLocalizations.of(context)!.cancel),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                        child: Text(AppLocalizations.of(context)!.delete),
+                      ),
+                    ],
+                  ),
+                ) ?? false;
               },
+              onDismissed: (direction) async {
+                await _deleteVocabularyItem(vocabularyItem);
+              },
+              child: VocabularyItemCard(
+                item: vocabularyItem,
+                onIconToggle: () async {
+                  await _updateAddedByUserVocabularyItemInFlashcards(item);
+                },
+                onDelete: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text(AppLocalizations.of(context)!.deleteVocabularyItem),
+                      content: Text(AppLocalizations.of(context)!.areYouSureYouWantToDeleteWord(item.word)),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: Text(AppLocalizations.of(context)!.cancel),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                          child: Text(AppLocalizations.of(context)!.delete),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true && mounted) {
+                    await _deleteVocabularyItem(vocabularyItem);
+                  }
+                },
+              ),
             );
           }),
-          const SizedBox(height: 24),
         ],
         // Section "Main" pour le vocabulaire standard
         if (widget.article.hasAddedByUserVocabularyItems) ...[
-          Text(
-            'Main',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ...widget.article.mainVocabularyItems.map((item) {
+          const SizedBox(height: 6)
+          ],
+          ...[...widget.article.mainVocabularyItems.map((item) {
             return VocabularyItemCard(
               item: item,
-              onIconToggle: () async {
-                await _updateVocabularyItemInFlashcards(item);
-              },
-            );
-          }),
-        ],
+                onIconToggle: () async {
+                  await _updateMainVocabularyItemInFlashcards(item);
+                },
+              );
+            }),
+          ],
       ],
     );
   }
@@ -941,11 +1059,11 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     }
 
     if (!_quizController.hasQuestions) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Text(
-            'No quiz available for this article',
+            AppLocalizations.of(context)!.noQuizAvailableForThisArticle,
             style: TextStyle(
               fontSize: 18,
               color: Colors.white,
@@ -972,23 +1090,9 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-            // Quiz completed image
-            Container(
-              width: 160,
-              height: 160,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image.asset(
-                  'assets/logo/quizlogo.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-            
             // Congratulations text
-            const Text(
-              'Quiz Completed!',
+            Text(
+              AppLocalizations.of(context)!.quizCompleted,
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
@@ -1030,8 +1134,8 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
                     width: 1.5,
                   ),
                 ),
-                child: const Text(
-                  'Try Again',
+                child: Text(
+                  AppLocalizations.of(context)!.tryAgain,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -1043,7 +1147,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
             const SizedBox(height: 40),
             if (_quizController.hasQuestions && _quizController.userAnswers.isNotEmpty) ...[
             Text(
-              'Answers',
+              AppLocalizations.of(context)!.answers,
               style: TextStyle(
                 fontSize: 28,
                 color: Colors.white.withOpacity(0.8),
@@ -1171,7 +1275,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
               onTap: () async {
                 if (widget.article.audioUrl == null || widget.article.audioUrl!.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('No audio available for this article')),
+                    SnackBar(content: Text(AppLocalizations.of(context)!.noAudioAvailableForThisArticle)),
                   );
                   return;
                 }
@@ -1272,55 +1376,14 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
   }
 
   void _showSpeedDialog() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Playback Speed',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 20),
-              ...([0.5, 0.75, 1.0, 1.25, 1.5].map((speed) {
-                final isSelected = _playbackSpeed == speed;
-                return ListTile(
-                  title: Text(
-                    'x$speed',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                    ),
-                  ),
-                  trailing: isSelected
-                      ? Icon(Icons.check, color: AppColors.primary)
-                      : null,
-                  onTap: () async {
-                    setState(() {
-                      _playbackSpeed = speed;
-                    });
-                    // Update playback speed
-                    await _updatePlaybackSpeed();
-                    Navigator.pop(context);
-                  },
-                );
-              })),
-            ],
-          ),
-        );
+    PlaybackSpeedDialog.show(
+      context,
+      currentSpeed: _playbackSpeed,
+      onSpeedChanged: (newSpeed) async {
+        setState(() {
+          _playbackSpeed = newSpeed;
+        });
+        await _updatePlaybackSpeed();
       },
     );
   }
@@ -1339,8 +1402,8 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Font Size',
+              Text(
+                AppLocalizations.of(context)!.fontSize,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
