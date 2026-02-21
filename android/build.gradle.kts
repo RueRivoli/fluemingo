@@ -22,3 +22,10 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+
+android {
+    defaultConfig {
+        // ... existing config ...
+        resValue "string", "default_web_client_id", "YOUR_GOOGLE_WEB_CLIENT_ID"
+    }
+}
