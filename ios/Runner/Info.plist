@@ -9,11 +9,11 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<string>com.fluemingo.app</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>hello_world</string>
+	<string>Fluemingo</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -45,7 +45,25 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>FacebookAppID</key>
+	<string>1394772852098051</string>
+	<key>FacebookDisplayName</key>
+	<string>Fluemingo</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.fluemingo.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.fluemingo.app</string>
+				<string>117116639562-dkivnon8riiilsihlcjjdquscvh2611c.apps.googleusercontent.com</string>
+				<string>com.googleusercontent.apps.117116639562-ftthuht2m4cbt9mvph0e2f2k7skua3nr</string>
+				<string>fb1394772852098051</string>
+			</array>
+		</dict>
+	</array>
+	<key>GIDClientID</key>
+	<string>117116639562-ftthuht2m4cbt9mvph0e2f2k7skua3nr.apps.googleusercontent.com</string>
 </dict>
 </plist>
-
-
