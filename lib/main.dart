@@ -1,24 +1,44 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_page.dart';
-import 'screens/welcome_page.dart';
+import 'screens/onboarding/welcome_page.dart';
 import 'constants/app_colors.dart';
 import 'config/supabase_config.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'stores/profile_store.dart';
+import 'services/profile_service.dart';
+import 'l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Supabase
   await Supabase.initialize(
     url: SupabaseConfig.supabaseUrl,
     anonKey: SupabaseConfig.supabaseAnonKey,
   );
-  
-  runApp(const MyApp());
+
+  final profileService = ProfileService(Supabase.instance.client);
+  final profileStore = ProfileStore(profileService);
+
+  runApp(ProfileStoreScope(
+    profileStore: profileStore,
+    child: const MyApp(),
+  ));
+}
+
+/// Maps profile native language code (backend) to a supported [Locale], or null to use system.
+Locale? _localeFromProfileNativeLanguage(String? nativeLanguage) {
+  if (nativeLanguage == null || nativeLanguage.isEmpty) return null;
+  const supported = {'en', 'fr', 'es', 'de', 'nl', 'it', 'pt', 'ja'};
+  const map = {'sp': 'es', 'ge': 'de', 'jp': 'ja'};
+  final code = map[nativeLanguage] ?? nativeLanguage;
+  if (supported.contains(code)) return Locale(code);
+  return null;
 }
 
 class MyApp extends StatelessWidget {
@@ -26,9 +46,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final profileStore = ProfileStoreScope.of(context);
+    final locale = _localeFromProfileNativeLanguage(profileStore.profile?.nativeLanguage);
+
     return MaterialApp(
-      title: 'Fluemingo',
+      onGenerateTitle: (BuildContext context) =>
+          AppLocalizations.of(context)!.appTitle,
       debugShowCheckedModeBanner: false,
+      locale: locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primary,
@@ -123,6 +155,6 @@ class _AppInitializerState extends State<AppInitializer> {
       return WelcomePage(onComplete: _onWelcomeComplete);
     }
 
-    return const HomePage();
+    return const ProfileLoader(child: HomePage());
   }
 }

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'library_page.dart';
 import 'audiobooks_page.dart';
 import 'flashcards_page.dart';
+import 'profile_page.dart';
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,11 +17,14 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = [
-    const LibraryPage(),
+  List<Widget> get _pages => [
+    LibraryPage(isVisible: _currentIndex == 0),
     const AudiobooksPage(),
-    const FlashcardsPage(),
-    const PlaceholderPage(title: 'Profile'),
+    FlashcardsPage(
+      key: const ValueKey('flashcards'),
+      isVisible: _currentIndex == 2,
+    ),
+    ProfilePage(isVisible: _currentIndex == 3),
   ];
 
   @override
@@ -42,10 +48,10 @@ class _HomePageState extends State<HomePage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem(Icons.format_list_bulleted, 0, 'Library'),
-                _buildNavItem(Icons.headphones, 1, 'Audiobooks'),
-                _buildNavItem(Icons.style_outlined, 2, 'Flashcards'),
-                _buildNavItem(Icons.person_outline, 3, 'Profile'),
+                _buildNavItem(FontAwesomeIcons.fileLines, 0, AppLocalizations.of(context)!.navLibrary),
+                _buildNavItem(FontAwesomeIcons.headphones, 1, AppLocalizations.of(context)!.navAudiobooks),
+                _buildNavItem(FontAwesomeIcons.cardsBlank, 2, AppLocalizations.of(context)!.navFlashcards),
+                _buildNavItem(FontAwesomeIcons.user, 3, AppLocalizations.of(context)!.navProfile),
               ],
             ),
           ),

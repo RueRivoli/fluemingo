@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/vocabulary_item.dart';
 import '../widgets/vocabulary_item_card.dart';
 import '../constants/app_colors.dart';
 import '../services/flashcard_service.dart';
 import 'flashcards_deck.dart';
+import '../widgets/flashcard_status_sheet.dart';
 
 class FlashcardsCategoryPage extends StatefulWidget {
   final String categoryName;
@@ -44,45 +46,45 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
     });
   }
 
-  Future<void> _onIconToggle(VocabularyItem item) async {
+  Future<void> _deleteFlashcard(int flashcardId) async {
     try {
-      final supabase = Supabase.instance.client;
-      final user = supabase.auth.currentUser;
-
-      if (user == null) return;
-
-      if (item.status == 'saved') {
-        // Remove from flashcards_fr
-        await supabase
-            .from('flashcards_fr')
-            .delete()
-            .eq('user_id', user.id)
-            .eq('text', item.word);
-
-        // Update local state
+      await flashcardService.deleteFlashcard(flashcardId);
         setState(() {
-          item.status = null;
-          _flashcards.removeWhere((flashcard) => flashcard.word == item.word);
-        });
-      } else {
-        // Add to flashcards_fr
-        await supabase.from('flashcards_fr').insert({
-          'user_id': user.id,
-          'text': item.word,
-          'text_translation': item.translation,
-          'function': item.type,
-        });
-
-        // Update local state
-        setState(() {
-          item.status = 'saved';
-        });
-      }
+        _flashcards.removeWhere((flashcard) => flashcard.flashcardId == flashcardId);
+      });
     } catch (e) {
-      print('Error toggling bookmark: $e');
+      print('Error deleting flashcard: $e');
       rethrow;
     }
   }
+
+  Future<void> _onIconToggle(VocabularyItem item) async {
+    if (item.flashcardId == null) return;
+
+    final newStatus = await FlashcardStatusSheet.show(
+      context,
+      word: item.word,
+      currentStatus: item.status ?? widget.categoryName,
+    );
+
+    if (newStatus != null && mounted && newStatus != widget.categoryName) {
+      try {
+        await flashcardService.editStatusFlashcard(item.flashcardId!, newStatus);
+        if (mounted) {
+          setState(() {
+            _flashcards.removeWhere((f) => f.flashcardId == item.flashcardId);
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not update status: $e')),
+          );
+        }
+      }
+    }
+  }
+  
 
   void _onReadFlashcards() {
     // Navigate to flashcard deck screen with the loaded flashcards
@@ -98,6 +100,7 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
       MaterialPageRoute(
         builder: (context) => FlashcardsDeckPage(
           flashcards: _flashcards,
+          categoryName: widget.categoryName,
         ),
       ),
     ).then((_) {
@@ -108,9 +111,17 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (!didPop) {
+          // Handle back navigation - always pop with true to trigger refresh
+          Navigator.of(context).pop(true);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
         child: Column(
           children: [
             // Header with back button and title
@@ -123,12 +134,12 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
                   Center(
                     child: Text(
                       widget.categoryName == 'saved'
-                          ? 'Bookmarked Vocabulary'
+                          ? 'Saved Vocabulary'
                           : widget.categoryName == 'difficult'
                               ? 'Difficult Vocabulary'
                               : widget.categoryName == 'training'
                                   ? 'Training Vocabulary'
-                                  : widget.categoryName == 'acknowledged' ? 'Acknowledged Vocabulary' : 'Vocabulary',
+                                  : widget.categoryName == 'mastered' ? 'Mastered Vocabulary' : 'Vocabulary',
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w600,
@@ -139,7 +150,7 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
                   ),
                   // Back button on the left
                   GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: () => Navigator.of(context).pop(true),
                     child: Container(
                       width: 40,
                       height: 40,
@@ -152,6 +163,23 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
                         color: AppColors.textPrimary,
                         size: 24,
                       ),
+                    ),
+                  ),
+                  // Save icon on the right
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    child: Icon(
+                      widget.categoryName == 'saved'
+                          ? FontAwesomeIcons.floppyDisk
+                          : widget.categoryName == 'difficult'
+                              ? FontAwesomeIcons.triangleExclamation
+                              : widget.categoryName == 'training'
+                                  ? FontAwesomeIcons.dumbbell
+                                  : widget.categoryName == 'mastered' ? FontAwesomeIcons.badgeCheck : Icons.menu,
+                      color: AppColors.textPrimary,
+                      size: 24,
                     ),
                   ),
                 ],
@@ -205,9 +233,53 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
                               itemCount: _flashcards.length,
                               itemBuilder: (context, index) {
                                 final item = _flashcards[index];
-                                return VocabularyItemCard(
-                                  item: item,
-                                  onIconToggle: () => _onIconToggle(item),
+                                return Dismissible(
+                                  key: Key('flashcard_${item.flashcardId ?? item.word}_${item.type}'),
+                                  direction: DismissDirection.endToStart,
+                                  background: Container(
+                                    alignment: Alignment.centerRight,
+                                    padding: const EdgeInsets.only(right: 20),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(
+                                      Icons.delete,
+                                      color: Colors.white,
+                                      size: 28,
+                                    ),
+                                  ),
+                                  confirmDismiss: (direction) async {
+                                    // Show confirmation dialog
+                                    return await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: const Text('Delete Flashcard'),
+                                        content: Text('Are you sure you want delete "${item.word}" from your ${widget.categoryName == 'saved' ? 'Saved' : widget.categoryName == 'difficult' ? 'Difficult' : widget.categoryName == 'training' ? 'Training' : widget.categoryName == 'mastered' ? 'Mastered' : ''} Vocabulary?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.of(context).pop(false),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.of(context).pop(true),
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: Colors.red,
+                                            ),
+                                            child: const Text('Delete'),
+                                          ),
+                                        ],
+                                      ),
+                                    ) ?? false;
+                                  },
+                                  onDismissed: (direction) async {
+                                    if (item.flashcardId != null) await _deleteFlashcard(item.flashcardId!);
+                                  },
+                                  child: VocabularyItemCard(
+                                    item: item,
+                                    displayType: 'flashcard',
+                                    onIconToggle: () => _onIconToggle(item),
+                                  ),
                                 );
                               },
                             ),
@@ -240,14 +312,14 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
-                              Icons.arrow_forward,
-                              color: AppColors.textPrimary,
-                              size: 24,
+                            const FaIcon(
+                              FontAwesomeIcons.blockQuestion,
+                              color: Colors.black,
+                              size: 22,
                             ),
                             const SizedBox(width: 8),
                             const Text(
-                              'Test your knowledge',
+                              'Test your Knowledge',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
@@ -275,10 +347,10 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
-                              Icons.play_arrow,
-                              color: AppColors.textPrimary,
-                              size: 24,
+                           const FaIcon(
+                              FontAwesomeIcons.cardsBlank,
+                              color: Colors.black,
+                              size: 22,
                             ),
                             const SizedBox(width: 8),
                             const Text(
@@ -298,6 +370,7 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
               ),
           ],
         ),
+      ),
       ),
     );
   }

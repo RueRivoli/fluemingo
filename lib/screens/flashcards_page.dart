@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 import 'flashcards_category.dart';
 import '../services/flashcard_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class FlashcardsPage extends StatefulWidget {
-  const FlashcardsPage({super.key});
+  final bool isVisible;
+  
+  const FlashcardsPage({super.key, this.isVisible = false});
 
   @override
   State<FlashcardsPage> createState() => _FlashcardsPageState();
@@ -20,6 +24,15 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
     super.initState();
     flashcardService = FlashcardService(Supabase.instance.client);
     _getFlashcardsCount();
+  }
+
+  @override
+  void didUpdateWidget(FlashcardsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Refresh when the page becomes visible (wasn't visible before, but is now)
+    if (!oldWidget.isVisible && widget.isVisible) {
+      _getFlashcardsCount();
+    }
   }
 
   Future<void> _getFlashcardsCount() async {
@@ -43,9 +56,9 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
             // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-              child: const Text(
-                'Vocabulary',
-                style: TextStyle(
+              child: Text(
+                AppLocalizations.of(context)!.vocabulary,
+                style: const TextStyle(
                   fontSize: 34,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
@@ -55,9 +68,9 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-              child: const Text(
-                'Flashcards on vocabulary',
-                style: TextStyle(
+              child: Text(
+                AppLocalizations.of(context)!.flashcardsVocabulary,
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textPrimary,
@@ -78,10 +91,10 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                       borderColor: Colors.white,
                       textColor: Colors.black,
                       imagePath: 'assets/images/flashcards/saved_purple.png',
-                      title: 'saved',
-                      bodyText: 'Your saved vocabulary',
+                      title: AppLocalizations.of(context)!.saved,
+                      bodyText: AppLocalizations.of(context)!.yourSavedVocabulary,
                       count: counts[0],
-                      icon: Icons.bookmark,
+                      icon: FontAwesomeIcons.floppyDisk,
                       categoryName: 'saved',
                       shapeColor: AppColors.primary,
                     ),
@@ -95,9 +108,9 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                       textColor: Colors.black,
                       imagePath: 'assets/images/flashcards/difficult_red.png',
                       title: 'Oops',
-                      bodyText: 'Difficult vocabulary',
+                      bodyText: AppLocalizations.of(context)!.difficultVocabulary,
                       count: counts[1],
-                      icon: Icons.warning,
+                      icon: FontAwesomeIcons.triangleExclamation,
                       categoryName: 'difficult',
                       shapeColor: AppColors.error,
                     ),
@@ -110,27 +123,27 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                       borderColor: Colors.white,
                       textColor: Colors.black,
                       imagePath: 'assets/images/flashcards/training_secondary.png',
-                      title: 'Repeat',
-                      bodyText: 'Key vocab to repeat',
+                      title: AppLocalizations.of(context)!.repeat,
+                      bodyText: AppLocalizations.of(context)!.vocabularyForTraining,
                       count: counts[2],
-                      icon: Icons.refresh,
+                      icon: FontAwesomeIcons.dumbbell,
                       categoryName: 'training',
                       shapeColor: AppColors.secondary,
                     ),
-                                        const SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     
-                    // Acknowledgement - Green color
+                    // Mastered - Green color
                     _buildFlashcardBox(
                       context: context,
                       backgroundColor: Colors.white,
                       borderColor: Colors.white,
                       textColor: Colors.black,
                       imagePath: 'assets/images/flashcards/achieved_green.png',
-                      title: 'Acknowledged',
-                      bodyText: 'Vocab you acquired',
+                      title: AppLocalizations.of(context)!.mastered,
+                      bodyText: AppLocalizations.of(context)!.vocabularyAcquired,
                       count: counts[3],
-                      icon: Icons.check,
-                      categoryName: 'acknowledged',
+                      icon: FontAwesomeIcons.badgeCheck,
+                      categoryName: 'mastered',
                       shapeColor: AppColors.success,
                     ),
                   ],
@@ -163,7 +176,7 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
         color: backgroundColor,
        borderRadius: BorderRadius.circular(12),
        border: Border.all(
-          color: borderColor,
+          color: categoryName == 'saved' ? AppColors.primary.withOpacity(0.7) : categoryName == 'difficult' ? AppColors.error.withOpacity(0.7) : categoryName == 'training' ? Colors.black.withOpacity(0.3) : categoryName == 'mastered' ? AppColors.success.withOpacity(0.7) : AppColors.primary.withOpacity(0.7),
           width: 1,
         ),
         boxShadow: [
@@ -176,9 +189,9 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
       ),
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Navigator.push(
+          child: InkWell(
+          onTap: () async {
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => FlashcardsCategoryPage(
@@ -186,13 +199,12 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                 ),
               ),
             );
+            // Refresh flashcards count when returning from category page
+            if (result == true && mounted) {
+              _getFlashcardsCount();
+            }
           },
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            bottomLeft: Radius.circular(24),
-            topRight: Radius.circular(20),
-            bottomRight: Radius.circular(20),
-          ),
+          borderRadius: BorderRadius.circular(12),
           child: Stack(
             children: [
               // Colored curved shape on the right side
@@ -271,7 +283,7 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                                         size: 20,
                                         color: textColor,
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: 14),
                                     ],
                                     Flexible(
                                       child: Text(
@@ -308,6 +320,10 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                             decoration: BoxDecoration(
                               color: shapeColor.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.black.withOpacity(0.3),
+                                width: 1,
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -317,7 +333,7 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
-                                    color: shapeColor,
+                                    color: Colors.black,
                                   ),
                                 ),
                                 const SizedBox(width: 4),
@@ -326,7 +342,7 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
-                                    color: shapeColor.withOpacity(0.8),
+                                    color: Colors.black,
                                   ),
                                 ),
                               ],
@@ -358,6 +374,8 @@ class CurvedShapePainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.fill;
 
+    final borderRadius = 12.0; // Match the container's border radius
+    
     final path = Path();
     
     // Start from top-left with a curve
@@ -374,11 +392,19 @@ class CurvedShapePainter extends CustomPainter {
       size.height, // End point y (bottom)
     );
     
-    // Continue to bottom-right
-    path.lineTo(size.width, size.height);
+    // Continue to bottom-right, then add rounded corner
+    path.lineTo(size.width - borderRadius, size.height);
+    path.quadraticBezierTo(
+      size.width, size.height, // Control point (corner)
+      size.width, size.height - borderRadius, // End point
+    );
     
-    // Continue to top-right
-    path.lineTo(size.width, 0);
+    // Continue up the right edge, then add rounded top-right corner
+    path.lineTo(size.width, borderRadius);
+    path.quadraticBezierTo(
+      size.width, 0, // Control point (corner)
+      size.width - borderRadius, 0, // End point
+    );
     
     // Close the path back to start
     path.close();

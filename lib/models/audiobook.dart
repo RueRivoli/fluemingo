@@ -1,51 +1,40 @@
 import 'vocabulary_item.dart';
+import 'article.dart';
+import 'chapter_overview.dart';
 
 class Audiobook {
   final int id;
   final String title;
   final String author;
+  final String description;
+  /// Description in reference language (e.g. English). Shown when user's native language matches.
+  final String? descriptionRef;
   final String imageUrl;
   final String level;
-  final String category;
-  final String description;
-  final List<VocabularyItem> vocabulary;
-  final List<Chapter> chapters;
+  final String category1;
+  final String? category2;
+  final String? category3;
+  final List<Article> chapters;
   final DateTime createdAt;
+  final String? readingStatus;
+  bool isFavorite;
+  bool isFree;
 
   Audiobook({
     required this.id,
     required this.title,
     required this.author,
+    this.description = '',
+    this.descriptionRef,
     required this.imageUrl,
     required this.level,
-    required this.category,
-    this.description = '',
-    this.vocabulary = const [],
+    required this.category1,
+    this.category2,
+    this.category3,
     this.chapters = const [],
     required this.createdAt,
+    this.isFavorite = false,
+    this.readingStatus = null,
+    this.isFree = false,
   });
 }
-
-class Chapter {
-  final int id;
-  final int longFormatId;
-  final String title;
-  final String? description;
-  final String? content;
-  final String? contentEn;
-  final String? audioUrl;
-  final int orderIndex;
-
-  Chapter({
-    required this.id,
-    required this.longFormatId,
-    required this.title,
-    this.description,
-    this.content,
-    this.contentEn,
-    this.audioUrl,
-    required this.orderIndex,
-  });
-}
-
-

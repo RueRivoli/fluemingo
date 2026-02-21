@@ -7,7 +7,7 @@ class QuizService {
   QuizService(this._supabase);
 
   // Fetch quiz questions for a specific content (article) ID
-  Future<List<QuizQuestion>> getQuizQuestionsForContent(int contentId) async {
+  Future<List<QuizQuestion>> getQuizQuestionsForArticleContent(int contentId) async {
     try {
       final response = await _supabase
           .from('quiz_models_fr')
@@ -24,12 +24,30 @@ class QuizService {
     }
   }
 
+    Future<List<QuizQuestion>> getQuizQuestionsForChapterContent(String chapterId) async {
+    try {
+      print('with chapter id: $chapterId');
+      final response = await _supabase
+          .from('quiz_models_fr')
+          .select()
+          .eq('type', 2)
+          .eq('chapter_id', int.parse(chapterId))
+          .order('id', ascending: true);
+
+      return (response as List)
+          .map((json) => QuizQuestion.fromJson(json))
+          .toList();
+    } catch (e) {
+      print('Error fetching quiz questions for chapter: $e');
+      rethrow;
+    }
+  }
+
   /// Create a quiz result entry when user starts a quiz
   /// Returns the quiz result with id and filled_out status
-  Future<Map<String, dynamic>?> createQuizResult({
+  Future<Map<String, dynamic>?> createQuizResultForArticle({
     required int quizId,
     required String userId,
-    required int type,
     required int referenceId,
   }) async {
     try {
@@ -37,7 +55,7 @@ class QuizService {
           .from('quiz_results_fr')
           .select('id, number_correct_answers, filled_out')
           .eq('reference_id', referenceId)
-          .eq('type', type)
+          .eq('type', 1)
           .limit(1)
           .maybeSingle();
       if (existingQuiz != null && existingQuiz['id'] != null) return existingQuiz;
@@ -47,12 +65,42 @@ class QuizService {
         'user_id': userId,
         'reference_id': referenceId,
         'number_correct_answers': 0,
-        'type': type,
+        'type': 1,
       }).select('id, filled_out').single();
 
       return newQuiz;
     } catch (e) {
       print('Error creating quiz result: $e');
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> createQuizResultForChapter({
+    required int quizId,
+    required String userId,
+    required int chapterId,
+  }) async {
+    try {
+        final existingQuiz = await _supabase
+          .from('quiz_results_fr')
+          .select('id, number_correct_answers, filled_out')
+          .eq('chapter_id', chapterId)
+          .eq('type', 2)
+          .limit(1)
+          .maybeSingle();
+      if (existingQuiz != null && existingQuiz['id'] != null) return existingQuiz;
+
+      final newQuiz = await _supabase.from('quiz_results_fr').insert({
+        'quiz_id': quizId,
+        'user_id': userId,
+        'chapter_id': chapterId,
+        'number_correct_answers': 0,
+        'type': 2,
+      }).select('id, filled_out').single();
+
+      return newQuiz;
+    } catch (e) {
+      print('Error creating chapter quiz result: $e');
       return null;
     }
   }

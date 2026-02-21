@@ -8,28 +8,44 @@ class Article {
   final String? chapterId;
   final String title;
   final String description;
+  final String author;
   final String imageUrl;
+  final String? readingStatus;
   final String level;
-  final String category;
+  final String category1;
+  final String? category2;
+  final String? category3;
   final List<VocabularyItem> vocabulary;
   final List<GrammarPoint> grammarPoints;
   final List<ArticleParagraph> paragraphs;
   final String? audioUrl;
+  final int? orderId;
+  final int? duration;
+  final int contentType;
   bool isFavorite;
+  bool isFree;
 
   Article({
     required this.id,
     this.chapterId,
     required this.title,
     required this.description,
+    required this.author,
     required this.imageUrl,
+    this.readingStatus = null,
     required this.level,
-    required this.category,
+    required this.category1,
+    this.category2,
+    this.category3,
     this.vocabulary = const [],
     this.grammarPoints = const [],
     this.paragraphs = const [],
     this.audioUrl,
+    this.orderId,
+    this.duration,
     this.isFavorite = false,
+    this.contentType = 1, 
+    this.isFree = false,
   });
 
   List<VocabularyItem> get addedByUserVocabularyItems {
@@ -54,7 +70,10 @@ class Article {
         'id: $id, '
         'title: $title, '
         'level: $level, '
-        'category: $category, '
+        'category1: $category1, '
+        'category2: $category2, '
+        'category3: $category3, '
+        'readingStatus: $readingStatus, '
         'vocabularyCount: ${vocabulary.length}, '
         'paragraphsCount: ${paragraphs.length}, '
         'grammarPointsCount: ${grammarPoints.length}, '

@@ -7,16 +7,21 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../constants/app_colors.dart';
 import '../../config/supabase_config.dart';
 import '../home_page.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class RegistrationPage extends StatefulWidget {
   final String targetLanguage;
   final String nativeLanguage;
+  final List<String>? favoriteThemes;
+  final int? weeklyGoalXP;
   final VoidCallback? onComplete;
 
   const RegistrationPage({
     super.key,
     required this.targetLanguage,
     required this.nativeLanguage,
+    this.favoriteThemes,
+    this.weeklyGoalXP,
     this.onComplete,
   });
 
@@ -255,7 +260,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
           height: 280,
           color: Colors.grey[300],
           child: const Icon(
-            Icons.image_not_supported,
+            FontAwesomeIcons.image,
             color: Colors.grey,
           ),
         );
@@ -517,13 +522,24 @@ class _RegistrationPageState extends State<RegistrationPage> {
     try {
       // Update profile with language preferences
       // The profile should already exist (either from trigger or _ensureProfileExists)
+      final updateData = <String, dynamic>{
+        'target_language': widget.targetLanguage,
+        'native_language': widget.nativeLanguage,
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+      if (widget.weeklyGoalXP != null) {
+        updateData['weekly_goal'] = widget.weeklyGoalXP;
+      }
+      if (widget.favoriteThemes != null && widget.favoriteThemes!.isNotEmpty) {
+        final themes = widget.favoriteThemes!.take(5).toList();
+        for (var i = 0; i < 5; i++) {
+          updateData['theme_interest_${i + 1}'] =
+              i < themes.length ? themes[i] : null;
+        }
+      }
       await supabase
           .from('profiles')
-          .update({
-            'target_language': widget.targetLanguage,
-            'native_language': widget.nativeLanguage,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
+          .update(updateData)
           .eq('id', user.id);
     } catch (e) {
       debugPrint('Error updating profile with languages: $e');
@@ -545,7 +561,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                          metadata['picture'] ??
                          metadata['picture_url'];
         
-        await supabase.from('profiles').insert({
+        final insertData = <String, dynamic>{
           'id': user.id,
           'email': user.email ?? user.phone,
           'full_name': fullName.isEmpty ? 'User' : fullName,
@@ -554,7 +570,16 @@ class _RegistrationPageState extends State<RegistrationPage> {
           'native_language': widget.nativeLanguage,
           'created_at': DateTime.now().toIso8601String(),
           'updated_at': DateTime.now().toIso8601String(),
-        });
+        };
+        if (widget.favoriteThemes != null &&
+            widget.favoriteThemes!.isNotEmpty) {
+          final themes = widget.favoriteThemes!.take(5).toList();
+          for (var i = 0; i < 5; i++) {
+            insertData['theme_interest_${i + 1}'] =
+                i < themes.length ? themes[i] : null;
+          }
+        }
+        await supabase.from('profiles').insert(insertData);
       } catch (insertError) {
         debugPrint('Error creating profile with languages: $insertError');
         // Don't rethrow - allow user to continue even if profile update fails
