@@ -4,13 +4,19 @@ import '../models/audiobook.dart';
 import '../services/audiobook_service.dart';
 import '../constants/app_colors.dart';
 import '../constants/levels.dart';
-import '../constants/audiobooks_themes.dart';
+import '../constants/content.dart';
 import '../l10n/app_localizations.dart';
+import '../l10n/label_localization.dart';
 import '../widgets/audiobook_card.dart';
+import '../widgets/theme_chip.dart';
+import '../widgets/audiobooks_skeleton.dart';
 import '../stores/profile_store.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class AudiobooksPage extends StatefulWidget {
-  const AudiobooksPage({super.key});
+  const AudiobooksPage({super.key, this.isVisible = false});
+
+  final bool isVisible;
 
   @override
   State<AudiobooksPage> createState() => _AudiobooksPageState();
@@ -31,6 +37,14 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
     super.initState();
     _audiobookService = AudiobookService(Supabase.instance.client);
     _loadAudiobooks();
+  }
+
+  @override
+  void didUpdateWidget(covariant AudiobooksPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isVisible && widget.isVisible) {
+      _loadAudiobooks();
+    }
   }
 
   Future<void> _loadAudiobooks() async {
@@ -84,7 +98,7 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
           setState(() => selectedLevel = v);
           _loadAudiobooks();
         },
-        themes: ['All', ...THEMES],
+        themes: ['All', ...THEMES.map((e) => e.id)],
         selectedThemes: selectedThemes,
         onThemesChanged: (v) => setState(() => selectedThemes = v),
         includeFinished: includeFinished,
@@ -225,6 +239,12 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: selectedThemes.map((t) {
+                      var categoryKey = t.trim().toLowerCase();
+                      if (categoryKey == 'sports') categoryKey = 'sport';
+                      final themeIcon = THEMES
+                          .where((e) => e.id == categoryKey)
+                          .firstOrNull
+                          ?.icon;
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: Container(
@@ -243,7 +263,7 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                t,
+                                getTranslatedLabel(context, t),
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
@@ -261,7 +281,7 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(4),
                                   child: Icon(
-                                    Icons.close,
+                                    FontAwesomeIcons.xmark,
                                     size: 18,
                                     color: AppColors.textSecondary,
                                   ),
@@ -328,7 +348,7 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
                               child: Padding(
                                 padding: const EdgeInsets.all(4),
                                 child: Icon(
-                                  Icons.close,
+                                  FontAwesomeIcons.xmark,
                                   size: 18,
                                   color: AppColors.textSecondary,
                                 ),
@@ -367,7 +387,7 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
                               child: Padding(
                                 padding: const EdgeInsets.all(4),
                                 child: Icon(
-                                  Icons.close,
+                                  FontAwesomeIcons.xmark,
                                   size: 18,
                                   color: AppColors.textSecondary,
                                 ),
@@ -386,7 +406,7 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
             // Audiobooks List by Category
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const AudiobooksPageSkeleton()
                   : _errorMessage != null
                       ? Center(
                           child: Column(
@@ -429,7 +449,7 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Text(
-                          category,
+                          audiobookTypeLabel(context, category),
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
@@ -452,7 +472,7 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
                               showIsFavorite: book.isFavorite,
                               showLocker: !isSubscribed && !book.isFree,
                               onFavoriteToggled: () {
-                                if (!isSubscribed && !book.isFree != null) return;
+                                if (!isSubscribed && !book.isFree) return;
                                 _audiobookService.toggleFavorite(book.id);
                                 setState(() {
                                   book.isFavorite = !book.isFavorite;
@@ -624,7 +644,13 @@ class _AudiobooksFilterSheetState extends State<_AudiobooksFilterSheet> {
                 final isAll = t == 'All';
                 final isSelected =
                     isAll ? _selectedThemes.isEmpty : _selectedThemes.contains(t);
-                return GestureDetector(
+                final leadingIcon = t == 'All'
+                    ? null
+                    : THEMES.where((e) => e.id == t).firstOrNull?.icon;
+                return ThemeChip(
+                  label: t,
+                  isSelected: isSelected,
+                  leadingIcon: leadingIcon,
                   onTap: () {
                     if (isAll) {
                       setState(() => _selectedThemes = {});
@@ -638,29 +664,6 @@ class _AudiobooksFilterSheetState extends State<_AudiobooksFilterSheet> {
                       setState(() => _selectedThemes = next);
                     }
                   },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppColors.secondary : Colors.white,
-                      border: isSelected
-                          ? Border.all(color: AppColors.borderBlack)
-                          : Border.all(color: Colors.white),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      t,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
                 );
               }).toList(),
             ),
@@ -669,12 +672,15 @@ class _AudiobooksFilterSheetState extends State<_AudiobooksFilterSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  AppLocalizations.of(context)!.includeFinishedAudiobooks,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
+                Expanded(
+                  child: Text(
+                    AppLocalizations.of(context)!.includeFinishedAudiobooks,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Switch(
@@ -689,12 +695,15 @@ class _AudiobooksFilterSheetState extends State<_AudiobooksFilterSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  AppLocalizations.of(context)!.showOnlyFavoriteAudiobooks,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
+                Expanded(
+                  child: Text(
+                    AppLocalizations.of(context)!.showOnlyFavoriteAudiobooks,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Switch(
@@ -735,4 +744,3 @@ class _AudiobooksFilterSheetState extends State<_AudiobooksFilterSheet> {
     );
   }
 }
-

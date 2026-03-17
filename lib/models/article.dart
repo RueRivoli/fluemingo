@@ -63,6 +63,12 @@ class Article {
    List<String> get listOfVocabularyItems {
     return vocabulary.map((item) => item.word + ' (' + item.type + ')').toList();
   }
+   List<VocabularyItem> get orderedListOfVocabularyItems {
+    final savedVocabularyItems = vocabulary.where((item) => item.status != null).toList();
+    final addedByUserVocabularyItems = vocabulary.where((item) => item.status == null && item.isAddedByUser == true).toList();
+    final unsavedStandardVocabularyItems = vocabulary.where((item) => item.status == null && item.isAddedByUser == false).toList();
+    return [...savedVocabularyItems, ...addedByUserVocabularyItems, ...unsavedStandardVocabularyItems];
+  }
 
   @override
   String toString() {

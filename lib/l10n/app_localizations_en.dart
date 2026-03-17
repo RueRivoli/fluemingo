@@ -9,7 +9,25 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get fiveMinutesADay => '\'5 mins/day\'';
+
+  @override
+  String get fifteenMinutesADay => '\'15 min/day\'';
+
+  @override
+  String get thirtyMinutesADay => '\'30 min/day\'';
+
+  @override
+  String get oneHourADay => '\'1 hr/day\'';
+
+  @override
   String get activeFilters => 'Active filters';
+
+  @override
+  String get addedByUser => 'Added by you';
+
+  @override
+  String get all => 'All';
 
   @override
   String get allLevels => 'All';
@@ -29,6 +47,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String areYouSureYouWantToDeleteReferenceLanguage(Object languageName) {
+    return 'Are you sure you want to change your reference language to $languageName?\n\nThis change will have an effect on the previous translated words.';
+  }
+
+  @override
+  String areYouSureYouWantToDeleteTargetLanguage(Object languageName) {
+    return 'Are you sure you want to change your target language to $languageName?\n\nThis change will have an effect on the previous translated words.';
+  }
+
+  @override
   String get art => 'Art';
 
   @override
@@ -38,10 +66,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get audiobooks => 'Audiobooks';
 
   @override
+  String get back => 'Back';
+
+  @override
   String get biography => 'Biography';
 
   @override
+  String get buildA => 'build a';
+
+  @override
   String get cancel => 'Cancel';
+
+  @override
+  String get changeStatus => 'Change Status';
+
+  @override
+  String get changeLanguage => 'Change Language';
 
   @override
   String get chapters => 'Chapters';
@@ -64,13 +104,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get completedQuizzes => 'Completed quizzes';
 
   @override
+  String get confirm => 'Confirm';
+
+  @override
   String get contentInProgress => 'Content in progress';
 
   @override
   String get continueReadingToEarnXP => 'Keep reading to earn XP';
 
   @override
+  String get connexion => 'Connexion';
+
+  @override
+  String get continueWithApple => 'Continue with Apple';
+
+  @override
+  String get continueWithFacebook => 'Continue with Facebook';
+
+  @override
+  String get continueWithGoogle => 'Continue with Google';
+
+  @override
   String get culture => 'Culture';
+
+  @override
+  String get dailyGoal => 'Daily Goal';
 
   @override
   String get definition => 'Definition';
@@ -80,6 +138,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteVocabularyItem => 'Delete this vocabulary item';
+
+  @override
+  String get difficult => 'Difficult';
 
   @override
   String get difficultVocabulary => 'Difficult vocabulary';
@@ -92,6 +153,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get education => 'Education';
+
+  @override
+  String get extreme => 'Extreme';
 
   @override
   String get fashion => 'Fashion';
@@ -127,10 +191,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get finishedAudiobooks => 'Finished audiobooks';
 
   @override
+  String get finishedChaptersAudiobooks => 'Audio chapters';
+
+  @override
   String get flashcardsVocabulary => 'Vocabulary flashcards';
 
   @override
   String get fontSize => 'Font size';
+
+  @override
+  String goalIntensity(String intensity) {
+    String _temp0 = intl.Intl.selectLogic(
+      intensity,
+      {
+        'light': 'light',
+        'regular': 'regular',
+        'high': 'high',
+        'extreme': 'extreme',
+        'other': '',
+      },
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String goalDuration(String duration) {
+    String _temp0 = intl.Intl.selectLogic(
+      duration,
+      {
+        'fiveMinutesADay': '5 mins/day',
+        'fifteenMinutesADay': '15 min/day',
+        'thirtyMinutesADay': '30 min/day',
+        'oneHourADay': '1 hr/day',
+        'other': '',
+      },
+    );
+    return '$_temp0';
+  }
 
   @override
   String get gastronomy => 'Gastronomy';
@@ -143,6 +240,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get health => 'Health';
+
+  @override
+  String get high => 'high';
 
   @override
   String get history => 'History';
@@ -190,10 +290,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageJa => 'Japanese';
 
   @override
+  String get learn => 'Learn';
+
+  @override
   String get literature => 'Literature';
 
   @override
   String get level => 'Level';
+
+  @override
+  String get light => 'Light';
 
   @override
   String get mainVocabulary => 'Main vocabulary';
@@ -267,6 +373,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readFlashcards => 'Read flashcards';
 
   @override
+  String get regular => 'Regular';
+
+  @override
   String get repeat => 'Practice';
 
   @override
@@ -276,10 +385,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saved => 'Saved';
 
   @override
+  String get savedVocabulary => 'Saved vocabulary';
+
+  @override
   String get science => 'Science';
 
   @override
-  String get savedVocabulary => 'Saved vocabulary';
+  String get selectGoal => 'Select a Goal to Remain Motivated';
+
+  @override
+  String selectUpToThemes(Object maxSelection) {
+    return 'Select up to $maxSelection themes.';
+  }
+
+  @override
+  String get setHowManyXpYouWant =>
+      'Set how many XP you want to earn per week.';
+
+  @override
+  String get signInWithApple => 'Sign in with Apple';
+
+  @override
+  String get signInWithFacebook => 'Continue with Facebook';
+
+  @override
+  String get signInWithGoogle => 'Sign in with Google';
 
   @override
   String get showOnlyFavoriteArticles => 'Show favorite articles only';
@@ -297,7 +427,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sport => 'Sport';
 
   @override
-  String get startToRead => 'Start reading';
+  String get startToRead => 'Start Reading';
+
+  @override
+  String get strongLastingVocabulary => 'Strong & Lasting Vocabulary';
 
   @override
   String get tale => 'Tale';
@@ -310,6 +443,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get testYourKnowledge => 'Test your knowledge';
+
+  @override
+  String get training => 'Training';
 
   @override
   String get trainingVocabulary => 'Training vocabulary';
@@ -327,6 +463,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sourceLanguage => 'Source language';
 
   @override
+  String get subscription => 'Subscription';
+
+  @override
+  String get upgradeToPremium => 'Upgrade to Premium';
+
+  @override
+  String get manageSubscription => 'Manage subscription';
+
+  @override
+  String get unlockWithPremium => 'Unlock with Premium';
+
+  @override
   String get vocabulary => 'Vocabulary';
 
   @override
@@ -337,6 +485,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watersports => 'Water sports';
+
+  @override
+  String get week => 'week';
 
   @override
   String get weekProgress => 'This week';
@@ -350,17 +501,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get weekGoal => 'Weekly goal';
 
   @override
+  String get whichLanguageDoYouWantToLearn =>
+      'Which language do you want to learn ?';
+
+  @override
+  String get selectOne => 'Select one';
+
+  @override
+  String get whichLanguageDoYouSpeakTheBest =>
+      'Which language do you speak the best ?';
+
+  @override
+  String get withYour => 'with your';
+
+  @override
+  String get unknown => 'Unknown';
+
+  @override
+  String get xpPerWeek => 'Xp Per Week';
+
+  @override
   String get yoga => 'Yoga';
 
   @override
   String get yourSavedVocabulary => 'Saved vocabulary';
 
   @override
-  String get yourPersonalVocabulary => 'Personal vocabulary';
+  String get yourPersonalVocabulary => 'Personal';
 
   @override
   String get yourProgress => 'Overall progress';
 
   @override
   String get yourWeekProgress => 'Weekly progress';
+
+  @override
+  String get yourWeeklyGoal => 'Your Weekly goal';
+
+  @override
+  String get rateTheApp => 'Rate the app';
+
+  @override
+  String get rateTheAppStoreUnavailable =>
+      'Store unavailable (try on a real device or set App Store ID in code).';
 }

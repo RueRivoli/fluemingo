@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
-import '../constants/library_themes.dart';
+import '../constants/content.dart';
 import 'theme_chip.dart';
 
 /// Reusable bottom sheet to edit "interesting themes" selection.
@@ -57,7 +57,7 @@ class EditThemesBottomSheet extends StatefulWidget {
 class _EditThemesBottomSheetState extends State<EditThemesBottomSheet> {
   late Set<String> _localSelected;
 
-  List<String> get _themeOptions => widget.themeOptions ?? THEMES;
+  List<String> get _themeOptions => widget.themeOptions ?? THEMES.map((e) => e.id).toList();
   int get _maxSelections => widget.maxSelections;
 
   @override

@@ -110,11 +110,47 @@ abstract class AppLocalizations {
     Locale('pt')
   ];
 
+  /// No description provided for @fiveMinutesADay.
+  ///
+  /// In en, this message translates to:
+  /// **'\'5 mins/day\''**
+  String get fiveMinutesADay;
+
+  /// No description provided for @fifteenMinutesADay.
+  ///
+  /// In en, this message translates to:
+  /// **'\'15 min/day\''**
+  String get fifteenMinutesADay;
+
+  /// No description provided for @thirtyMinutesADay.
+  ///
+  /// In en, this message translates to:
+  /// **'\'30 min/day\''**
+  String get thirtyMinutesADay;
+
+  /// No description provided for @oneHourADay.
+  ///
+  /// In en, this message translates to:
+  /// **'\'1 hr/day\''**
+  String get oneHourADay;
+
   /// No description provided for @activeFilters.
   ///
   /// In en, this message translates to:
   /// **'Active filters'**
   String get activeFilters;
+
+  /// No description provided for @addedByUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Added by you'**
+  String get addedByUser;
+
+  /// No description provided for @all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get all;
 
   /// No description provided for @allLevels.
   ///
@@ -146,6 +182,18 @@ abstract class AppLocalizations {
   /// **'Are you sure you want to delete {word} from the vocabulary list?'**
   String areYouSureYouWantToDeleteWord(Object word);
 
+  /// No description provided for @areYouSureYouWantToDeleteReferenceLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to change your reference language to {languageName}?\n\nThis change will have an effect on the previous translated words.'**
+  String areYouSureYouWantToDeleteReferenceLanguage(Object languageName);
+
+  /// No description provided for @areYouSureYouWantToDeleteTargetLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to change your target language to {languageName}?\n\nThis change will have an effect on the previous translated words.'**
+  String areYouSureYouWantToDeleteTargetLanguage(Object languageName);
+
   /// No description provided for @art.
   ///
   /// In en, this message translates to:
@@ -164,17 +212,41 @@ abstract class AppLocalizations {
   /// **'Audiobooks'**
   String get audiobooks;
 
+  /// No description provided for @back.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
   /// No description provided for @biography.
   ///
   /// In en, this message translates to:
   /// **'Biography'**
   String get biography;
 
+  /// No description provided for @buildA.
+  ///
+  /// In en, this message translates to:
+  /// **'build a'**
+  String get buildA;
+
   /// No description provided for @cancel.
   ///
   /// In en, this message translates to:
   /// **'Cancel'**
   String get cancel;
+
+  /// No description provided for @changeStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Status'**
+  String get changeStatus;
+
+  /// No description provided for @changeLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Language'**
+  String get changeLanguage;
 
   /// No description provided for @chapters.
   ///
@@ -212,6 +284,12 @@ abstract class AppLocalizations {
   /// **'Completed quizzes'**
   String get completedQuizzes;
 
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
+
   /// No description provided for @contentInProgress.
   ///
   /// In en, this message translates to:
@@ -224,11 +302,41 @@ abstract class AppLocalizations {
   /// **'Keep reading to earn XP'**
   String get continueReadingToEarnXP;
 
+  /// No description provided for @connexion.
+  ///
+  /// In en, this message translates to:
+  /// **'Connexion'**
+  String get connexion;
+
+  /// No description provided for @continueWithApple.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Apple'**
+  String get continueWithApple;
+
+  /// No description provided for @continueWithFacebook.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Facebook'**
+  String get continueWithFacebook;
+
+  /// No description provided for @continueWithGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get continueWithGoogle;
+
   /// No description provided for @culture.
   ///
   /// In en, this message translates to:
   /// **'Culture'**
   String get culture;
+
+  /// No description provided for @dailyGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Goal'**
+  String get dailyGoal;
 
   /// No description provided for @definition.
   ///
@@ -247,6 +355,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete this vocabulary item'**
   String get deleteVocabularyItem;
+
+  /// No description provided for @difficult.
+  ///
+  /// In en, this message translates to:
+  /// **'Difficult'**
+  String get difficult;
 
   /// No description provided for @difficultVocabulary.
   ///
@@ -271,6 +385,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Education'**
   String get education;
+
+  /// No description provided for @extreme.
+  ///
+  /// In en, this message translates to:
+  /// **'Extreme'**
+  String get extreme;
 
   /// No description provided for @fashion.
   ///
@@ -338,6 +458,12 @@ abstract class AppLocalizations {
   /// **'Finished audiobooks'**
   String get finishedAudiobooks;
 
+  /// No description provided for @finishedChaptersAudiobooks.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio chapters'**
+  String get finishedChaptersAudiobooks;
+
   /// No description provided for @flashcardsVocabulary.
   ///
   /// In en, this message translates to:
@@ -349,6 +475,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Font size'**
   String get fontSize;
+
+  /// No description provided for @goalIntensity.
+  ///
+  /// In en, this message translates to:
+  /// **'{intensity, select, light{light} regular{regular} high{high} extreme{extreme} other{}}'**
+  String goalIntensity(String intensity);
+
+  /// No description provided for @goalDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration, select, fiveMinutesADay{5 mins/day} fifteenMinutesADay{15 min/day} thirtyMinutesADay{30 min/day} oneHourADay{1 hr/day} other{}}'**
+  String goalDuration(String duration);
 
   /// No description provided for @gastronomy.
   ///
@@ -373,6 +511,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Health'**
   String get health;
+
+  /// No description provided for @high.
+  ///
+  /// In en, this message translates to:
+  /// **'high'**
+  String get high;
 
   /// No description provided for @history.
   ///
@@ -464,6 +608,12 @@ abstract class AppLocalizations {
   /// **'Japanese'**
   String get languageJa;
 
+  /// No description provided for @learn.
+  ///
+  /// In en, this message translates to:
+  /// **'Learn'**
+  String get learn;
+
   /// No description provided for @literature.
   ///
   /// In en, this message translates to:
@@ -475,6 +625,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Level'**
   String get level;
+
+  /// No description provided for @light.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get light;
 
   /// No description provided for @mainVocabulary.
   ///
@@ -614,6 +770,12 @@ abstract class AppLocalizations {
   /// **'Read flashcards'**
   String get readFlashcards;
 
+  /// No description provided for @regular.
+  ///
+  /// In en, this message translates to:
+  /// **'Regular'**
+  String get regular;
+
   /// No description provided for @repeat.
   ///
   /// In en, this message translates to:
@@ -632,17 +794,53 @@ abstract class AppLocalizations {
   /// **'Saved'**
   String get saved;
 
+  /// No description provided for @savedVocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved vocabulary'**
+  String get savedVocabulary;
+
   /// No description provided for @science.
   ///
   /// In en, this message translates to:
   /// **'Science'**
   String get science;
 
-  /// No description provided for @savedVocabulary.
+  /// No description provided for @selectGoal.
   ///
   /// In en, this message translates to:
-  /// **'Saved vocabulary'**
-  String get savedVocabulary;
+  /// **'Select a Goal to Remain Motivated'**
+  String get selectGoal;
+
+  /// No description provided for @selectUpToThemes.
+  ///
+  /// In en, this message translates to:
+  /// **'Select up to {maxSelection} themes.'**
+  String selectUpToThemes(Object maxSelection);
+
+  /// No description provided for @setHowManyXpYouWant.
+  ///
+  /// In en, this message translates to:
+  /// **'Set how many XP you want to earn per week.'**
+  String get setHowManyXpYouWant;
+
+  /// No description provided for @signInWithApple.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Apple'**
+  String get signInWithApple;
+
+  /// No description provided for @signInWithFacebook.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Facebook'**
+  String get signInWithFacebook;
+
+  /// No description provided for @signInWithGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google'**
+  String get signInWithGoogle;
 
   /// No description provided for @showOnlyFavoriteArticles.
   ///
@@ -677,8 +875,14 @@ abstract class AppLocalizations {
   /// No description provided for @startToRead.
   ///
   /// In en, this message translates to:
-  /// **'Start reading'**
+  /// **'Start Reading'**
   String get startToRead;
+
+  /// No description provided for @strongLastingVocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Strong & Lasting Vocabulary'**
+  String get strongLastingVocabulary;
 
   /// No description provided for @tale.
   ///
@@ -703,6 +907,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Test your knowledge'**
   String get testYourKnowledge;
+
+  /// No description provided for @training.
+  ///
+  /// In en, this message translates to:
+  /// **'Training'**
+  String get training;
 
   /// No description provided for @trainingVocabulary.
   ///
@@ -734,6 +944,30 @@ abstract class AppLocalizations {
   /// **'Source language'**
   String get sourceLanguage;
 
+  /// No description provided for @subscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription'**
+  String get subscription;
+
+  /// No description provided for @upgradeToPremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to Premium'**
+  String get upgradeToPremium;
+
+  /// No description provided for @manageSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage subscription'**
+  String get manageSubscription;
+
+  /// No description provided for @unlockWithPremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock with Premium'**
+  String get unlockWithPremium;
+
   /// No description provided for @vocabulary.
   ///
   /// In en, this message translates to:
@@ -758,6 +992,12 @@ abstract class AppLocalizations {
   /// **'Water sports'**
   String get watersports;
 
+  /// No description provided for @week.
+  ///
+  /// In en, this message translates to:
+  /// **'week'**
+  String get week;
+
   /// No description provided for @weekProgress.
   ///
   /// In en, this message translates to:
@@ -776,6 +1016,42 @@ abstract class AppLocalizations {
   /// **'Weekly goal'**
   String get weekGoal;
 
+  /// No description provided for @whichLanguageDoYouWantToLearn.
+  ///
+  /// In en, this message translates to:
+  /// **'Which language do you want to learn ?'**
+  String get whichLanguageDoYouWantToLearn;
+
+  /// No description provided for @selectOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Select one'**
+  String get selectOne;
+
+  /// No description provided for @whichLanguageDoYouSpeakTheBest.
+  ///
+  /// In en, this message translates to:
+  /// **'Which language do you speak the best ?'**
+  String get whichLanguageDoYouSpeakTheBest;
+
+  /// No description provided for @withYour.
+  ///
+  /// In en, this message translates to:
+  /// **'with your'**
+  String get withYour;
+
+  /// No description provided for @unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get unknown;
+
+  /// No description provided for @xpPerWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Xp Per Week'**
+  String get xpPerWeek;
+
   /// No description provided for @yoga.
   ///
   /// In en, this message translates to:
@@ -791,7 +1067,7 @@ abstract class AppLocalizations {
   /// No description provided for @yourPersonalVocabulary.
   ///
   /// In en, this message translates to:
-  /// **'Personal vocabulary'**
+  /// **'Personal'**
   String get yourPersonalVocabulary;
 
   /// No description provided for @yourProgress.
@@ -805,6 +1081,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Weekly progress'**
   String get yourWeekProgress;
+
+  /// No description provided for @yourWeeklyGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Weekly goal'**
+  String get yourWeeklyGoal;
+
+  /// No description provided for @rateTheApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate the app'**
+  String get rateTheApp;
+
+  /// No description provided for @rateTheAppStoreUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Store unavailable (try on a real device or set App Store ID in code).'**
+  String get rateTheAppStoreUnavailable;
 }
 
 class _AppLocalizationsDelegate

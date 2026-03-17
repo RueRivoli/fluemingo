@@ -5,6 +5,7 @@ class Unit {
   final bool? punctuation;
   final bool? properName;
   final String? originVerb;
+  final String? basis;
 
   Unit({
     required this.text,
@@ -13,6 +14,7 @@ class Unit {
     this.punctuation,
     this.properName,
     this.originVerb,
+    this.basis,
   });
 }
 

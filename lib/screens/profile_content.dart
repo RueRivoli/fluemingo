@@ -53,7 +53,6 @@ class _ProfileContentState extends State<ProfileContent> {
 
     @override
   void didUpdateWidget(covariant ProfileContent oldWidget) {
-    print('didUpdateWidget week progress');
     super.didUpdateWidget(oldWidget);
     // Reload when switching tabs or changing category
     if ((widget.isVisible && !oldWidget.isVisible) || widget.category != oldWidget.category) {
@@ -70,13 +69,10 @@ class _ProfileContentState extends State<ProfileContent> {
       final favoriteArticlesRaw = await profileService.getFavoriteArticles();
       _favoriteArticles = favoriteArticlesRaw.where((article) => article.readingStatus != 'started' && article.readingStatus != 'finished').toList();
       final favoriteAudiobooksRaw = await profileService.getFavoriteAudiobooks();
-      print('favoriteAudiobooksRaw: ${favoriteAudiobooksRaw}');
       _favoriteAudiobooks = favoriteAudiobooksRaw.where((audiobook) => audiobook.readingStatus != 'finished').toList();
     } else if (widget.category == 'interesting') {
       _interestThemes = await profileService.getThemeInterests();
-      print('interestThemes: ${_interestThemes}');
       _selectedThemes = _interestThemes.toSet();
-      print('selectedThemes: ${_selectedThemes}');
       final interestingArticlesRaw = await profileService.getInterestingArticles();
       _interestingArticles = interestingArticlesRaw.where((article) => article.readingStatus != 'started' && article.readingStatus != 'finished').toList();
       final interestingAudiobooksRaw = await profileService.getInterestingAudiobooks();
@@ -109,9 +105,12 @@ class _ProfileContentState extends State<ProfileContent> {
                 itemCount: _inProgressArticles.length,
                 itemBuilder: (context, index) {
                   final article = _inProgressArticles[index];
+                  final isSubscribed = ProfileStoreScope.of(context).isSubscribed;
                   return ArticleCard(
                     article: article,
+                    showLocker: !isSubscribed && !article.isFree,
                     onFavoriteToggle: () {
+                      if (!isSubscribed && !article.isFree) return;
                       _articleService.toggleFavorite(article.id);
                       setState(() {
                         article.isFavorite = !article.isFavorite;
@@ -189,9 +188,12 @@ class _ProfileContentState extends State<ProfileContent> {
                 itemCount: _favoriteArticles.length,
                 itemBuilder: (context, index) {
                   final article = _favoriteArticles[index];
+                  final isSubscribed = ProfileStoreScope.of(context).isSubscribed;
                   return ArticleCard(
                     article: article,
+                    showLocker: !isSubscribed && !article.isFree,
                     onFavoriteToggle: () {
+                      if (!isSubscribed && !article.isFree) return;
                       _articleService.toggleFavorite(article.id);
                       setState(() {
                         article.isFavorite = !article.isFavorite;
@@ -268,9 +270,12 @@ class _ProfileContentState extends State<ProfileContent> {
                 itemCount: _interestingArticles.length,
                 itemBuilder: (context, index) {
                   final article = _interestingArticles[index];
+                  final isSubscribed = ProfileStoreScope.of(context).isSubscribed;
                   return ArticleCard(
                     article: article,
+                    showLocker: !isSubscribed && !article.isFree,
                     onFavoriteToggle: () {
+                      if (!isSubscribed && !article.isFree) return;
                       _articleService.toggleFavorite(article.id);
                       setState(() {
                         _interestingArticles[index].isFavorite = !article.isFavorite;

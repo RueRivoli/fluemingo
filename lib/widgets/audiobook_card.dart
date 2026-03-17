@@ -41,7 +41,7 @@ class AudiobookCard extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => AudiobookOverviewPage(audiobook: book),
+                        builder: (context) => AudiobookOverviewPage(audiobook: book, showLocker: showLocker, onFavoriteToggle: onFavoriteToggled),
                       ),
                     );
                   },
@@ -186,7 +186,7 @@ class AudiobookCard extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AudiobookOverviewPage(audiobook: book),
+                    builder: (context) => AudiobookOverviewPage(audiobook: book, showLocker: showLocker, onFavoriteToggle: onFavoriteToggled),
                   ),
                 );
               },

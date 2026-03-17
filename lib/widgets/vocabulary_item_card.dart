@@ -4,6 +4,7 @@ import 'package:just_audio/just_audio.dart';
 import '../models/vocabulary_item.dart';
 import '../constants/app_colors.dart';
 import '../constants/word_types.dart';
+import '../l10n/app_localizations.dart';
 
 class VocabularyItemCard extends StatefulWidget {
   final VocabularyItem item;
@@ -30,6 +31,9 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
   bool? _isAddedByUser;
   late AudioPlayer _audioPlayer;
   bool _isPlaying = false;
+  bool _showBasisTop = false;
+  bool _showBasisBottom = false;
+  bool _showType = false;
 
   @override
   void initState() {
@@ -37,7 +41,9 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
     _status = widget.item.status;
     _isAddedByUser = widget.item.isAddedByUser ?? false;
     _audioPlayer = AudioPlayer();
-
+    _showBasisTop = widget.item.basis != null && widget.item.basis!.isNotEmpty && widget.item.word!.length < 10;
+    _showBasisBottom = widget.item.basis != null && widget.item.basis!.isNotEmpty && widget.item.word!.length >= 10;
+    _showType = widget.item.word.isNotEmpty && widget.item.word.length < 20;
     _audioPlayer.playerStateStream.listen((state) {
       if (state.processingState == ProcessingState.completed) {
         if (mounted) {
@@ -88,6 +94,16 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
     // Always sync status from widget - needed when the same item object is mutated
     _status = widget.item.status;
     _isAddedByUser = widget.item.isAddedByUser ?? false;
+  }
+
+  String displayTypeToText(String word, String wordType) {
+    if (wordType.isNotEmpty) {
+      return WORD_SHORT_TYPES_FR.containsKey(wordType) && wordType.length > 0
+          ? (WORD_SHORT_TYPES_FR[wordType]!.toLowerCase())
+          : wordType.toLowerCase();
+    } else {
+      return "expr.".toLowerCase();
+    }
   }
 
   Color getColorPlayIcon() {
@@ -150,18 +166,29 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
         case 'difficult':
           return AppColors.error.withOpacity(0.06);
         case 'training':
-           return AppColors.secondary.withOpacity(0.06);
+           return AppColors.white;
         case 'mastered':
            return AppColors.success.withOpacity(0.06);
         default:
-          return Colors.black.withOpacity(0.06);
+          return AppColors.white.withOpacity(0.06);
       }
     } else if (widget.displayType == 'standard') {
-      return isAddedByUser ? Colors.black.withOpacity(0.06) : Colors.white.withOpacity(0.06);
+        switch (_status) {
+        case 'saved':
+          return Color(0xFFD3D3EE);
+        case 'difficult':
+          return Color(0xFFD3D3EE);
+        case 'training':
+           return Color(0xFFD3D3EE);
+        case 'mastered':
+           return Color(0xFFD3D3EE);
+        default:
+          return AppColors.textGrey;
+      }
     } else if (widget.displayType == 'text') {
-      return Colors.white;
+      return AppColors.textGrey;
   }
-    return Colors.black.withOpacity(0.06);
+    return AppColors.textGrey;
   }
 
 
@@ -180,14 +207,15 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
           return Colors.black.withOpacity(0.2);
       }
     } else if (widget.displayType == 'standard') {
-      return isAddedByUser ? Colors.black.withOpacity(0.2) : Colors.white.withOpacity(0.2);
+      return _status != null ? AppColors.primary.withOpacity(0.8) : Colors.black.withOpacity(0.2);
     } else if (widget.displayType == 'text') {
-      return isAddedByUser ? Colors.black.withOpacity(0.06) : Colors.black.withOpacity(0.2);
+      return Colors.black.withOpacity(0.2);
   }
     return Colors.black.withOpacity(0.2);
   }
 
     Color getPlayIconBorderColor(bool isAddedByUser) {
+      return Colors.transparent;
     if (widget.displayType == 'flashcard') {
         switch (_status) {
         case 'saved':
@@ -218,7 +246,7 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
       return isPlaying ? FontAwesomeIcons.solidCirclePause : FontAwesomeIcons.solidCirclePlay;
     } else if (widget.displayType == 'standard') {
       return isPlaying
-          ? (status != null ? FontAwesomeIcons.solidCirclePause : FontAwesomeIcons.thinCirclePlay)
+          ? (status != null ? FontAwesomeIcons.solidCirclePause : FontAwesomeIcons.thinCirclePause)
           : (status != null ? FontAwesomeIcons.solidCirclePlay : FontAwesomeIcons.thinCirclePlay);
     } else if (widget.displayType == 'text') {
       return isPlaying ? FontAwesomeIcons.thinCirclePause : FontAwesomeIcons.thinCirclePlay;
@@ -232,40 +260,36 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
     
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isAddedByUser ? AppColors.primary.withOpacity(0.06) : Colors.white,
+        color: getCardBackgroundColor(isAddedByUser),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: getCardBorderColor(isAddedByUser), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: getCardBackgroundColor(isAddedByUser),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           // Play/Pause button
-          if (widget.displayType != 'text') GestureDetector(
-            onTap: _toggleAudio,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: getPlayIconBorderColor(isAddedByUser),
-                  width: 1,
+          if (widget.displayType != 'text') Center(
+            child: GestureDetector(
+              onTap: _toggleAudio,
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: getPlayIconBorderColor(isAddedByUser),
+                    width: 1,
+                  ),
                 ),
-              ),
-              child: Center(
-                child: FaIcon(
-                  getPlayIconIconData(_isPlaying, _status),
-                  color: getColorPlayIcon(),
-                  size: 30,
+                child: Center(
+                  child: FaIcon(
+                    getPlayIconIconData(_isPlaying, _status),
+                    color: getColorPlayIcon(),
+                    size: 30,
+                  ),
                 ),
               ),
             ),
@@ -276,44 +300,64 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                ...[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // const SizedBox(height: 2),
+                      Text(
+                        widget.item.word,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      if (_showType) Text(
+                        ' · ${displayTypeToText(widget.item.word, widget.item.type)}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.8,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      if (isAddedByUser) ...[
+                        const SizedBox(width: 12),
+                        Tooltip(
+                          message: AppLocalizations.of(context)!.addedByUser,
+                          child: FaIcon(
+                            FontAwesomeIcons.lightUserPen,
+                            size: 12,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                if (_showBasisTop) ...[
+                const SizedBox(width: 8),
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    FaIcon(
+                      FontAwesomeIcons.lightArrowRightLong,
+                      size: 16,
+                      color: AppColors.textPrimary,
+                    ),
+                    const SizedBox(width: 8),
                     Text(
-                      widget.item.word,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                      '${widget.item.basis}',
+                      style: TextStyle(
+                        fontSize: 16,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    if (widget.item.type.isNotEmpty) ...[
-                      const SizedBox(width: 8),
-                      if (WORD_SHORT_TYPES_FR.containsKey(widget.item.type))
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          child: Text(
-                            (WORD_SHORT_TYPES_FR[widget.item.type]!),
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        )
-                      else
-                        Text(
-                          widget.item.type,
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                    ],
                   ],
-                ),
+                )
+              ],
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 2),
+                if (widget.item.translation.isNotEmpty) ...[
                 Text(
                   '${widget.item.translation}',
                   style: TextStyle(
@@ -322,21 +366,46 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
                   ),
                 ),
               ],
+
+                if (_showBasisBottom) ...[
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    FaIcon(
+                      FontAwesomeIcons.lightArrowRightLong,
+                      size: 16,
+                      color: AppColors.textPrimary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${widget.item.basis}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            ],
             ),
           ),
           if (_isAddedByUser == true && widget.onDelete != null) ...[
             const SizedBox(width: 8),
-            GestureDetector(
-              onTap: widget.onDelete,
-              child: FaIcon(
-                FontAwesomeIcons.trashCan,
-                size: 22,
-                color: Colors.grey[600],
+            Center(
+              child: GestureDetector(
+                onTap: widget.onDelete,
+                child: FaIcon(
+                  FontAwesomeIcons.thinTrashCan,
+                  size: 22,
+                  color: Colors.red,
+                ),
               ),
             ),
             const SizedBox(width: 8),
           ],
-          Column(
+          Center(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -369,7 +438,9 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
               ),
             ],
           ),
+          ),
         ],
+      ),
       ),
     );
   }

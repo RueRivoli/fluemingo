@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 
-/// Language codes for reference (native) language selection (all 8 locales).
+
 const List<String> REFERENCE_LANGUAGE_CODES = [
   'en',
   'fr',
@@ -13,7 +13,6 @@ const List<String> REFERENCE_LANGUAGE_CODES = [
   'ja',
 ];
 
-/// Language codes for target (learning) language selection.
 const List<String> TARGET_LANGUAGE_CODES = [
   'en',
   'fr',
@@ -44,14 +43,36 @@ String getLanguageName(BuildContext context, String code) {
   }
 }
 
-/// Returns the list of reference languages with localized names for the current locale.
+  String languageNameFromCode(String code) {
+    switch (code.trim().toLowerCase()) {
+      case 'fr':
+        return 'French';
+      case 'en':
+        return 'English';
+      case 'es':
+        return 'Spanish';
+      case 'de':
+        return 'German';
+      case 'it':
+        return 'Italian';
+      case 'pt':
+        return 'Portuguese';
+      case 'nl':
+        return 'Dutch';
+      case 'ja':
+        return 'Japanese';
+      default:
+        return code.toUpperCase();
+    }
+  }
+
+
 List<Map<String, String>> getReferenceLanguages(BuildContext context) {
   return REFERENCE_LANGUAGE_CODES
       .map((code) => {'code': code, 'name': getLanguageName(context, code)})
       .toList();
 }
 
-/// Returns the list of target languages with localized names for the current locale.
 List<Map<String, String>> getTargetLanguages(BuildContext context) {
   return TARGET_LANGUAGE_CODES
       .map((code) => {'code': code, 'name': getLanguageName(context, code)})

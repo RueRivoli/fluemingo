@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../config/revenue_cat_config.dart';
 import '../models/article.dart';
 import '../models/vocabulary_item.dart';
 import '../models/grammar_point.dart';
@@ -8,18 +9,26 @@ import '../services/article_service.dart';
 import 'article_reading_page.dart';
 import '../widgets/vocabulary_item_card.dart';
 import '../widgets/content_status_badge.dart';
+import '../widgets/content_category_chip.dart';
 import '../models/audiobook.dart';
 import '../services/audiobook_service.dart';
 import '../services/profile_service.dart';
 import 'article_overview_page.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../constants/audiobooks_themes.dart';
 import '../l10n/app_localizations.dart';
+import '../constants/number_icons.dart';
+import '../stores/profile_store.dart';
 
 class AudiobookOverviewPage extends StatefulWidget {
   final Audiobook audiobook;
+  final bool showLocker;
+  final VoidCallback onFavoriteToggle;
 
-  const AudiobookOverviewPage({super.key, required this.audiobook});
+  const AudiobookOverviewPage(
+      {super.key,
+      required this.audiobook,
+      this.showLocker = false,
+      required this.onFavoriteToggle});
 
   @override
   State<AudiobookOverviewPage> createState() => _AudiobookOverviewPageState();
@@ -60,7 +69,8 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
     });
 
     try {
-      final audioBook = await _audiobookService.getAudiobookById(widget.audiobook.id);
+      final audioBook =
+          await _audiobookService.getAudiobookById(widget.audiobook.id);
       if (audioBook != null) {
         setState(() {
           _audiobook = audioBook;
@@ -86,28 +96,13 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
     return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
-  /// Font Awesome icon for digits 0-9; null for 10+ (use text instead).
-  IconData? _numberToFontAwesomeIcon(int n) {
-    switch (n) {
-      case 0: return FontAwesomeIcons.zero;
-      case 1: return FontAwesomeIcons.one;
-      case 2: return FontAwesomeIcons.two;
-      case 3: return FontAwesomeIcons.three;
-      case 4: return FontAwesomeIcons.four;
-      case 5: return FontAwesomeIcons.five;
-      case 6: return FontAwesomeIcons.six;
-      case 7: return FontAwesomeIcons.seven;
-      case 8: return FontAwesomeIcons.eight;
-      case 9: return FontAwesomeIcons.nine;
-      default: return null;
-    }
-  }
-
   /// Description in the user's reference (native) language when available, otherwise default.
   String _getDescriptionForDisplay(Audiobook? book) {
     if (book == null) return widget.audiobook.description;
     final ref = _referenceLanguage?.toLowerCase();
-    if (ref == 'en' && book.descriptionRef != null && book.descriptionRef!.isNotEmpty) {
+    if (ref == 'en' &&
+        book.descriptionRef != null &&
+        book.descriptionRef!.isNotEmpty) {
       return book.descriptionRef!;
     }
     return book.description;
@@ -174,6 +169,15 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
                         child: ContentStatusBadge(
                           status: _audiobook?.readingStatus ?? null,
                           compact: false,
+                          showStatusMenu: true,
+                          onStatusChange: (newStatus) async {
+                            final audiobook = _audiobook ?? widget.audiobook;
+                            await _audiobookService.editAudiobookStatus(
+                              audiobook,
+                              newStatus,
+                            );
+                            await _loadFullAudiobook();
+                          },
                         ),
                       ),
                     ],
@@ -181,7 +185,7 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
 
                   // Content
                   Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -214,17 +218,19 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
                         ),
                         const SizedBox(height: 12),
 
-                        // Tags
-                        Row(
+                        // Tags (wrap to next line when chips overflow)
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            // Level tag with dotted border
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 14,
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                               color: AppColors.primary,
+                                color: AppColors.primary,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -236,70 +242,68 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
                                 ),
                               ),
                             ),
-                            // Category tags (only when they have content)
-                            if (_audiobook?.category1?.isNotEmpty ?? false) ...[
-                              const SizedBox(width: 10),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 8,
-                                ),
+                            if (_audiobook?.category1?.isNotEmpty ?? false)
+                              ContentCategoryChip(
+                                category: widget.audiobook.category1,
+                                useAudiobookTypeLabel: true,
+                                horizontalPadding: 14,
+                                verticalPadding: 8,
+                                borderRadius: 6,
+                              ),
+                            if (widget.audiobook.category2 != null &&
+                                widget.audiobook.category2!.isNotEmpty)
+                              ContentCategoryChip(
+                                category: widget.audiobook.category2!,
+                                horizontalPadding: 14,
+                                verticalPadding: 8,
+                                borderRadius: 6,
+                              ),
+                            if (widget.audiobook.category3 != null &&
+                                widget.audiobook.category3!.isNotEmpty)
+                              ContentCategoryChip(
+                                category: widget.audiobook.category3!,
+                                horizontalPadding: 14,
+                                verticalPadding: 8,
+                                borderRadius: 6,
+                              ),
+                            GestureDetector(
+                              onTap: () async {
+                                if (widget.showLocker) {
+                                  await presentPaywall();
+                                  if (mounted) {
+                                    ProfileStoreScope.of(context).load();
+                                  }
+                                  return;
+                                }
+                                widget.onFavoriteToggle();
+                                setState(() {
+                                  if (_audiobook == null) return;
+                                  _audiobook!.isFavorite =
+                                      !_audiobook!.isFavorite;
+                                });
+                              },
+                              behavior: HitTestBehavior.opaque,
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFE8E8E8),
+                                  color: Colors.black54,
                                   borderRadius: BorderRadius.circular(6),
                                 ),
-                                child: Text(
-                                  audiobookTypeLabel(context, widget.audiobook.category1),
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF4A4A4A),
-                                  ),
+                                child: Icon(
+                                  widget.showLocker
+                                      ? FontAwesomeIcons.lock
+                                      : (_audiobook?.isFavorite ?? false
+                                          ? FontAwesomeIcons.solidHeart
+                                          : FontAwesomeIcons.lightHeart),
+                                  size: 20,
+                                  color: widget.showLocker
+                                      ? Colors.white
+                                      : (_audiobook?.isFavorite ?? false
+                                          ? AppColors.secondary
+                                          : Colors.white),
                                 ),
                               ),
-                            ],
-                            if (widget.audiobook.category2 != null && widget.audiobook.category2!.isNotEmpty) ...[
-                              const SizedBox(width: 10),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE8E8E8),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  audiobookThemeLabel(context, widget.audiobook.category2!),
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF4A4A4A),
-                                  ),
-                                ),
-                              ),
-                            ],
-                            if (widget.audiobook.category3 != null && widget.audiobook.category3!.isNotEmpty) ...[
-                              const SizedBox(width: 10),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE8E8E8),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  audiobookThemeLabel(context, widget.audiobook.category3!),
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF4A4A4A),
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -316,7 +320,8 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
                         const SizedBox(height: 28),
 
                         // Chapters section
-                        if (_audiobook != null && _audiobook!.chapters.isNotEmpty) ...[
+                        if (_audiobook != null &&
+                            _audiobook!.chapters.isNotEmpty) ...[
                           Text(
                             AppLocalizations.of(context)!.chapters,
                             style: TextStyle(
@@ -330,99 +335,157 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
                             final chapterIndex = entry.key;
                             final chapter = entry.value;
                             final chapterNumber = chapterIndex + 1;
-                            final numberIcon = _numberToFontAwesomeIcon(chapterNumber);
+                            final numberIcon =
+                                figureToFontAwesomeIcon(chapterNumber);
+                            final isFinished =
+                                chapter.readingStatus?.toLowerCase().trim() ==
+                                    'finished';
                             return GestureDetector(
-                              onTap: () async {
-                                await _audiobookService.editAudiobookStatus(widget.audiobook, 'started');
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ArticleOverviewPage(article: chapter),
+                                onTap: () async {
+                                  if (widget.showLocker) {
+                                    await presentPaywall();
+                                    if (mounted) {
+                                      ProfileStoreScope.of(context).load();
+                                    }
+                                    return;
+                                  }
+                                  await _audiobookService.editAudiobookStatus(
+                                      widget.audiobook, 'started');
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ArticleOverviewPage(
+                                          article: chapter,
+                                          showLocker: false,
+                                          onFavoriteToggle: () {}),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.neutral,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.black,
+                                      width: 1,
+                                    ),
                                   ),
-                                );
-                              },
-                              child: Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.black,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Row(
-                                      children: [
-                                        if (numberIcon != null)
-                                          Padding(
-                                            padding: const EdgeInsets.only(right: 8),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              crossAxisAlignment: CrossAxisAlignment.center,
-                                              children: [
-                                                Icon(numberIcon, size: 12, color: AppColors.textPrimary),
-                                                Text(
-                                                  '.',
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            if (numberIcon != null)
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    right: 8),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.center,
+                                                  children: [
+                                                    Icon(numberIcon,
+                                                        size: 12,
+                                                        color: AppColors
+                                                            .textPrimary),
+                                                    Text(
+                                                      '.',
+                                                      style: const TextStyle(
+                                                        fontSize: 15,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: AppColors
+                                                            .textPrimary,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              )
+                                            else
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    right: 8),
+                                                child: Text(
+                                                  '$chapterNumber.',
                                                   style: const TextStyle(
                                                     fontSize: 15,
                                                     fontWeight: FontWeight.w600,
-                                                    color: AppColors.textPrimary,
+                                                    color:
+                                                        AppColors.textPrimary,
                                                   ),
                                                 ),
-                                              ],
-                                            ),
-                                          )
-                                        else
-                                          Padding(
-                                            padding: const EdgeInsets.only(right: 8),
-                                            child: Text(
-                                              '$chapterNumber.',
-                                              style: const TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.textPrimary,
+                                              ),
+                                            Expanded(
+                                              child: Text.rich(
+                                                TextSpan(
+                                                  children: [
+                                                    TextSpan(
+                                                      text: chapter.title,
+                                                      style: const TextStyle(
+                                                        fontSize: 16,
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                        color: AppColors
+                                                            .textPrimary,
+                                                      ),
+                                                    ),
+                                                    if (isFinished)
+                                                      const WidgetSpan(
+                                                        alignment:
+                                                            PlaceholderAlignment
+                                                                .middle,
+                                                        child: Padding(
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                                  left: 6),
+                                                          child: Icon(
+                                                            FontAwesomeIcons
+                                                                .badgeCheck,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                            size: 16,
+                                                            color: AppColors
+                                                                .textPrimary,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                  ],
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 2,
                                               ),
                                             ),
-                                          ),
-                                        Expanded(
-                                          child: Text(
-                                            chapter.title,
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w500,
-                                              color: AppColors.textPrimary,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                            maxLines: 2,
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.secondary,
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          border: Border.all(
+                                              color: Colors.black, width: 1),
+                                        ),
+                                        child: Text(
+                                          _formatDuration(
+                                              chapter.duration ?? 0),
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.black,
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.secondary,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: Colors.black, width: 1),
-                                    ),
-                                    child: Text(
-                                      _formatDuration(chapter.duration ?? 0),
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.black,
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ));
+                                ));
                           })),
                         ],
                       ],
@@ -437,4 +500,3 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
     );
   }
 }
-

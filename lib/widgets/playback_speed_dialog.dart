@@ -3,12 +3,12 @@ import '../constants/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 /// A dialog widget for selecting playback speed.
-/// 
+///
 /// This widget displays a bottom sheet with playback speed options
 /// and allows the user to select a new speed.
 class PlaybackSpeedDialog {
   /// Shows a modal bottom sheet with playback speed options.
-  /// 
+  ///
   /// [context] - The build context to show the dialog in.
   /// [currentSpeed] - The currently selected playback speed.
   /// [onSpeedChanged] - Callback function called when a new speed is selected.
@@ -66,22 +66,46 @@ class _PlaybackSpeedDialogContent extends StatelessWidget {
           const SizedBox(height: 20),
           ..._speedOptions.map((speed) {
             final isSelected = currentSpeed == speed;
-            return ListTile(
-              title: Text(
-                'x$speed',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                ),
-              ),
-              trailing: isSelected
-                  ? Icon(FontAwesomeIcons.badgeCheck, color: AppColors.primary)
-                  : null,
+            return InkWell(
+              borderRadius: BorderRadius.circular(10),
               onTap: () {
                 onSpeedChanged(speed);
                 Navigator.pop(context);
               },
+              child: SizedBox(
+                height: 48,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'x$speed',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w400,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: isSelected
+                          ? const Center(
+                              child: FaIcon(
+                                FontAwesomeIcons.check,
+                                color: AppColors.textPrimary,
+                                size: 14,
+                              ),
+                            )
+                          : null,
+                    ),
+                  ],
+                ),
+              ),
             );
           }),
         ],
@@ -89,4 +113,3 @@ class _PlaybackSpeedDialogContent extends StatelessWidget {
     );
   }
 }
-

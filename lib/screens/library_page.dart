@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/article.dart';
 import '../widgets/article_card.dart';
+import '../widgets/library_skeleton.dart';
 import '../services/article_service.dart';
 import '../constants/app_colors.dart';
 import '../constants/levels.dart';
-import '../constants/library_themes.dart';
+import '../constants/content.dart';
 import '../l10n/app_localizations.dart';
+import '../l10n/label_localization.dart';
+import '../widgets/theme_chip.dart';
+import '../stores/profile_store.dart';
 
 class LibraryPage extends StatefulWidget {
   const LibraryPage({super.key, this.isVisible = true});
@@ -25,13 +29,26 @@ class _LibraryPageState extends State<LibraryPage> {
   bool _isLoading = true;
   List<Article> _articles = [];
   String? _errorMessage;
+  bool _isSubscribed = false;
   late final ArticleService _articleService;
+  late ProfileStore _profileStore;
+  bool _didLoadInitial = false;
 
   @override
   void initState() {
     super.initState();
     _articleService = ArticleService(Supabase.instance.client);
-    _loadArticles();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _profileStore = ProfileStoreScope.of(context);
+    _isSubscribed = _profileStore.isSubscribed;
+    if (!_didLoadInitial) {
+      _didLoadInitial = true;
+      _loadArticles();
+    }
   }
 
   @override
@@ -93,7 +110,7 @@ class _LibraryPageState extends State<LibraryPage> {
       builder: (ctx) => _LibraryFilterSheet(
         selectedLevel: selectedLevel,
         onLevelChanged: (v) => setState(() => selectedLevel = v),
-        themes: THEMES,
+        themes: THEMES.map((e) => e.id).toList(),
         selectedThemes: selectedThemes,
         onThemesChanged: (v) => setState(() => selectedThemes = v),
         includeFinished: includeFinished,
@@ -105,9 +122,30 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
+  Widget _buildArticleCard(
+    Article article, {
+    bool stackChipsAtBottom = false,
+  }) {
+    return ArticleCard(
+      article: article,
+      showLocker: !_isSubscribed && !article.isFree,
+      stackChipsAtBottom: stackChipsAtBottom,
+      onFavoriteToggle: () async {
+        try {
+          await _articleService.toggleFavorite(article.id);
+          setState(() {
+            article.isFavorite = !article.isFavorite;
+          });
+        } catch (e) {
+          print('Error toggling favorite: $e');
+        }
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-   //  final readingLevels = getReadingLevels(context);
+    //  final readingLevels = getReadingLevels(context);
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -169,7 +207,7 @@ class _LibraryPageState extends State<LibraryPage> {
                     final isSelected = selectedLevel == level;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
-                        child: GestureDetector(
+                      child: GestureDetector(
                         onTap: () {
                           setState(() {
                             selectedLevel = level;
@@ -182,12 +220,17 @@ class _LibraryPageState extends State<LibraryPage> {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: isSelected ? AppColors.secondary : Colors.white,
-                            border: isSelected ? Border.all(color: AppColors.borderBlack) : Border.all(color: Colors.white),
+                            color:
+                                isSelected ? AppColors.secondary : Colors.white,
+                            border: isSelected
+                                ? Border.all(color: AppColors.borderBlack)
+                                : Border.all(color: Colors.white),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            level == 'All' ? AppLocalizations.of(context)!.allLevels : level,
+                            level == 'All'
+                                ? AppLocalizations.of(context)!.allLevels
+                                : level,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -243,7 +286,7 @@ class _LibraryPageState extends State<LibraryPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                themeLabel(context, theme),
+                                getTranslatedLabel(context, theme),
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
@@ -253,7 +296,9 @@ class _LibraryPageState extends State<LibraryPage> {
                               GestureDetector(
                                 onTap: () {
                                   setState(() {
-                                    selectedThemes = Set<String>.from(selectedThemes)..remove(theme);
+                                    selectedThemes =
+                                        Set<String>.from(selectedThemes)
+                                          ..remove(theme);
                                   });
                                 },
                                 child: Padding(
@@ -313,7 +358,8 @@ class _LibraryPageState extends State<LibraryPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              AppLocalizations.of(context)!.includeFinishedArticles,
+                              AppLocalizations.of(context)!
+                                  .includeFinishedArticles,
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
@@ -352,7 +398,8 @@ class _LibraryPageState extends State<LibraryPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              AppLocalizations.of(context)!.favoritesArticlesOnly,
+                              AppLocalizations.of(context)!
+                                  .favoritesArticlesOnly,
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
@@ -384,11 +431,7 @@ class _LibraryPageState extends State<LibraryPage> {
             // Articles List
             Expanded(
               child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
-                    )
+                  ? const LibraryPageSkeleton()
                   : _errorMessage != null
                       ? Center(
                           child: Column(
@@ -423,26 +466,47 @@ class _LibraryPageState extends State<LibraryPage> {
                                 ),
                               ),
                             )
-                          : ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              itemCount: filteredArticles.length,
-                              itemBuilder: (context, index) {
-                                return ArticleCard(
-                                  article: filteredArticles[index],
-                                  onFavoriteToggle: () async {
-                                    try {
-                                      await _articleService.toggleFavorite(
-                                        filteredArticles[index].id,
-                                      );
-                                      setState(() {
-                                        filteredArticles[index].isFavorite =
-                                            !filteredArticles[index].isFavorite;
-                                      });
-                                    } catch (e) {
-                                      // Handle error
-                                      print('Error toggling favorite: $e');
-                                    }
-                                  },
+                          : LayoutBuilder(
+                              builder: (context, constraints) {
+                                final isTabletLayout =
+                                    constraints.maxWidth >= 700;
+                                if (!isTabletLayout) {
+                                  return ListView.builder(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20),
+                                    itemCount: filteredArticles.length,
+                                    itemBuilder: (context, index) =>
+                                        _buildArticleCard(
+                                      filteredArticles[index],
+                                    ),
+                                  );
+                                }
+
+                                return GridView.builder(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20),
+                                  itemCount: filteredArticles.length,
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 8,
+                                    childAspectRatio: (() {
+                                      const horizontalPadding = 20.0;
+                                      const crossSpacing = 12.0;
+                                      const estimatedCardHeight = 460.0;
+                                      final tileWidth = (constraints.maxWidth -
+                                              (horizontalPadding * 2) -
+                                              crossSpacing) /
+                                          2;
+                                      return tileWidth / estimatedCardHeight;
+                                    })(),
+                                  ),
+                                  itemBuilder: (context, index) =>
+                                      _buildArticleCard(
+                                    filteredArticles[index],
+                                    stackChipsAtBottom: true,
+                                  ),
                                 );
                               },
                             ),
@@ -551,7 +615,6 @@ class _LibraryFilterSheetState extends State<_LibraryFilterSheet> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: LEVELS.map((level) {
-                  print('level: $level');
                   final isSelected = _selectedLevel == level;
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
@@ -565,14 +628,17 @@ class _LibraryFilterSheetState extends State<_LibraryFilterSheet> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.secondary : Colors.white,
+                          color:
+                              isSelected ? AppColors.secondary : Colors.white,
                           border: isSelected
                               ? Border.all(color: AppColors.borderBlack)
                               : Border.all(color: Colors.white),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          level == 'All' ? AppLocalizations.of(context)!.allLevels : level,
+                          level == 'All'
+                              ? AppLocalizations.of(context)!.allLevels
+                              : level,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -603,9 +669,16 @@ class _LibraryFilterSheetState extends State<_LibraryFilterSheet> {
               runSpacing: 6,
               children: widget.themes.map((theme) {
                 final isAll = theme == 'All';
-                final isSelected =
-                    isAll ? _selectedThemes.isEmpty : _selectedThemes.contains(theme);
-                return GestureDetector(
+                final isSelected = isAll
+                    ? _selectedThemes.isEmpty
+                    : _selectedThemes.contains(theme);
+                final leadingIcon = theme == 'All'
+                    ? null
+                    : THEMES.where((e) => e.id == theme).firstOrNull?.icon;
+                return ThemeChip(
+                  label: theme,
+                  isSelected: isSelected,
+                  leadingIcon: leadingIcon,
                   onTap: () {
                     if (isAll) {
                       setState(() => _selectedThemes = {});
@@ -619,29 +692,6 @@ class _LibraryFilterSheetState extends State<_LibraryFilterSheet> {
                       setState(() => _selectedThemes = next);
                     }
                   },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppColors.secondary : Colors.white,
-                      border: isSelected
-                          ? Border.all(color: AppColors.borderBlack)
-                          : Border.all(color: Colors.white),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      themeLabel(context, theme),
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
                 );
               }).toList(),
             ),

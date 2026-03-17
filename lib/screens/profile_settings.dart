@@ -2,16 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../config/revenue_cat_config.dart';
 import '../constants/app_colors.dart';
+import '../services/app_review_service.dart';
 import '../l10n/app_localizations.dart';
 import '../models/profile.dart';
 import '../services/profile_service.dart';
 import '../stores/profile_store.dart';
+import '../utils/avatar.dart';
 import '../widgets/avatar_widget.dart';
 import '../widgets/edit_themes_bottom_sheet.dart';
 import '../widgets/theme_chip.dart';
 import '../constants/languages.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../services/week_progress_service.dart';
+import '../services/onesignal_notification_service.dart';
+import 'onboarding/welcome_page.dart';
 
 class ProfileSettingsPage extends StatefulWidget {
   final bool isVisible;
@@ -25,6 +31,10 @@ class ProfileSettingsPage extends StatefulWidget {
 class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
   late final ProfileService profileService =
       ProfileService(Supabase.instance.client);
+  late final WeekProgressService weekProgressService =
+      WeekProgressService(Supabase.instance.client);
+  late final OneSignalNotificationService _oneSignalNotificationService =
+      OneSignalNotificationService(profileService);
   Profile? profile;
   bool isLoading = true;
   List<String> _interestThemes = [];
@@ -39,17 +49,23 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     if (mounted) setState(() => isLoading = true);
     try {
       final profileData = await profileService.getProfileData();
-      final weeklyProgress = await profileService.getWeeklyProgress();
+      final weeklyProgress = await weekProgressService.getWeekProgress();
       final interestThemes = await profileService.getThemeInterests();
       setState(() {
         this._interestThemes = interestThemes;
       });
       if (mounted) {
+        final avatarSeed = profileData['avatar']?.toString();
+        final avatarUrl = resolveAvatarUrl(
+          avatar: avatarSeed,
+          avatarUrl: profileData['avatar_url']?.toString(),
+        );
         setState(() {
           profile = Profile(
             fullName: profileData['full_name'] ?? '',
             email: profileData['email'] ?? '',
-            avatarUrl: profileData['avatar_url'],
+            avatar: avatarSeed,
+            avatarUrl: avatarUrl,
             isPremium: profileData['is_premium'] ?? false,
             nativeLanguage: profileData['native_language'] ?? '',
             targetLanguage: profileData['target_language'] ?? '',
@@ -62,10 +78,14 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             lastWeekXP: profileData['last_week_xp'] != null
                 ? (profileData['last_week_xp'] as num).toInt()
                 : null,
-            weeklyArticlesRead: weeklyProgress['articles'],
-            weeklyAudiobooksRead: weeklyProgress['audiobooks'],
-            weeklyFlashcardsAchieved: weeklyProgress['flashcards'],
-            weeklyQuizzesCompleted: weeklyProgress['quizzes'],
+            weeklyArticlesRead:
+                int.tryParse(weeklyProgress.weekArticlesReadCount) ?? 0,
+            weeklyAudiobooksRead:
+                int.tryParse(weeklyProgress.weekAudiobooksReadCount) ?? 0,
+            weeklyFlashcardsAchieved:
+                int.tryParse(weeklyProgress.weekFlashcardsAchievedCount) ?? 0,
+            weeklyQuizzesCompleted:
+                int.tryParse(weeklyProgress.weekQuizzesCompletedCount) ?? 0,
           );
           isLoading = false;
         });
@@ -84,6 +104,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
               ? Profile(
                   fullName: profile!.fullName,
                   email: profile!.email,
+                  avatar: profile!.avatar,
                   avatarUrl: profile!.avatarUrl,
                   isPremium: profile!.isPremium,
                   nativeLanguage: profile!.nativeLanguage,
@@ -117,6 +138,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
               ? Profile(
                   fullName: profile!.fullName,
                   email: profile!.email,
+                  avatar: profile!.avatar,
                   avatarUrl: profile!.avatarUrl,
                   isPremium: profile!.isPremium,
                   nativeLanguage: profile!.nativeLanguage,
@@ -151,6 +173,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
               ? Profile(
                   fullName: profile!.fullName,
                   email: profile!.email,
+                  avatar: profile!.avatar,
                   avatarUrl: profile!.avatarUrl,
                   isPremium: profile!.isPremium,
                   nativeLanguage: code,
@@ -240,18 +263,19 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     required VoidCallback onConfirm,
   }) {
     final message = isReference
-        ? 'Are you sure you want to change your reference language to $languageName?\n\n'
-            'This change will have an effect on the previous translated words.'
-        : 'Are you sure you want to change your ${isReference ? 'reference' : 'targeted'} language to $languageName?';
+        ? AppLocalizations.of(context)!
+            .areYouSureYouWantToDeleteReferenceLanguage(languageName)
+        : AppLocalizations.of(context)!
+            .areYouSureYouWantToDeleteTargetLanguage(languageName);
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Change language?'),
+        title: Text(AppLocalizations.of(context)!.changeLanguage),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           FilledButton(
             onPressed: () {
@@ -259,7 +283,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
               onConfirm();
             },
             style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
-            child: const Text('Confirm'),
+            child: Text(AppLocalizations.of(context)!.confirm),
           ),
         ],
       ),
@@ -303,13 +327,16 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Material(
-                    color: isSelected ? AppColors.primary.withOpacity(0.15) : AppColors.neutral,
+                    color: isSelected
+                        ? AppColors.primary.withOpacity(0.15)
+                        : AppColors.neutral,
                     borderRadius: BorderRadius.circular(12),
                     child: InkWell(
                       onTap: () => onSelect(code),
                       borderRadius: BorderRadius.circular(12),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 12),
                         child: Row(
                           children: [
                             SvgPicture.asset(
@@ -323,17 +350,19 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                               name,
                               style: TextStyle(
                                 fontSize: 16,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
                                 color: AppColors.textPrimary,
                               ),
                             ),
                             if (isSelected) ...[
                               const Spacer(),
-                                Icon(
-                        FontAwesomeIcons.circleCheck,
-                        size: 22,
-                        color: AppColors.primary,
-                      ),
+                              Icon(
+                                FontAwesomeIcons.circleCheck,
+                                size: 22,
+                                color: AppColors.primary,
+                              ),
                             ],
                           ],
                         ),
@@ -372,7 +401,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Your weekly goal',
+                AppLocalizations.of(context)!.yourWeeklyGoal,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -381,7 +410,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Set how many XP you want to earn per week.',
+                AppLocalizations.of(context)!.setHowManyXpYouWant,
                 style: TextStyle(
                   fontSize: 14,
                   color: AppColors.textSecondary,
@@ -392,7 +421,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                 controller: controller,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  labelText: 'XP per week',
+                  labelText: AppLocalizations.of(context)!.xpPerWeek,
                   hintText: 'e.g. 90',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -434,7 +463,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Please enter a valid positive number.'),
+                              content:
+                                  Text('Please enter a valid positive number.'),
                             ),
                           );
                         }
@@ -471,6 +501,26 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     );
   }
 
+  Future<void> _logout() async {
+    try {
+      await _oneSignalNotificationService.logout();
+      await Supabase.instance.client.auth.signOut();
+      if (!mounted) return;
+      ProfileStoreScope.of(context).clear();
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => const WelcomePage(),
+        ),
+        (route) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to log out: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -492,6 +542,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             UserAvatar(
+                              avatar: profile?.avatar,
                               avatarUrl: profile?.avatarUrl,
                               fullName: profile?.fullName,
                               radius: 44,
@@ -548,90 +599,225 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                         24,
                         32 + MediaQuery.of(context).padding.bottom,
                       ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Your target language
-                            Text(
-                              AppLocalizations.of(context)!.targetLanguage,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Your target language
+                          Text(
+                            AppLocalizations.of(context)!.targetLanguage,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
                             ),
-                            const SizedBox(height: 8),
-                            _buildLanguageRow(
-                              profile?.targetLanguage ?? 'en',
-                              target: true,
-                              onTap: _showTargetLanguageModal,
+                          ),
+                          const SizedBox(height: 8),
+                          _buildLanguageRow(
+                            profile?.targetLanguage ?? 'en',
+                            target: true,
+                            onTap: _showTargetLanguageModal,
+                          ),
+                          const SizedBox(height: 24),
+                          // Your reference language
+                          Text(
+                            AppLocalizations.of(context)!.sourceLanguage,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
                             ),
-                            const SizedBox(height: 24),
-                            // Your reference language
-                            Text(
-                              AppLocalizations.of(context)!.sourceLanguage,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildLanguageRow(
+                            profile?.nativeLanguage ?? 'en',
+                            target: false,
+                            onTap: _showReferenceLanguageModal,
+                          ),
+                          const SizedBox(height: 24),
+                          // Subscription / Upgrade
+                          Text(
+                            AppLocalizations.of(context)!.subscription,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
                             ),
-                            const SizedBox(height: 8),
-                            _buildLanguageRow(
-                              profile?.nativeLanguage ?? 'en',
-                              target: false,
-                              onTap: _showReferenceLanguageModal,
-                            ),
-                            const SizedBox(height: 24),
-                            // Your weekly goal + edit button
-                            Text(
-                              AppLocalizations.of(context)!.weekGoal,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 12,
+                          ),
+                          const SizedBox(height: 8),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () async {
+                                await presentPaywall();
+                                if (mounted) {
+                                  _loadProfileData();
+                                  ProfileStoreScope.of(context).load();
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.neutral,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.textGrey.withOpacity(0.5),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      FontAwesomeIcons.crown,
+                                      size: 22,
+                                      color: profile?.isPremium == true
+                                          ? AppColors.primary
+                                          : AppColors.textPrimary,
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.neutral,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: AppColors.textGrey.withOpacity(0.5),
-                                        width: 1,
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        profile?.isPremium == true
+                                            ? AppLocalizations.of(context)!
+                                                .manageSubscription
+                                            : AppLocalizations.of(context)!
+                                                .upgradeToPremium,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.textPrimary,
+                                        ),
                                       ),
                                     ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                    Icon(
+                                      FontAwesomeIcons.chevronRight,
+                                      size: 24,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          // Your weekly goal + edit button
+                          Text(
+                            AppLocalizations.of(context)!.weekGoal,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.neutral,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color:
+                                          AppColors.textGrey.withOpacity(0.5),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'XP',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${profile?.weeklyGoalXP ?? 90}',
+                                        style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Material(
+                                color: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  side: const BorderSide(color: Colors.black),
+                                ),
+                                child: InkWell(
+                                  onTap: _showEditWeeklyGoalModal,
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 10,
+                                    ),
+                                    child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text(
-                                          'XP',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                            color: AppColors.textSecondary,
-                                          ),
+                                        const Icon(
+                                          FontAwesomeIcons.pencil,
+                                          size: 20,
+                                          color: Colors.black,
                                         ),
-                                        const SizedBox(height: 2),
+                                        const SizedBox(width: 8),
                                         Text(
-                                          '${profile?.weeklyGoalXP ?? 90}',
+                                          AppLocalizations.of(context)!.edit,
                                           style: const TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.textPrimary,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.black,
                                           ),
                                         ),
                                       ],
                                     ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          // Your weekly goal + edit button
+                          Text(
+                            AppLocalizations.of(context)!.favoriteThemes,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Expanded(
+                                  child: Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: _interestThemes
+                                        .map((theme) => ThemeChip(
+                                            label: theme, isSelected: true))
+                                        .toList(),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -642,7 +828,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                                     side: const BorderSide(color: Colors.black),
                                   ),
                                   child: InkWell(
-                                    onTap: _showEditWeeklyGoalModal,
+                                    onTap: _showEditThemesBottomSheet,
                                     borderRadius: BorderRadius.circular(8),
                                     child: Padding(
                                       padding: const EdgeInsets.symmetric(
@@ -673,79 +859,120 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                                 ),
                               ],
                             ),
-                                                        const SizedBox(height: 24),
-                            // Your weekly goal + edit button
-                            Text(
-                              AppLocalizations.of(context)!.favoriteThemes,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
+                          ),
+                          const SizedBox(height: 24),
+                          // Rate the app
+                          Text(
+                            AppLocalizations.of(context)!.rateTheApp,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
                             ),
-                            const SizedBox(height: 8),
-                            IntrinsicHeight(
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Expanded(
-                                    child: Wrap(
-                                      spacing: 8,
-                                      runSpacing: 8,
-                                      children: _interestThemes.map((theme) => ThemeChip(label: theme, isSelected: true)).toList(),
+                          ),
+                          const SizedBox(height: 8),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () async {
+                                final opened = await AppReviewService.instance
+                                    .openStoreListing();
+                                if (mounted && !opened) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        AppLocalizations.of(context)!
+                                            .rateTheAppStoreUnavailable,
+                                      ),
+                                      behavior: SnackBarBehavior.floating,
                                     ),
+                                  );
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.neutral,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.textGrey.withOpacity(0.5),
+                                    width: 1,
                                   ),
-                                  const SizedBox(width: 12),
-                                  Material(
-                                    color: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      side: const BorderSide(color: Colors.black),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      FontAwesomeIcons.solidStar,
+                                      size: 22,
+                                      color: AppColors.primary,
                                     ),
-                                    child: InkWell(
-                                      onTap: _showEditThemesBottomSheet,
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 10,
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Icon(
-                                              FontAwesomeIcons.pencil,
-                                              size: 20,
-                                              color: Colors.black,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              AppLocalizations.of(context)!.edit,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                          ],
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        AppLocalizations.of(context)!
+                                            .rateTheApp,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.textPrimary,
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    Icon(
+                                      FontAwesomeIcons.chevronRight,
+                                      size: 24,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _logout,
+                              style: OutlinedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                side: const BorderSide(
+                                  color: AppColors.error,
+                                ),
+                                foregroundColor: AppColors.error,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              icon: const Icon(
+                                FontAwesomeIcons.rightFromBracket,
+                                size: 18,
+                              ),
+                              label: const Text(
+                                'Log out',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
+                ),
               ],
             ),
     );
   }
 
-  Widget _buildLanguageRow(String code, {required bool target, VoidCallback? onTap}) {
+  Widget _buildLanguageRow(String code,
+      {required bool target, VoidCallback? onTap}) {
     final name = getLanguageName(context, code);
     final path = getLanguageIconPath(code);
     final content = Container(
@@ -777,7 +1004,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           ),
           if (onTap != null) ...[
             const Spacer(),
-            Icon(FontAwesomeIcons.chevronRight, size: 24, color: AppColors.textSecondary),
+            Icon(FontAwesomeIcons.chevronRight,
+                size: 24, color: AppColors.textSecondary),
           ],
         ],
       ),

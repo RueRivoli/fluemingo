@@ -140,25 +140,8 @@ class _QuizContentWidgetState extends State<QuizContentWidget> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               children: [
-                const SizedBox(height: 16),
-                // Quiz image
-                Container(
-                  width: double.infinity,
-                  height: 120,
-                //   decoration: BoxDecoration(
-                //     color: Colors.white,
-                //     borderRadius: BorderRadius.circular(16),
-                //   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.asset(
-                      'assets/logo/quizlogo.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-
+                const SizedBox(height: 26),
+                // TODO: Add Quiz image ...
                 // Question text
                 Text(
                   currentQuestion.question,

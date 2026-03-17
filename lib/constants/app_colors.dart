@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Primary colors
-  static const Color primary = Color(0xFF8A8BDE);
+  static const Color primary = Color(0xFF8A8BDE); 
   static const Color secondary = Color(0xFFF6D75A);
   static const Color background = Color(0xFFF5F5F5);
   static const Color success = Color(0xFF55AD61);
@@ -17,8 +17,14 @@ class AppColors {
 
   static const Color white = Colors.white;
   static const Color black = Colors.black;
+  
   // Border colors
   static const Color borderBlack = Color(0xFF000000);
+  static const Color chipBackground = Color(0xFFE8E8E8);
+  static const Color chipText = Color(0xFF4A4A4A);
+
+  // Other colors
+  static const Color marketingColor = Color(0xFF849bff);
 }
 
 

@@ -1,6 +1,8 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -8,10 +10,16 @@ import '../../constants/app_colors.dart';
 import '../../config/supabase_config.dart';
 import '../home_page.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../l10n/app_localizations.dart';
+import '../../services/profile_service.dart';
+import '../../services/notification_token_sync_service.dart';
+import '../../services/onesignal_notification_service.dart';
+import '../../utils/avatar.dart';
 
 class RegistrationPage extends StatefulWidget {
   final String targetLanguage;
   final String nativeLanguage;
+  final String? avatar;
   final List<String>? favoriteThemes;
   final int? weeklyGoalXP;
   final VoidCallback? onComplete;
@@ -20,6 +28,7 @@ class RegistrationPage extends StatefulWidget {
     super.key,
     required this.targetLanguage,
     required this.nativeLanguage,
+    this.avatar,
     this.favoriteThemes,
     this.weeklyGoalXP,
     this.onComplete,
@@ -33,7 +42,29 @@ class _RegistrationPageState extends State<RegistrationPage> {
   bool _isLoadingApple = false;
   bool _isLoadingGoogle = false;
   bool _isLoadingFacebook = false;
+  bool _isLoadingEmail = false;
+  bool _obscurePassword = true;
   StreamSubscription<AuthState>? _authSubscription;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  late final ProfileService _profileService =
+      ProfileService(Supabase.instance.client);
+  late final NotificationTokenSyncService _notificationTokenSyncService =
+      NotificationTokenSyncService(_profileService);
+  late final OneSignalNotificationService _oneSignalNotificationService =
+      OneSignalNotificationService(_profileService);
+
+  String? get _selectedAvatar {
+    final value = widget.avatar?.trim();
+    if (value == null || value.isEmpty) return null;
+    return value;
+  }
+
+  String? get _selectedAvatarUrl {
+    final avatar = _selectedAvatar;
+    if (avatar == null) return null;
+    return buildOpenPeepsAvatarUrl(avatar);
+  }
 
   @override
   void initState() {
@@ -51,12 +82,19 @@ class _RegistrationPageState extends State<RegistrationPage> {
             _ensureProfileExists(session.user).then((_) {
               // Then update profile with language preferences
               return _updateProfileWithLanguages(session.user);
+            }).then((_) async {
+              await _oneSignalNotificationService.initialize();
+              await _oneSignalNotificationService
+                  .loginWithSupabaseUserId(session.user.id);
+              await _oneSignalNotificationService.requestPermission();
+              await _oneSignalNotificationService.syncSubscriptionIdToProfile();
+            }).then((_) {
+              // Backward-compatible fallback for older locally stored token keys.
+              return _notificationTokenSyncService.syncIfAvailable();
             }).then((_) {
               if (mounted) {
                 setState(() {
-                  _isLoadingFacebook = false;
-                  _isLoadingApple = false;
-                  _isLoadingGoogle = false;
+                  _resetLoadingStates();
                 });
                 widget.onComplete?.call();
                 Navigator.of(context).pushAndRemoveUntil(
@@ -69,9 +107,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
               debugPrint('Error ensuring/updating profile: $error');
               if (mounted) {
                 setState(() {
-                  _isLoadingFacebook = false;
-                  _isLoadingApple = false;
-                  _isLoadingGoogle = false;
+                  _resetLoadingStates();
                 });
                 widget.onComplete?.call();
                 Navigator.of(context).pushAndRemoveUntil(
@@ -87,9 +123,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
         debugPrint('Auth state change error: $error');
         if (mounted) {
           setState(() {
-            _isLoadingFacebook = false;
-            _isLoadingApple = false;
-            _isLoadingGoogle = false;
+            _resetLoadingStates();
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -105,7 +139,16 @@ class _RegistrationPageState extends State<RegistrationPage> {
   @override
   void dispose() {
     _authSubscription?.cancel();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
+  }
+
+  void _resetLoadingStates() {
+    _isLoadingFacebook = false;
+    _isLoadingApple = false;
+    _isLoadingGoogle = false;
+    _isLoadingEmail = false;
   }
 
   @override
@@ -113,120 +156,306 @@ class _RegistrationPageState extends State<RegistrationPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 60),
-
-            // Title
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: Text(
-                'Connexion',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textPrimary,
-                  height: 1.4,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 24),
+          child: Column(
+            children: [
+              // Top bar: back button
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 12, 24, 24),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(FontAwesomeIcons.arrowLeft),
+                      color: AppColors.textPrimary,
+                      iconSize: 22,
+                    )
+                  ],
                 ),
               ),
+
+              // Title
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Text(
+                  AppLocalizations.of(context)!.connexion,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 40),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F7FA),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFE6E6EF)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Temporary App Review login',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Sign in with an existing account only.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            autofillHints: const [AutofillHints.email],
+                            decoration: InputDecoration(
+                              labelText: 'Email',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            textInputAction: TextInputAction.done,
+                            autofillHints: const [AutofillHints.password],
+                            onSubmitted: (_) {
+                              if (!_isLoadingEmail) {
+                                _handleEmailLogin(context);
+                              }
+                            },
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? FontAwesomeIcons.eye
+                                      : FontAwesomeIcons.eyeSlash,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: _isLoadingEmail
+                                  ? null
+                                  : () => _handleEmailLogin(context),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.textPrimary,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: _isLoadingEmail
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                          Colors.white,
+                                        ),
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Sign in with email',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildDividerLabel(),
+                    const SizedBox(height: 24),
+
+                    // Social login buttons (Google & Apple: light style; Facebook: official blue)
+                    _buildGoogleLightButton(
+                      onTap: _isLoadingGoogle
+                          ? null
+                          : () => _handleGoogleLogin(context),
+                      isLoading: _isLoadingGoogle,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildAppleButton(
+                      onTap: _isLoadingApple
+                          ? null
+                          : () => _handleAppleLogin(context),
+                      isLoading: _isLoadingApple,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildFacebookButton(
+                      onTap: _isLoadingFacebook
+                          ? null
+                          : () => _handleFacebookLogin(context),
+                      isLoading: _isLoadingFacebook,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Official Facebook blue for "Continue with Facebook" button (brand guidelines).
+  static const Color _facebookBlue = Color(0xFF1877F2);
+  static const Color _googleBorder = Color(0xFFDADCE0);
+  static const Color _googleText = Color(0xFF3C4043);
+  static const double _socialButtonHeight = 56;
+
+  /// Google branded light button: white background, subtle border and Google "G" logo.
+  Widget _buildGoogleLightButton({
+    required VoidCallback? onTap,
+    bool isLoading = false,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Opacity(
+          opacity: onTap == null ? 0.5 : 1.0,
+          child: Container(
+            width: double.infinity,
+            height: _socialButtonHeight,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _googleBorder),
             ),
-
-            const SizedBox(height: 60),
-
-            // Social login buttons
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildSocialButton(
-                    context: context,
-                    icon: _buildLogoIcon('assets/logo/google.jpg'),
-                    label: 'Google',
-                    onTap: _isLoadingGoogle ? null : () => _handleGoogleLogin(context),
-                    isLoading: _isLoadingGoogle,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSocialButton(
-                    context: context,
-                    icon: _buildLogoIcon('assets/logo/apple.png'),
-                    label: 'Apple',
-                    onTap: _isLoadingApple ? null : () => _handleAppleLogin(context),
-                    isLoading: _isLoadingApple,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSocialButton(
-                    context: context,
-                    icon: _buildLogoIcon('assets/logo/facebook.png'),
-                    label: 'Facebook',
-                    onTap: _isLoadingFacebook ? null : () => _handleFacebookLogin(context),
-                    isLoading: _isLoadingFacebook,
+                  if (isLoading)
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(_googleText),
+                      ),
+                    )
+                  else
+                    SvgPicture.asset(
+                      'assets/logo/google.svg',
+                      width: 18,
+                      height: 18,
+                    ),
+                  const SizedBox(width: 12),
+                  Text(
+                    AppLocalizations.of(context)!.continueWithGoogle,
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: _googleText,
+                    ),
                   ),
                 ],
               ),
             ),
-
-            // Flamingo illustration
-            Expanded(
-              child: Center(
-                child: _buildFlamingoIllustration(),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSocialButton({
-    required BuildContext context,
-    required Widget icon,
-    required String label,
+  Widget _buildAppleButton({
     required VoidCallback? onTap,
     bool isLoading = false,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Opacity(
-        opacity: onTap == null ? 0.5 : 1.0,
-        child: Container(
-          width: double.infinity,
-          height: 56,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.grey.shade300,
-              width: 1,
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (isLoading)
-                  const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Opacity(
+          opacity: onTap == null ? 0.5 : 1.0,
+          child: SizedBox(
+            width: double.infinity,
+            height: _socialButtonHeight,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (isLoading)
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  else
+                    const Icon(
+                      FontAwesomeIcons.apple,
+                      size: 20,
+                      color: Colors.white,
                     ),
-                  )
-                else
-                  icon,
-                if (isLoading) const SizedBox(width: 16),
-                const SizedBox(width: 16),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
+                  const SizedBox(width: 12),
+                  Text(
+                    AppLocalizations.of(context)!.continueWithApple,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -234,38 +463,132 @@ class _RegistrationPageState extends State<RegistrationPage> {
     );
   }
 
-  Widget _buildLogoIcon(String assetPath) {
-    return Image.asset(
-      assetPath,
-      width: 24,
-      height: 24,
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) {
-        return Container(
-          width: 24,
-          height: 24,
-          color: Colors.grey[300],
-        );
-      },
+  /// Facebook button following official guidelines: blue background, white icon + text.
+  Widget _buildFacebookButton({
+    required VoidCallback? onTap,
+    bool isLoading = false,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Opacity(
+          opacity: onTap == null ? 0.5 : 1.0,
+          child: Container(
+            width: double.infinity,
+            height: _socialButtonHeight,
+            decoration: BoxDecoration(
+              color: _facebookBlue,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (isLoading)
+                    const SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  else
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: Icon(
+                        FontAwesomeIcons.facebook,
+                        size: 20,
+                        color: Colors.white,
+                      ),
+                    ),
+                  const SizedBox(width: 12),
+                  Text(
+                    AppLocalizations.of(context)!.continueWithFacebook,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildFlamingoIllustration() {
-    return Image.asset(
-      'assets/logo/flamingo.png',
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) {
-        return Container(
-          width: 200,
-          height: 280,
-          color: Colors.grey[300],
-          child: const Icon(
-            FontAwesomeIcons.image,
-            color: Colors.grey,
+  Widget _buildDividerLabel() {
+    return Row(
+      children: [
+        const Expanded(child: Divider(color: Color(0xFFE0E0E8))),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            'or continue with',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
           ),
-        );
-      },
+        ),
+        const Expanded(child: Divider(color: Color(0xFFE0E0E8))),
+      ],
     );
+  }
+
+  Future<void> _handleEmailLogin(BuildContext context) async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter your email and password to sign in.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoadingEmail = true;
+    });
+
+    try {
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingEmail = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingEmail = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Email sign-in failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _handleGoogleLogin(BuildContext context) async {
@@ -275,14 +598,19 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
     try {
       final supabase = Supabase.instance.client;
-    
-      // The iOS clientId is configured in Info.plist (GIDClientID)
+
+      // Web: use Supabase OAuth redirect (no native Google Sign-In on web).
+      if (kIsWeb) {
+        await supabase.auth.signInWithOAuth(OAuthProvider.google);
+        return; // Page redirects to Google and back; auth state listener handles success.
+      }
+
+      // Mobile (iOS/Android): native Google Sign-In. iOS clientId in Info.plist (GIDClientID).
       final googleSignIn = GoogleSignIn.instance;
       await googleSignIn.initialize(
           serverClientId: SupabaseConfig.googleWebClientId,
-          clientId: SupabaseConfig.iosClientId
-        );
-      
+          clientId: SupabaseConfig.iosClientId);
+
       // Sign in with Google using the new authenticate() method
       final GoogleSignInAccount googleUser;
       try {
@@ -299,35 +627,35 @@ class _RegistrationPageState extends State<RegistrationPage> {
         }
         rethrow;
       }
-      
+
       // Obtain the auth details from the account
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
-      
+
       // Extract ID token (accessToken is no longer available in v7+)
       final String? idToken = googleAuth.idToken;
-      
+
       if (idToken == null) {
         throw Exception('Impossible d\'obtenir le token ID de Google');
       }
-      
+
       // Sign in to Supabase with the Google ID token
       await supabase.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
       );
-      
+
       // The auth state listener in initState will handle the callback
       // and profile creation/update
-      
     } catch (e) {
       if (mounted) {
         setState(() {
           _isLoadingGoogle = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur lors de la connexion Google: ${e.toString()}'),
+            content:
+                Text('Erreur lors de la connexion Google: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -342,10 +670,11 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
     try {
       final supabase = Supabase.instance.client;
-      
+
       // On Android, use OAuth flow directly (native Apple Sign In requires webAuthenticationOptions)
       // On iOS, check if native Apple Sign In is available
-      if (defaultTargetPlatform == TargetPlatform.android || !await SignInWithApple.isAvailable()) {
+      if (defaultTargetPlatform == TargetPlatform.android ||
+          !await SignInWithApple.isAvailable()) {
         // Fallback to OAuth flow if native Apple Sign In is not available or on Android
         const redirectUrl = 'com.fluemingo.app://login-callback';
         await supabase.auth.signInWithOAuth(
@@ -355,7 +684,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
         );
         return;
       }
-      
+
       // Use native Apple Sign In (iOS only)
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: [
@@ -363,22 +692,24 @@ class _RegistrationPageState extends State<RegistrationPage> {
           AppleIDAuthorizationScopes.fullName,
         ],
       );
-      
+
       // Extract full name if available (only on first sign-in)
       String? fullName;
       if (credential.givenName != null || credential.familyName != null) {
-        fullName = '${credential.givenName ?? ''} ${credential.familyName ?? ''}'.trim();
+        fullName =
+            '${credential.givenName ?? ''} ${credential.familyName ?? ''}'
+                .trim();
         if (fullName.isEmpty) {
           fullName = null;
         }
       }
-      
+
       // Sign in to Supabase with the Apple ID token
       await supabase.auth.signInWithIdToken(
         provider: OAuthProvider.apple,
         idToken: credential.identityToken!,
       );
-      
+
       // Update profile with full name if available
       // Note: fullName is only provided on first sign-in with Apple
       if (fullName != null) {
@@ -389,14 +720,11 @@ class _RegistrationPageState extends State<RegistrationPage> {
             // The auth state listener will also call _ensureProfileExists,
             // but we update it here to ensure the fullName is saved
             try {
-              // Try to update existing profile
-              await supabase.from('profiles').update({
-                'full_name': fullName,
-                'updated_at': DateTime.now().toIso8601String(),
-              }).eq('id', currentUser.id);
+              await _profileService.updateFullName(fullName);
             } catch (e) {
               // If update fails, try to insert (profile might not exist yet)
-              debugPrint('Profile update failed, will be created by listener: $e');
+              debugPrint(
+                  'Profile update failed, will be created by listener: $e');
             }
           }
         } catch (e) {
@@ -404,23 +732,22 @@ class _RegistrationPageState extends State<RegistrationPage> {
           // Continue anyway - _ensureProfileExists will handle it
         }
       }
-      
+
       // The auth state listener in initState will handle the callback
       // and profile creation/update
-      
     } catch (e) {
       if (mounted) {
         setState(() {
           _isLoadingApple = false;
         });
-        
+
         // Handle user cancellation gracefully
         if (e is SignInWithAppleAuthorizationException) {
           if (e.code == AuthorizationErrorCode.canceled) {
             return; // User canceled, don't show error
           }
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erreur lors de la connexion Apple: ${e.toString()}'),
@@ -439,21 +766,21 @@ class _RegistrationPageState extends State<RegistrationPage> {
     try {
       final supabase = Supabase.instance.client;
       const redirectUrl = 'com.fluemingo.app://login-callback';
-        await supabase.auth.signInWithOAuth(
-          OAuthProvider.facebook,
-          redirectTo: redirectUrl,
-          authScreenLaunchMode: LaunchMode.inAppBrowserView,
-        );
-        
+      await supabase.auth.signInWithOAuth(
+        OAuthProvider.facebook,
+        redirectTo: redirectUrl,
+        authScreenLaunchMode: LaunchMode.inAppBrowserView,
+      );
     } catch (e) {
       if (mounted) {
         setState(() {
           _isLoadingFacebook = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur lors de la connexion Facebook: ${e.toString()}'),
+            content:
+                Text('Erreur lors de la connexion Facebook: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -464,48 +791,47 @@ class _RegistrationPageState extends State<RegistrationPage> {
   /// Ensures the user profile exists in the database
   /// This handles cases where the database trigger might have failed
   Future<void> _ensureProfileExists(User user) async {
-    final supabase = Supabase.instance.client;
-    
     try {
       // Check if profile exists
-      final response = await supabase
+      final response = await Supabase.instance.client
           .from('profiles')
           .select('id')
           .eq('id', user.id)
           .maybeSingle();
-      
+
       // If profile doesn't exist, create it
       if (response == null) {
         debugPrint('Profile does not exist, creating it...');
-        
+
         // Extract user data from metadata (handles different OAuth providers)
         final metadata = user.userMetadata ?? {};
-        
+
         // Facebook uses different field names
-        final nameFromMetadata = metadata['full_name'] ?? 
-                                 metadata['name'] ?? 
-                                 metadata['user_name'];
+        final nameFromMetadata =
+            metadata['full_name'] ?? metadata['name'] ?? metadata['user_name'];
         final firstName = metadata['first_name'] ?? '';
         final lastName = metadata['last_name'] ?? '';
         final nameFromParts = '$firstName $lastName'.trim();
-        final fullName = nameFromMetadata ?? 
-                        (nameFromParts.isNotEmpty ? nameFromParts : null) ??
-                        user.email?.split('@').first ??
-                        'User';
-        
-        final avatarUrl = metadata['avatar_url'] ?? 
-                         metadata['picture'] ??
-                         metadata['picture_url'];
-        
-        await supabase.from('profiles').insert({
+        final fullName = nameFromMetadata ??
+            (nameFromParts.isNotEmpty ? nameFromParts : null) ??
+            user.email?.split('@').first ??
+            'User';
+
+        final avatarUrl = metadata['avatar_url'] ??
+            metadata['picture'] ??
+            metadata['picture_url'];
+
+        final profileData = {
           'id': user.id,
           'email': user.email ?? user.phone,
           'full_name': fullName.isEmpty ? 'User' : fullName,
-          'avatar_url': avatarUrl,
+          'avatar': _selectedAvatar,
+          'avatar_url': _selectedAvatarUrl ?? avatarUrl,
           'created_at': DateTime.now().toIso8601String(),
           'updated_at': DateTime.now().toIso8601String(),
-        });
-        
+        };
+        await _profileService.insertProfile(profileData);
+
         debugPrint('Profile created successfully');
       }
     } catch (e) {
@@ -517,8 +843,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
   /// Updates the user profile with language preferences from onboarding
   /// This is called after successful OAuth authentication
   Future<void> _updateProfileWithLanguages(User user) async {
-    final supabase = Supabase.instance.client;
-    
     try {
       // Update profile with language preferences
       // The profile should already exist (either from trigger or _ensureProfileExists)
@@ -527,6 +851,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
         'native_language': widget.nativeLanguage,
         'updated_at': DateTime.now().toIso8601String(),
       };
+      if (_selectedAvatar != null) {
+        updateData['avatar'] = _selectedAvatar;
+        updateData['avatar_url'] = _selectedAvatarUrl;
+      }
       if (widget.weeklyGoalXP != null) {
         updateData['weekly_goal'] = widget.weeklyGoalXP;
       }
@@ -537,35 +865,32 @@ class _RegistrationPageState extends State<RegistrationPage> {
               i < themes.length ? themes[i] : null;
         }
       }
-      await supabase
-          .from('profiles')
-          .update(updateData)
-          .eq('id', user.id);
+      await _profileService.updateProfileData(updateData);
     } catch (e) {
       debugPrint('Error updating profile with languages: $e');
       // If update fails, try to create the profile with all data
       try {
         final metadata = user.userMetadata ?? {};
-        final nameFromMetadata = metadata['full_name'] ?? 
-                                 metadata['name'] ?? 
-                                 metadata['user_name'];
+        final nameFromMetadata =
+            metadata['full_name'] ?? metadata['name'] ?? metadata['user_name'];
         final firstName = metadata['first_name'] ?? '';
         final lastName = metadata['last_name'] ?? '';
         final nameFromParts = '$firstName $lastName'.trim();
-        final fullName = nameFromMetadata ?? 
-                        (nameFromParts.isNotEmpty ? nameFromParts : null) ??
-                        user.email?.split('@').first ??
-                        'User';
-        
-        final avatarUrl = metadata['avatar_url'] ?? 
-                         metadata['picture'] ??
-                         metadata['picture_url'];
-        
+        final fullName = nameFromMetadata ??
+            (nameFromParts.isNotEmpty ? nameFromParts : null) ??
+            user.email?.split('@').first ??
+            'User';
+
+        final avatarUrl = metadata['avatar_url'] ??
+            metadata['picture'] ??
+            metadata['picture_url'];
+
         final insertData = <String, dynamic>{
           'id': user.id,
           'email': user.email ?? user.phone,
           'full_name': fullName.isEmpty ? 'User' : fullName,
-          'avatar_url': avatarUrl,
+          'avatar': _selectedAvatar,
+          'avatar_url': _selectedAvatarUrl ?? avatarUrl,
           'target_language': widget.targetLanguage,
           'native_language': widget.nativeLanguage,
           'created_at': DateTime.now().toIso8601String(),
@@ -579,7 +904,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 i < themes.length ? themes[i] : null;
           }
         }
-        await supabase.from('profiles').insert(insertData);
+        await _profileService.insertProfile(insertData);
       } catch (insertError) {
         debugPrint('Error creating profile with languages: $insertError');
         // Don't rethrow - allow user to continue even if profile update fails
@@ -587,4 +912,3 @@ class _RegistrationPageState extends State<RegistrationPage> {
     }
   }
 }
-

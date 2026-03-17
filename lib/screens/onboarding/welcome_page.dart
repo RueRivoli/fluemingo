@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../constants/app_colors.dart';
 import 'target_language_page.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../l10n/app_localizations.dart';
 
 class WelcomePage extends StatelessWidget {
   final VoidCallback? onComplete;
@@ -11,20 +13,22 @@ class WelcomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.marketingColor,
       body: SafeArea(
         child: Column(
           children: [
             // Spacer at top
             const SizedBox(height: 60),
             
-            // App Title
+            // App Logo & Title
+            Image.asset('assets/logo/app-logo.png', height: 48),
+            const SizedBox(height: 12),
             const Text(
               'Fluemingo',
               style: TextStyle(
                 fontSize: 42,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: Colors.white,
                 letterSpacing: -1,
               ),
             ),
@@ -39,14 +43,39 @@ class WelcomePage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.textPrimary,
+                    color: Colors.white,
                     height: 1.5,
                   ),
                   children: [
-                    const TextSpan(text: 'Learn with your '),
+                    TextSpan(text: AppLocalizations.of(context)!.learn),
+                                        const WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: SizedBox(width: 10),
+                    ),
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: SvgPicture.asset('assets/images/languages/english.svg', height: 24),
+                    ),
+                    const WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: SizedBox(width: 4),
+                    ),
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: SvgPicture.asset('assets/images/languages/french.svg', height: 24),
+                    ),
+                                        const WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: SizedBox(width: 10),
+                    ),
+                    TextSpan(text: AppLocalizations.of(context)!.withYour),
+                      const WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: SizedBox(width: 5),
+                    ),
                     TextSpan(
-                      text: 'favorite content',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                      text: AppLocalizations.of(context)!.favoriteContent,
+                      style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.secondary),
                     ),
                     const TextSpan(text: '.'),
                   ],
@@ -62,14 +91,18 @@ class WelcomePage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.textPrimary,
+                    color: Colors.white,
                     height: 1.5,
                   ),
                   children: [
-                    const TextSpan(text: 'Build a '),
+                    TextSpan(text: AppLocalizations.of(context)!.buildA),
+                    const WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: SizedBox(width: 5),
+                    ),
                     TextSpan(
-                      text: 'Strong, Lasting Vocabulary',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                      text: AppLocalizations.of(context)!.strongLastingVocabulary,
+                      style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.secondary),
                     ),
                     const TextSpan(text: '.'),
                   ],
@@ -88,56 +121,6 @@ class WelcomePage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 40),
                     child: Column(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(FontAwesomeIcons.arrowRight, size: 14, color: AppColors.textSecondary),
-                            const SizedBox(width: 8),
-                            Text(
-                              'articles about topics you love',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(FontAwesomeIcons.arrowRight, size: 14, color: AppColors.textSecondary),
-                            const SizedBox(width: 8),
-                            Text(
-                              'articles about current events',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(FontAwesomeIcons.arrowRight, size: 14, color: AppColors.textSecondary),
-                            const SizedBox(width: 8),
-                            Text(
-                              'audiobooks about topics you love',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   ),
@@ -172,7 +155,7 @@ class WelcomePage extends StatelessWidget {
                   width: double.infinity,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: AppColors.secondary,
+                    color: const Color(0xFFf6d75a),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: Colors.black,

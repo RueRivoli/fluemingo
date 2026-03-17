@@ -8,7 +8,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class FlashcardsPage extends StatefulWidget {
   final bool isVisible;
-  
+
   const FlashcardsPage({super.key, this.isVisible = false});
 
   @override
@@ -17,7 +17,21 @@ class FlashcardsPage extends StatefulWidget {
 
 class _FlashcardsPageState extends State<FlashcardsPage> {
   late final FlashcardService flashcardService;
-  List<int> counts = [0, 0, 0, 0]; // Initialize with default values to avoid index errors
+  List<int> counts = [
+    0,
+    0,
+    0,
+    0
+  ]; // Initialize with default values to avoid index errors
+
+  String _toTitleCase(String value) {
+    return value
+        .split(' ')
+        .map((word) => word.isEmpty
+            ? word
+            : '${word[0].toUpperCase()}${word.substring(1)}')
+        .join(' ');
+  }
 
   @override
   void initState() {
@@ -41,7 +55,6 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
       setState(() {
         counts = fetchedCounts;
       });
-      print("counts: $counts");
     }
   }
 
@@ -68,23 +81,35 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-              child: Text(
-                AppLocalizations.of(context)!.flashcardsVocabulary,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textPrimary,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _toTitleCase(
+                      AppLocalizations.of(context)!.flashcardsVocabulary,
+                    ),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const FaIcon(
+                    FontAwesomeIcons.thinCardsBlank,
+                    size: 16,
+                    color: AppColors.textPrimary,
+                  ),
+                ],
               ),
             ),
 
             // Three colored boxes
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  children: [
-                    // Saved - Primary color
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isTabletLayout = constraints.maxWidth >= 700;
+                  final sections = <Widget>[
                     _buildFlashcardBox(
                       context: context,
                       backgroundColor: Colors.white,
@@ -92,15 +117,13 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                       textColor: Colors.black,
                       imagePath: 'assets/images/flashcards/saved_purple.png',
                       title: AppLocalizations.of(context)!.saved,
-                      bodyText: AppLocalizations.of(context)!.yourSavedVocabulary,
+                      bodyText:
+                          AppLocalizations.of(context)!.yourSavedVocabulary,
                       count: counts[0],
                       icon: FontAwesomeIcons.floppyDisk,
                       categoryName: 'saved',
                       shapeColor: AppColors.primary,
                     ),
-                    const SizedBox(height: 12),
-                    
-                    // Oops - Red color
                     _buildFlashcardBox(
                       context: context,
                       backgroundColor: Colors.white,
@@ -108,31 +131,28 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                       textColor: Colors.black,
                       imagePath: 'assets/images/flashcards/difficult_red.png',
                       title: 'Oops',
-                      bodyText: AppLocalizations.of(context)!.difficultVocabulary,
+                      bodyText:
+                          AppLocalizations.of(context)!.difficultVocabulary,
                       count: counts[1],
                       icon: FontAwesomeIcons.triangleExclamation,
                       categoryName: 'difficult',
                       shapeColor: AppColors.error,
                     ),
-                    const SizedBox(height: 12),
-                    
-                    // Repeat - Secondary color
                     _buildFlashcardBox(
                       context: context,
                       backgroundColor: Colors.white,
                       borderColor: Colors.white,
                       textColor: Colors.black,
-                      imagePath: 'assets/images/flashcards/training_secondary.png',
+                      imagePath:
+                          'assets/images/flashcards/training_secondary.png',
                       title: AppLocalizations.of(context)!.repeat,
-                      bodyText: AppLocalizations.of(context)!.vocabularyForTraining,
+                      bodyText:
+                          AppLocalizations.of(context)!.vocabularyForTraining,
                       count: counts[2],
                       icon: FontAwesomeIcons.dumbbell,
                       categoryName: 'training',
                       shapeColor: AppColors.secondary,
                     ),
-                    const SizedBox(height: 12),
-                    
-                    // Mastered - Green color
                     _buildFlashcardBox(
                       context: context,
                       backgroundColor: Colors.white,
@@ -140,14 +160,45 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                       textColor: Colors.black,
                       imagePath: 'assets/images/flashcards/achieved_green.png',
                       title: AppLocalizations.of(context)!.mastered,
-                      bodyText: AppLocalizations.of(context)!.vocabularyAcquired,
+                      bodyText:
+                          AppLocalizations.of(context)!.vocabularyAcquired,
                       count: counts[3],
                       icon: FontAwesomeIcons.badgeCheck,
                       categoryName: 'mastered',
                       shapeColor: AppColors.success,
                     ),
-                  ],
-                ),
+                  ];
+
+                  if (!isTabletLayout) {
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: [
+                          for (int i = 0; i < sections.length; i++) ...[
+                            sections[i],
+                            if (i < sections.length - 1)
+                              const SizedBox(height: 12),
+                          ],
+                        ],
+                      ),
+                    );
+                  }
+
+                  final sectionWidth = (constraints.maxWidth - 40 - 12) / 2;
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: sections
+                          .map((section) => SizedBox(
+                                width: sectionWidth,
+                                child: section,
+                              ))
+                          .toList(),
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -174,9 +225,17 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
       height: 110,
       decoration: BoxDecoration(
         color: backgroundColor,
-       borderRadius: BorderRadius.circular(12),
-       border: Border.all(
-          color: categoryName == 'saved' ? AppColors.primary.withOpacity(0.7) : categoryName == 'difficult' ? AppColors.error.withOpacity(0.7) : categoryName == 'training' ? Colors.black.withOpacity(0.3) : categoryName == 'mastered' ? AppColors.success.withOpacity(0.7) : AppColors.primary.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: categoryName == 'saved'
+              ? AppColors.primary.withOpacity(0.7)
+              : categoryName == 'difficult'
+                  ? AppColors.error.withOpacity(0.7)
+                  : categoryName == 'training'
+                      ? Colors.black.withOpacity(0.3)
+                      : categoryName == 'mastered'
+                          ? AppColors.success.withOpacity(0.7)
+                          : AppColors.primary.withOpacity(0.7),
           width: 1,
         ),
         boxShadow: [
@@ -189,7 +248,7 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
       ),
       child: Material(
         color: Colors.transparent,
-          child: InkWell(
+        child: InkWell(
           onTap: () async {
             final result = await Navigator.push(
               context,
@@ -205,157 +264,155 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
             }
           },
           borderRadius: BorderRadius.circular(12),
-          child: Stack(
-            children: [
-              // Colored curved shape on the right side
-              Positioned(
-                right: 0,
-                top: 0,
-                bottom: 0,
-                width: 140,
-                child: CustomPaint(
-                  painter: CurvedShapePainter(color: shapeColor),
-                ),
+          child: Stack(children: [
+            // Colored curved shape on the right side
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: 140,
+              child: CustomPaint(
+                painter: CurvedShapePainter(color: shapeColor),
               ),
-              // Image on the right side
-              Positioned(
-                right: 0,
-                top: 0,
-                bottom: 0,
-                width: 120,
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 10),
-                    child: Transform.rotate(
-                      angle: -0.2, // Rotate approximately -11.5 degrees
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
-                              width: 2,
-                            ),
+            ),
+            // Image on the right side
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: 120,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: Transform.rotate(
+                    angle: -0.2, // Rotate approximately -11.5 degrees
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.3),
+                            width: 2,
                           ),
-                          child: Image.asset(
-                            imagePath,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Icon(
-                                Icons.image_not_supported,
-                                size: 50,
-                                color: Colors.white,
-                              );
-                            },
-                          ),
+                        ),
+                        child: Image.asset(
+                          imagePath,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(
+                              Icons.image_not_supported,
+                              size: 50,
+                              color: Colors.white,
+                            );
+                          },
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-              // Content
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                child: Row(
-                  children: [
-                    // Left side - Text content
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Title and Description
-                          Flexible(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Row(
-                                  children: [
-                                    if (icon != null) ...[
-                                      Icon(
-                                        icon,
-                                        size: 20,
+            ),
+            // Content
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  // Left side - Text content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Title and Description
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                children: [
+                                  if (icon != null) ...[
+                                    Icon(
+                                      icon,
+                                      size: 20,
+                                      color: textColor,
+                                    ),
+                                    const SizedBox(width: 14),
+                                  ],
+                                  Flexible(
+                                    child: Text(
+                                      title,
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w700,
                                         color: textColor,
-                                      ),
-                                      const SizedBox(width: 14),
-                                    ],
-                                    Flexible(
-                                      child: Text(
-                                        title,
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w700,
-                                          color: textColor,
-                                          letterSpacing: -0.5,
-                                        ),
+                                        letterSpacing: -0.5,
                                       ),
                                     ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  bodyText,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w400,
-                                    color: textColor.withOpacity(0.9),
-                                    height: 1.3,
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Count indicator badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: shapeColor.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.black.withOpacity(0.3),
-                                width: 1,
+                                ],
                               ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  count.toString(),
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.black,
-                                  ),
+                              const SizedBox(height: 4),
+                              Text(
+                                bodyText,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w400,
+                                  color: textColor.withOpacity(0.9),
+                                  height: 1.3,
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'items',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Count indicator badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: shapeColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.black.withOpacity(0.3),
+                              width: 1,
                             ),
                           ),
-                        ],
-                      ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                count.toString(),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'items',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ]
-          ),
+            ),
+          ]),
         ),
       ),
     );
@@ -375,12 +432,12 @@ class CurvedShapePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final borderRadius = 12.0; // Match the container's border radius
-    
+
     final path = Path();
-    
+
     // Start from top-left with a curve
     path.moveTo(0, 0);
-    
+
     // Create a smooth curved edge on the left side
     // The curve starts from top and curves inward, then back out at the bottom
     path.cubicTo(
@@ -391,21 +448,21 @@ class CurvedShapePainter extends CustomPainter {
       size.width * 0.2, // End point x
       size.height, // End point y (bottom)
     );
-    
+
     // Continue to bottom-right, then add rounded corner
     path.lineTo(size.width - borderRadius, size.height);
     path.quadraticBezierTo(
       size.width, size.height, // Control point (corner)
       size.width, size.height - borderRadius, // End point
     );
-    
+
     // Continue up the right edge, then add rounded top-right corner
     path.lineTo(size.width, borderRadius);
     path.quadraticBezierTo(
       size.width, 0, // Control point (corner)
       size.width - borderRadius, 0, // End point
     );
-    
+
     // Close the path back to start
     path.close();
 
@@ -415,4 +472,3 @@ class CurvedShapePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-

@@ -25,29 +25,24 @@ class QuizController extends ChangeNotifier {
 
   /// Initialize quiz by fetching questions and creating quiz result
   Future<void> initializeQuiz(bool retry) async {
-    print('Initializing quiz for content type: $contentType');
     try {
       isLoading = true;
       notifyListeners();
       final contentId = contentType == 1 ? int.tryParse(articleId!) : int.tryParse(chapterId!);
-       print('CHAPTER ID: $chapterId');
       if (contentType == 1 && contentId == null) {
         isLoading = false;
         notifyListeners();
         return;
       }
-      print('TRY');
       if (contentType == 2 && chapterId == null) {
         isLoading = false;
         notifyListeners();
         return;
       }
-      print('Cezfzezfe');
       // Fetch quiz questions for this content
       final fetchedQuestions = contentType == 1 
           ? await _quizService.getQuizQuestionsForArticleContent(contentId!) 
           : await _quizService.getQuizQuestionsForChapterContent(chapterId!);
-      print('Fetched questions: $fetchedQuestions');
       if (fetchedQuestions.isNotEmpty) {
         // Get current user
         final user = Supabase.instance.client.auth.currentUser;

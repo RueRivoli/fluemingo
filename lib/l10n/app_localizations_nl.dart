@@ -9,7 +9,25 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get fiveMinutesADay => '\'5 min/dag\'';
+
+  @override
+  String get fifteenMinutesADay => '\'15 min/dag\'';
+
+  @override
+  String get thirtyMinutesADay => '\'30 min/dag\'';
+
+  @override
+  String get oneHourADay => '\'1 u/dag\'';
+
+  @override
   String get activeFilters => 'Actieve filters';
+
+  @override
+  String get addedByUser => 'Door jou toegevoegd';
+
+  @override
+  String get all => 'Alle niveaus';
 
   @override
   String get allLevels => 'Alle';
@@ -29,6 +47,16 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String areYouSureYouWantToDeleteReferenceLanguage(Object languageName) {
+    return 'Weet je zeker dat je je referentietaal wilt wijzigen naar $languageName?\n\nDeze wijziging heeft gevolgen voor eerder vertaalde woorden.';
+  }
+
+  @override
+  String areYouSureYouWantToDeleteTargetLanguage(Object languageName) {
+    return 'Weet je zeker dat je je doeltaal wilt wijzigen naar $languageName?\n\nDeze wijziging heeft gevolgen voor eerder vertaalde woorden.';
+  }
+
+  @override
   String get art => 'Kunst';
 
   @override
@@ -38,10 +66,22 @@ class AppLocalizationsNl extends AppLocalizations {
   String get audiobooks => 'Luisterboeken';
 
   @override
+  String get back => 'Terug';
+
+  @override
   String get biography => 'Biografie';
 
   @override
+  String get buildA => 'bouw een';
+
+  @override
   String get cancel => 'Annuleren';
+
+  @override
+  String get changeStatus => 'Status wijzigen';
+
+  @override
+  String get changeLanguage => 'Taal wijzigen';
 
   @override
   String get chapters => 'Hoofdstukken';
@@ -64,13 +104,31 @@ class AppLocalizationsNl extends AppLocalizations {
   String get completedQuizzes => 'Voltooide quizzen';
 
   @override
+  String get confirm => 'Bevestigen';
+
+  @override
   String get contentInProgress => 'Lopende inhoud';
 
   @override
   String get continueReadingToEarnXP => 'Blijf lezen om XP te verdienen';
 
   @override
+  String get connexion => 'Inloggen';
+
+  @override
+  String get continueWithApple => 'Doorgaan met Apple';
+
+  @override
+  String get continueWithFacebook => 'Doorgaan met Facebook';
+
+  @override
+  String get continueWithGoogle => 'Doorgaan met Google';
+
+  @override
   String get culture => 'Cultuur';
+
+  @override
+  String get dailyGoal => 'Dagelijks doel';
 
   @override
   String get definition => 'Definitie';
@@ -80,6 +138,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get deleteVocabularyItem => 'Dit woordenlijstitem verwijderen';
+
+  @override
+  String get difficult => 'Moeilijk';
 
   @override
   String get difficultVocabulary => 'Moeilijke woordenschat';
@@ -92,6 +153,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get education => 'Onderwijs';
+
+  @override
+  String get extreme => 'Extreem';
 
   @override
   String get fashion => 'Mode';
@@ -128,10 +192,43 @@ class AppLocalizationsNl extends AppLocalizations {
   String get finishedAudiobooks => 'Voltooide luisterboeken';
 
   @override
+  String get finishedChaptersAudiobooks => 'Audiohoofdstukken';
+
+  @override
   String get flashcardsVocabulary => 'Woordenschat-flashcards';
 
   @override
   String get fontSize => 'Lettergrootte';
+
+  @override
+  String goalIntensity(String intensity) {
+    String _temp0 = intl.Intl.selectLogic(
+      intensity,
+      {
+        'light': 'licht',
+        'regular': 'regelmatig',
+        'high': 'hoog',
+        'extreme': 'extreem',
+        'other': '',
+      },
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String goalDuration(String duration) {
+    String _temp0 = intl.Intl.selectLogic(
+      duration,
+      {
+        'fiveMinutesADay': '5 min/dag',
+        'fifteenMinutesADay': '15 min/dag',
+        'thirtyMinutesADay': '30 min/dag',
+        'oneHourADay': '1 u/dag',
+        'other': '',
+      },
+    );
+    return '$_temp0';
+  }
 
   @override
   String get gastronomy => 'Gastronomie';
@@ -144,6 +241,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get health => 'Gezondheid';
+
+  @override
+  String get high => 'hoog';
 
   @override
   String get history => 'Geschiedenis';
@@ -191,10 +291,16 @@ class AppLocalizationsNl extends AppLocalizations {
   String get languageJa => 'Japans';
 
   @override
+  String get learn => 'Leren';
+
+  @override
   String get literature => 'Literatuur';
 
   @override
   String get level => 'Niveau';
+
+  @override
+  String get light => 'Licht';
 
   @override
   String get mainVocabulary => 'Hoofdwoordenschat';
@@ -268,6 +374,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get readFlashcards => 'Flashcards lezen';
 
   @override
+  String get regular => 'Regelmatig';
+
+  @override
   String get repeat => 'Oefenen';
 
   @override
@@ -277,10 +386,31 @@ class AppLocalizationsNl extends AppLocalizations {
   String get saved => 'Opgeslagen';
 
   @override
+  String get savedVocabulary => 'Opgeslagen woordenschat';
+
+  @override
   String get science => 'Wetenschap';
 
   @override
-  String get savedVocabulary => 'Opgeslagen woordenschat';
+  String get selectGoal => 'Kies een doel om gemotiveerd te blijven';
+
+  @override
+  String selectUpToThemes(Object maxSelection) {
+    return 'Selecteer tot $maxSelection thema\'s.';
+  }
+
+  @override
+  String get setHowManyXpYouWant =>
+      'Stel in hoeveel XP je per week wilt verdienen.';
+
+  @override
+  String get signInWithApple => 'Inloggen met Apple';
+
+  @override
+  String get signInWithFacebook => 'Doorgaan met Facebook';
+
+  @override
+  String get signInWithGoogle => 'Inloggen met Google';
 
   @override
   String get showOnlyFavoriteArticles => 'Alleen favoriete artikelen tonen';
@@ -299,7 +429,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sport => 'Sport';
 
   @override
-  String get startToRead => 'Begin met lezen';
+  String get startToRead => 'Begin met Lezen';
+
+  @override
+  String get strongLastingVocabulary => 'Sterke en blijvende woordenschat';
 
   @override
   String get tale => 'Sprookje';
@@ -312,6 +445,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get testYourKnowledge => 'Test je kennis';
+
+  @override
+  String get training => 'Oefenen';
 
   @override
   String get trainingVocabulary => 'Oefenwoordenschat';
@@ -329,6 +465,18 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sourceLanguage => 'Brontaal';
 
   @override
+  String get subscription => 'Abonnement';
+
+  @override
+  String get upgradeToPremium => 'Upgrade naar Premium';
+
+  @override
+  String get manageSubscription => 'Abonnement beheren';
+
+  @override
+  String get unlockWithPremium => 'Ontgrendel met Premium';
+
+  @override
   String get vocabulary => 'Woordenschat';
 
   @override
@@ -341,6 +489,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get watersports => 'Watersport';
 
   @override
+  String get week => 'week';
+
+  @override
   String get weekProgress => 'Deze week';
 
   @override
@@ -350,6 +501,25 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get weekGoal => 'Weekdoel';
+
+  @override
+  String get whichLanguageDoYouWantToLearn => 'Welke taal wil je leren?';
+
+  @override
+  String get selectOne => 'Selecteer één';
+
+  @override
+  String get whichLanguageDoYouSpeakTheBest =>
+      'Welke taal spreek je het beste?';
+
+  @override
+  String get withYour => 'met je';
+
+  @override
+  String get unknown => 'Onbekend';
+
+  @override
+  String get xpPerWeek => 'XP per week';
 
   @override
   String get yoga => 'Yoga';
@@ -365,4 +535,14 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get yourWeekProgress => 'Wekelijkse voortgang';
+
+  @override
+  String get yourWeeklyGoal => 'Je weekdoel';
+
+  @override
+  String get rateTheApp => 'App beoordelen';
+
+  @override
+  String get rateTheAppStoreUnavailable =>
+      'Store niet beschikbaar (test op een echt apparaat).';
 }

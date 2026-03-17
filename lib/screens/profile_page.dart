@@ -13,6 +13,9 @@ import '../screens/profile_content.dart';
 import '../screens/profile_settings.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../l10n/app_localizations.dart';
+import '../constants/number_icons.dart';
+import '../stores/profile_store.dart';
+import '../constants/content.dart';
 
 class ProfilePage extends StatefulWidget {
   final bool isVisible;
@@ -23,14 +26,11 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-
 class _ProfilePageState extends State<ProfilePage> {
   late final ProfileService profileService =
       ProfileService(Supabase.instance.client);
   late final WeekProgressService weekProgressService =
       WeekProgressService(Supabase.instance.client);
-  Profile? profile;
-  bool isLoading = true;
   WeekProgress? _weekProgress;
   WeekProgress? _overallProgress;
   ContentMenu _selectedMenu = ContentMenu.inProgress;
@@ -39,16 +39,16 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    _loadProfileData();
     _loadWeekProgress();
     _loadOverallProgress();
   }
 
   Future<void> _loadWeekProgress() async {
     final weekProgress = await weekProgressService.getWeekProgress();
-    setState(() {
-      _weekProgress = weekProgress;
-    });
+    if (mounted)
+      setState(() {
+        _weekProgress = weekProgress;
+      });
   }
 
   Future<void> _loadOverallProgress() async {
@@ -59,9 +59,9 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void didUpdateWidget(covariant ProfilePage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Reload profile data every time the user switches to this tab
+    // Reload profile and progress every time the user switches to this tab
     if (widget.isVisible && !oldWidget.isVisible) {
-      _loadProfileData();
+      ProfileStoreScope.of(context).load();
       _loadWeekProgress();
       _loadOverallProgress();
     }
@@ -69,16 +69,19 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildWeeklyProgressCard({
     required int value,
+    required int unitValue,
     required String label,
     required IconData icon,
     required Color iconColor,
+    required Color backgroundColor,
+    required Color textColor,
   }) {
     return Container(
-      height: 100,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      height: 116,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.black, width: 1),
       ),
       child: Column(
@@ -88,32 +91,36 @@ class _ProfilePageState extends State<ProfilePage> {
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AppColors.black,
-              letterSpacing: 0.3,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: textColor,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Expanded(
             child: Row(
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  alignment: Alignment.center,
-                  child: FaIcon(icon, color: iconColor, size: 30),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      child: FaIcon(icon, color: iconColor, size: 26),
+                    ),
+                    // Text(
+                    //   '(${unitValue} XP)',
+                    //   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: textColor),
+                    // ),
+                  ],
                 ),
-                const Spacer(),
-                Text(
-                  value.toString(),
-                  style: const TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.black,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: numberToFontAwesomeIcons(value, 'thin')
+                      .map((icon) => Icon(icon, size: 26, color: iconColor))
+                      .toList(),
                 ),
               ],
             ),
@@ -133,18 +140,25 @@ class _ProfilePageState extends State<ProfilePage> {
             Expanded(
               child: _buildWeeklyProgressCard(
                 value: int.parse(progress?.weekArticlesReadCount ?? '0'),
+                unitValue: XP_PER_ARTICLE,
                 label: AppLocalizations.of(context)!.finishedArticles,
-                icon: FontAwesomeIcons.solidFileLines,
-                iconColor: AppColors.primary,
+                icon: FontAwesomeIcons.thinFileLines,
+                iconColor: AppColors.textPrimary,
+                backgroundColor: AppColors.secondary,
+                textColor: AppColors.textPrimary,
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _buildWeeklyProgressCard(
-                value: int.parse(progress?.weekAudiobooksReadCount ?? '0'),
-                label: AppLocalizations.of(context)!.finishedAudiobooks,
-                icon: FontAwesomeIcons.solidHeadphones,
-                iconColor: AppColors.secondary,
+                value:
+                    int.parse(progress?.weekAudiobooksChaptersReadCount ?? '0'),
+                unitValue: XP_PER_AUDIOBOOK_CHAPTER,
+                label: AppLocalizations.of(context)!.finishedChaptersAudiobooks,
+                icon: FontAwesomeIcons.thinHeadphones,
+                iconColor: AppColors.white,
+                backgroundColor: AppColors.primary,
+                textColor: AppColors.white,
               ),
             ),
           ],
@@ -155,18 +169,24 @@ class _ProfilePageState extends State<ProfilePage> {
             Expanded(
               child: _buildWeeklyProgressCard(
                 value: int.parse(progress?.weekFlashcardsAchievedCount ?? '0'),
+                unitValue: XP_PER_FLASHCARD,
                 label: AppLocalizations.of(context)!.masteredFlashcards,
-                icon: FontAwesomeIcons.solidCardsBlank,
-                iconColor: AppColors.success,
+                icon: FontAwesomeIcons.thinCardsBlank,
+                iconColor: AppColors.textPrimary,
+                backgroundColor: AppColors.white,
+                textColor: AppColors.textPrimary,
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _buildWeeklyProgressCard(
                 value: int.parse(progress?.weekQuizzesCompletedCount ?? '0'),
+                unitValue: XP_PER_QUIZ,
                 label: AppLocalizations.of(context)!.completedQuizzes,
-                icon: FontAwesomeIcons.solidBlockQuestion,
-                iconColor: AppColors.error,
+                icon: FontAwesomeIcons.thinBlockQuestion,
+                iconColor: AppColors.textPrimary,
+                backgroundColor: AppColors.neutral,
+                textColor: AppColors.textPrimary,
               ),
             ),
           ],
@@ -180,43 +200,27 @@ class _ProfilePageState extends State<ProfilePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
+        Wrap(
+          spacing: 10,
+          runSpacing: 8,
           children: [
-            GestureDetector(
-              onTap: () => setState(() => _showOverallProgress = false),
-              child: Text(
-                AppLocalizations.of(context)!.yourWeekProgress,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: _showOverallProgress ? AppColors.textSecondary : AppColors.textPrimary,
-                  decoration: _showOverallProgress ? null : TextDecoration.underline,
-                  decorationColor: AppColors.textPrimary,
-                ),
-              ),
+            _buildProgressToggleChip(
+              label: AppLocalizations.of(context)!.yourWeekProgress,
+              isSelected: !_showOverallProgress,
+              onTap: () {
+                if (mounted) {
+                  setState(() => _showOverallProgress = false);
+                }
+              },
             ),
-            const SizedBox(width: 12),
-            Text(
-              '|',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(width: 12),
-            GestureDetector(
-              onTap: () => setState(() => _showOverallProgress = true),
-              child: Text(
-                AppLocalizations.of(context)!.yourProgress,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: _showOverallProgress ? AppColors.textPrimary : AppColors.textSecondary,
-                  decoration: _showOverallProgress ? TextDecoration.underline : null,
-                  decorationColor: AppColors.textPrimary,
-                ),
-              ),
+            _buildProgressToggleChip(
+              label: AppLocalizations.of(context)!.yourProgress,
+              isSelected: _showOverallProgress,
+              onTap: () {
+                if (mounted) {
+                  setState(() => _showOverallProgress = true);
+                }
+              },
             ),
           ],
         ),
@@ -228,7 +232,40 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildWeekProgress() {
+  Widget _buildProgressToggleChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final baseTextStyle =
+        Theme.of(context).textTheme.bodyMedium ?? const TextStyle();
+
+    return Material(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            label,
+            style: baseTextStyle.copyWith(
+              fontSize: 18,
+              fontWeight:
+                  isSelected ? FontWeight.w600 : baseTextStyle.fontWeight,
+              color: isSelected
+                  ? AppColors.textPrimary
+                  : AppColors.textPrimary.withValues(alpha: 0.55),
+              decoration:
+                  isSelected ? TextDecoration.underline : TextDecoration.none,
+              decorationThickness: 1.5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeekProgress(Profile? profile) {
     final goal = profile?.weeklyGoalXP ?? 500;
     final current = _weekProgress?.weekXP ?? 0;
     final progress = goal > 0 ? (current / goal).clamp(0.0, 1.0) : 0.0;
@@ -262,7 +299,8 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(FontAwesomeIcons.solidStar, size: 22, color: AppColors.secondary),
+                  Icon(FontAwesomeIcons.solidShrimp,
+                      size: 22, color: AppColors.secondary),
                   const SizedBox(width: 6),
                   Text(
                     '${_weekProgress?.weekXP ?? 0} XP',
@@ -282,7 +320,8 @@ class _ProfilePageState extends State<ProfilePage> {
           builder: (context, constraints) {
             const trackHeight = 14.0;
             const fillHeight = 12.0;
-            final fillWidth = (constraints.maxWidth * progress).clamp(0.0, constraints.maxWidth);
+            final fillWidth = (constraints.maxWidth * progress)
+                .clamp(0.0, constraints.maxWidth);
             return Container(
               height: trackHeight,
               decoration: BoxDecoration(
@@ -296,7 +335,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   SizedBox(width: constraints.maxWidth, height: fillHeight),
                   if (progress > 0)
                     Container(
-                      width: fillWidth.clamp(fillHeight, constraints.maxWidth - 2),
+                      width:
+                          fillWidth.clamp(fillHeight, constraints.maxWidth - 2),
                       height: fillHeight,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(fillHeight / 2),
@@ -332,27 +372,33 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-
-  Widget _buildVerticalMenuButton(String label, ContentMenu menu, {IconData? icon}) {
+  Widget _buildVerticalMenuButton(String label, ContentMenu menu,
+      {IconData? icon}) {
     final isSelected = _selectedMenu == menu;
-        final isInProgress = menu == ContentMenu.inProgress;
+    final isInProgress = menu == ContentMenu.inProgress;
     final isFavorite = menu == ContentMenu.favorite;
-    final textColor = isInProgress ? AppColors.white : AppColors.textPrimary;
-
+    //final textColor = isInProgress ? AppColors.white : AppColors.textPrimary;
+    final textColor = AppColors.textPrimary;
 
     Color backgroundColor;
+    Color iconColor;
     BoxBorder? border;
 
-      if (isInProgress) {
-        backgroundColor = AppColors.primary.withOpacity(0.85);
-        border = Border.all(color: Colors.black, width: 1);
-      } else if (isFavorite) {
-       backgroundColor = AppColors.secondary.withOpacity(0.85);
-        border = Border.all(color: Colors.black, width: 1);
-      } else {
-       backgroundColor = Colors.white.withOpacity(0.85);
-        border = Border.all(color: Colors.black, width: 1);
-      }
+    if (isInProgress) {
+      //  backgroundColor = AppColors.primary.withOpacity(0.85);
+      backgroundColor = AppColors.chipBackground;
+      border = Border.all(color: AppColors.textPrimary, width: 1);
+      iconColor = AppColors.chipText;
+    } else if (isFavorite) {
+      // backgroundColor = AppColors.secondary.withOpacity(0.85);
+      backgroundColor = AppColors.chipBackground;
+      border = Border.all(color: AppColors.textPrimary, width: 1);
+      iconColor = AppColors.chipText;
+    } else {
+      backgroundColor = AppColors.chipBackground;
+      border = Border.all(color: AppColors.textPrimary, width: 1);
+      iconColor = AppColors.chipText;
+    }
 
     return Material(
       color: Colors.transparent,
@@ -367,16 +413,16 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
           );
-          setState(() {
-            _selectedMenu = menu;
-          });
+          if (mounted)
+            setState(() {
+              _selectedMenu = menu;
+            });
         },
         borderRadius: BorderRadius.circular(12),
         child: Container(
           decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(12),
-            border: border,
+            color: AppColors.chipBackground,
+            borderRadius: BorderRadius.circular(10),
           ),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           child: Row(
@@ -387,18 +433,21 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: icon != null
                       ? Row(
                           mainAxisAlignment: MainAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(icon, size: 20, color: textColor),
+                            Icon(icon, size: 20, color: iconColor),
                             const SizedBox(width: 10),
-                            Text(
-                              label,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                color: textColor,
+                            Expanded(
+                              child: Text(
+                                label,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.chipText,
+                                ),
+                                textAlign: TextAlign.left,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              textAlign: TextAlign.left,
                             ),
                           ],
                         )
@@ -406,14 +455,18 @@ class _ProfilePageState extends State<ProfilePage> {
                           label,
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                            color: textColor,
+                            fontWeight:
+                                isSelected ? FontWeight.w600 : FontWeight.w500,
+                            color: AppColors.chipText,
                           ),
                           textAlign: TextAlign.left,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                 ),
               ),
-              Icon(FontAwesomeIcons.chevronRight, size: 24, color: textColor),
+              Icon(FontAwesomeIcons.chevronRight,
+                  size: 24, color: AppColors.chipText),
             ],
           ),
         ),
@@ -421,37 +474,10 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-
-  Future<void> _loadProfileData() async {
-    if (mounted) setState(() => isLoading = true);
-    final profileData = await profileService.getProfileData();
-    final weeklyProgress = await profileService.getWeeklyProgress();
-
-    if (mounted) {
-      setState(() {
-        profile = Profile(
-          fullName: profileData['full_name'] ?? '',
-          email: profileData['email'] ?? '',
-          avatarUrl: profileData['avatar_url'],
-          isPremium: profileData['is_premium'] ?? false,
-          nativeLanguage: profileData['native_language'] ?? '',
-          targetLanguage: profileData['target_language'] ?? '',
-          weeklyGoalXP: profileData['weekly_goal'] != null ? (profileData['weekly_goal'] as num).toInt() : null,
-          weekXP: profileData['week_xp'] != null ? (profileData['week_xp'] as num).toInt() : null,
-          lastWeekXP: profileData['last_week_xp'] != null ? (profileData['last_week_xp'] as num).toInt() : null,
-          weeklyArticlesRead: weeklyProgress['articles'],
-          weeklyAudiobooksRead: weeklyProgress['audiobooks'],
-          weeklyFlashcardsAchieved: weeklyProgress['flashcards'],
-          weeklyQuizzesCompleted: weeklyProgress['quizzes'],
-        );
-        isLoading = false;
-      });
-    }
-  }
-
-
   @override
   Widget build(BuildContext context) {
+    final store = ProfileStoreScope.of(context);
+    final profile = store.profile;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -459,106 +485,122 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-            // Header: avatar + week progress + settings icon
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  UserAvatar(avatarUrl: profile?.avatarUrl, fullName: profile?.fullName),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildWeekProgress()),
-                  const SizedBox(width: 12),
-                  SizedBox(
-                    width: 56,
-                    height: 56,
-                    child: Material(
-                      color: AppColors.neutral,
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ProfileSettingsPage(),
-                            ),
-                          );
-                        },
-                        customBorder: const CircleBorder(),
-                        child: Icon(
-                          FontAwesomeIcons.gear,
-                          size: 22,
-                          color: AppColors.textPrimary,
+              // Header: avatar + week progress + settings icon
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    UserAvatar(
+                        avatar: profile?.avatar,
+                        avatarUrl: profile?.avatarUrl,
+                        fullName: profile?.fullName),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildWeekProgress(profile)),
+                    const SizedBox(width: 12),
+                    SizedBox(
+                      width: 56,
+                      height: 56,
+                      child: Material(
+                        color: AppColors.neutral,
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ProfileSettingsPage(),
+                              ),
+                            );
+                          },
+                          customBorder: const CircleBorder(),
+                          child: Icon(
+                            FontAwesomeIcons.gear,
+                            size: 22,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-              child: Text.rich(
-                TextSpan(
-                  style: const TextStyle(
-                    fontSize: 22,
-                    color: AppColors.textPrimary,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: AppLocalizations.of(context)!.greetings + ', ',
-                      style: TextStyle(fontWeight: FontWeight.normal),
-                    ),
-                    TextSpan(
-                      text: profile?.fullName ?? Supabase.instance.client.auth.currentUser?.userMetadata?['full_name'] ?? '',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
               ),
-            ),
-            // Your weekly Progress
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-              child: _buildWeeklyProgressSection(),
-            ),
-            // Continue Reading to Earn XP
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  AppLocalizations.of(context)!.continueReadingToEarnXP,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Text.rich(
+                  TextSpan(
+                    style: const TextStyle(
+                      fontSize: 22,
+                      color: AppColors.textPrimary,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: AppLocalizations.of(context)!.greetings + ', ',
+                        style: TextStyle(fontWeight: FontWeight.normal),
+                      ),
+                      TextSpan(
+                        text: profile?.fullName ??
+                            Supabase.instance.client.auth.currentUser
+                                ?.userMetadata?['full_name'] ??
+                            '',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-            // Three vertical buttons: In Progress | Favorite | Content you may Like
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  _buildVerticalMenuButton(AppLocalizations.of(context)!.contentInProgress, ContentMenu.inProgress, icon: FontAwesomeIcons.ellipsis),
-                  const SizedBox(height: 12),
-                  _buildVerticalMenuButton(AppLocalizations.of(context)!.favoriteContent, ContentMenu.favorite, icon: FontAwesomeIcons.solidHeart),
-                  const SizedBox(height: 12),
-                  _buildVerticalMenuButton(AppLocalizations.of(context)!.interestingContent, ContentMenu.interesting, icon: FontAwesomeIcons.bolt),
-                ],
+              // Your weekly Progress
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                child: _buildWeeklyProgressSection(),
               ),
-            ),
-            // Content below the buttons (inline, no navigation)
-            // ContentCategory(
-            //   category: _selectedMenu.name,
-            //   embedded: true,
-            // ),
-          ],
+              // Continue Reading to Earn XP
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    AppLocalizations.of(context)!.continueReadingToEarnXP,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+              // Three vertical buttons: In Progress | Favorite | Content you may Like
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    _buildVerticalMenuButton(
+                        AppLocalizations.of(context)!.contentInProgress,
+                        ContentMenu.inProgress,
+                        icon: FontAwesomeIcons.ellipsis),
+                    const SizedBox(height: 12),
+                    _buildVerticalMenuButton(
+                        AppLocalizations.of(context)!.favoriteContent,
+                        ContentMenu.favorite,
+                        icon: FontAwesomeIcons.heart),
+                    const SizedBox(height: 12),
+                    _buildVerticalMenuButton(
+                        AppLocalizations.of(context)!.interestingContent,
+                        ContentMenu.interesting,
+                        icon: FontAwesomeIcons.bolt),
+                  ],
+                ),
+              ),
+              // Content below the buttons (inline, no navigation)
+              // ContentCategory(
+              //   category: _selectedMenu.name,
+              //   embedded: true,
+              // ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }

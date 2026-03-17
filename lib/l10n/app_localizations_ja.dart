@@ -9,7 +9,25 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get fiveMinutesADay => '\'5分/日\'';
+
+  @override
+  String get fifteenMinutesADay => '\'15分/日\'';
+
+  @override
+  String get thirtyMinutesADay => '\'30分/日\'';
+
+  @override
+  String get oneHourADay => '\'1時間/日\'';
+
+  @override
   String get activeFilters => 'アクティブなフィルター';
+
+  @override
+  String get addedByUser => 'あなたが追加';
+
+  @override
+  String get all => '全レベル';
 
   @override
   String get allLevels => 'すべて';
@@ -29,6 +47,16 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String areYouSureYouWantToDeleteReferenceLanguage(Object languageName) {
+    return '参照言語を$languageNameに変更してもよろしいですか？\n\nこの変更は、既に翻訳された単語に影響します。';
+  }
+
+  @override
+  String areYouSureYouWantToDeleteTargetLanguage(Object languageName) {
+    return '学習言語を$languageNameに変更してもよろしいですか？\n\nこの変更は、既に翻訳された単語に影響します。';
+  }
+
+  @override
   String get art => 'アート';
 
   @override
@@ -38,10 +66,22 @@ class AppLocalizationsJa extends AppLocalizations {
   String get audiobooks => 'オーディオブック';
 
   @override
+  String get back => '戻る';
+
+  @override
   String get biography => '伝記';
 
   @override
+  String get buildA => '作る';
+
+  @override
   String get cancel => 'キャンセル';
+
+  @override
+  String get changeStatus => 'ステータスを変更';
+
+  @override
+  String get changeLanguage => '言語を変更';
 
   @override
   String get chapters => '章';
@@ -64,13 +104,31 @@ class AppLocalizationsJa extends AppLocalizations {
   String get completedQuizzes => '完了したクイズ';
 
   @override
+  String get confirm => '確認';
+
+  @override
   String get contentInProgress => '進行中のコンテンツ';
 
   @override
   String get continueReadingToEarnXP => '読み続けてXPを獲得しよう';
 
   @override
+  String get connexion => '接続';
+
+  @override
+  String get continueWithApple => 'Appleで続ける';
+
+  @override
+  String get continueWithFacebook => 'Facebookで続ける';
+
+  @override
+  String get continueWithGoogle => 'Googleで続ける';
+
+  @override
   String get culture => '文化';
+
+  @override
+  String get dailyGoal => 'デイリー目標';
 
   @override
   String get definition => '定義';
@@ -80,6 +138,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get deleteVocabularyItem => 'この単語を削除';
+
+  @override
+  String get difficult => '難しい';
 
   @override
   String get difficultVocabulary => '難しい単語';
@@ -92,6 +153,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get education => '教育';
+
+  @override
+  String get extreme => 'エクストリーム';
 
   @override
   String get fashion => 'ファッション';
@@ -127,10 +191,43 @@ class AppLocalizationsJa extends AppLocalizations {
   String get finishedAudiobooks => '完了したオーディオブック';
 
   @override
+  String get finishedChaptersAudiobooks => 'オーディオ章';
+
+  @override
   String get flashcardsVocabulary => '単語フラッシュカード';
 
   @override
   String get fontSize => 'フォントサイズ';
+
+  @override
+  String goalIntensity(String intensity) {
+    String _temp0 = intl.Intl.selectLogic(
+      intensity,
+      {
+        'light': 'ライト',
+        'regular': 'レギュラー',
+        'high': '高い',
+        'extreme': 'エクストリーム',
+        'other': '',
+      },
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String goalDuration(String duration) {
+    String _temp0 = intl.Intl.selectLogic(
+      duration,
+      {
+        'fiveMinutesADay': '5分/日',
+        'fifteenMinutesADay': '15分/日',
+        'thirtyMinutesADay': '30分/日',
+        'oneHourADay': '1時間/日',
+        'other': '',
+      },
+    );
+    return '$_temp0';
+  }
 
   @override
   String get gastronomy => '美食';
@@ -143,6 +240,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get health => '健康';
+
+  @override
+  String get high => '高い';
 
   @override
   String get history => '歴史';
@@ -190,10 +290,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get languageJa => '日本語';
 
   @override
+  String get learn => '学ぶ';
+
+  @override
   String get literature => '文学';
 
   @override
   String get level => 'レベル';
+
+  @override
+  String get light => 'ライト';
 
   @override
   String get mainVocabulary => 'メイン単語帳';
@@ -265,6 +371,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get readFlashcards => 'フラッシュカードを読む';
 
   @override
+  String get regular => 'レギュラー';
+
+  @override
   String get repeat => '練習する';
 
   @override
@@ -274,10 +383,30 @@ class AppLocalizationsJa extends AppLocalizations {
   String get saved => '保存済み';
 
   @override
+  String get savedVocabulary => '保存した単語';
+
+  @override
   String get science => '科学';
 
   @override
-  String get savedVocabulary => '保存した単語';
+  String get selectGoal => 'モチベーションを維持する目標を選択';
+
+  @override
+  String selectUpToThemes(Object maxSelection) {
+    return '最大$maxSelection個のテーマを選択してください。';
+  }
+
+  @override
+  String get setHowManyXpYouWant => '週に獲得したいXPの量を設定してください。';
+
+  @override
+  String get signInWithApple => 'Appleでサインイン';
+
+  @override
+  String get signInWithFacebook => 'Facebookで続ける';
+
+  @override
+  String get signInWithGoogle => 'Googleでサインイン';
 
   @override
   String get showOnlyFavoriteArticles => 'お気に入りの記事のみ表示';
@@ -298,6 +427,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get startToRead => '読み始める';
 
   @override
+  String get strongLastingVocabulary => '強く定着する語彙';
+
+  @override
   String get tale => '物語';
 
   @override
@@ -308,6 +440,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get testYourKnowledge => '知識を試す';
+
+  @override
+  String get training => '練習中';
 
   @override
   String get trainingVocabulary => '練習用の単語';
@@ -325,6 +460,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sourceLanguage => '母語';
 
   @override
+  String get subscription => 'サブスクリプション';
+
+  @override
+  String get upgradeToPremium => 'プレミアムにアップグレード';
+
+  @override
+  String get manageSubscription => 'サブスクリプションを管理';
+
+  @override
+  String get unlockWithPremium => 'プレミアムでアンロック';
+
+  @override
   String get vocabulary => '単語帳';
 
   @override
@@ -337,6 +484,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get watersports => 'ウォータースポーツ';
 
   @override
+  String get week => '週';
+
+  @override
   String get weekProgress => '今週';
 
   @override
@@ -346,6 +496,24 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get weekGoal => '週間目標';
+
+  @override
+  String get whichLanguageDoYouWantToLearn => 'どの言語を学びたいですか？';
+
+  @override
+  String get selectOne => '1つ選んでください';
+
+  @override
+  String get whichLanguageDoYouSpeakTheBest => '最も得意な言語はどれですか？';
+
+  @override
+  String get withYour => 'あなたの〜で';
+
+  @override
+  String get unknown => '不明';
+
+  @override
+  String get xpPerWeek => '週間XP';
 
   @override
   String get yoga => 'ヨガ';
@@ -361,4 +529,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get yourWeekProgress => '今週の進捗';
+
+  @override
+  String get yourWeeklyGoal => '週間目標';
+
+  @override
+  String get rateTheApp => 'アプリを評価';
+
+  @override
+  String get rateTheAppStoreUnavailable => 'ストアを開けません（実機でお試しください）。';
 }

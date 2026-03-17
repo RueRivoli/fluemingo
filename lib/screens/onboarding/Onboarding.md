@@ -7,11 +7,13 @@
 
 3. Reference Language selection
 
-4. Motivation:
+4. Avatar selection
+
+5. Motivation:
 what does use this app changes
 
-5. Favorite Themes
+6. Favorite Themes
 
-6. Set a weekly reading goal
+7. Set a weekly reading goal
 
-7. Sign In/Sign Up
+8. Sign In/Sign Up

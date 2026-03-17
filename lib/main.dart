@@ -8,13 +8,17 @@ import 'screens/home_page.dart';
 import 'screens/onboarding/welcome_page.dart';
 import 'constants/app_colors.dart';
 import 'config/supabase_config.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'config/revenue_cat_config.dart';
 import 'stores/profile_store.dart';
 import 'services/profile_service.dart';
+import 'services/week_progress_service.dart';
 import 'l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize RevenueCat (no-op on non-iOS/Android)
+  await initializeRevenueCat();
 
   // Initialize Supabase
   await Supabase.initialize(
@@ -23,7 +27,8 @@ void main() async {
   );
 
   final profileService = ProfileService(Supabase.instance.client);
-  final profileStore = ProfileStore(profileService);
+  final weekProgressService = WeekProgressService(Supabase.instance.client);
+  final profileStore = ProfileStore(profileService, weekProgressService);
 
   runApp(ProfileStoreScope(
     profileStore: profileStore,
@@ -32,11 +37,11 @@ void main() async {
 }
 
 /// Maps profile native language code (backend) to a supported [Locale], or null to use system.
-Locale? _localeFromProfileNativeLanguage(String? nativeLanguage) {
-  if (nativeLanguage == null || nativeLanguage.isEmpty) return null;
+Locale? _localeFromLanguageCode(String? languageCode) {
+  if (languageCode == null || languageCode.isEmpty) return null;
   const supported = {'en', 'fr', 'es', 'de', 'nl', 'it', 'pt', 'ja'};
   const map = {'sp': 'es', 'ge': 'de', 'jp': 'ja'};
-  final code = map[nativeLanguage] ?? nativeLanguage;
+  final code = map[languageCode] ?? languageCode;
   if (supported.contains(code)) return Locale(code);
   return null;
 }
@@ -47,7 +52,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profileStore = ProfileStoreScope.of(context);
-    final locale = _localeFromProfileNativeLanguage(profileStore.profile?.nativeLanguage);
+    final locale = _localeFromLanguageCode(profileStore.uiLanguageCode);
 
     return MaterialApp(
       onGenerateTitle: (BuildContext context) =>
@@ -85,44 +90,55 @@ class AppInitializer extends StatefulWidget {
 class _AppInitializerState extends State<AppInitializer> {
   bool _isLoading = true;
   bool _isFirstTime = true;
-  
+  bool _hasInitialized = false;
+  late final ProfileStore _profileStore;
+
   // Mode debug : mettre à true pour forcer l'affichage de l'onboarding
   static const bool _forceOnboarding = true;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_hasInitialized) return;
+
+    _hasInitialized = true;
+    _profileStore = ProfileStoreScope.of(context);
     _checkAuthAndOnboarding();
   }
 
   Future<void> _checkAuthAndOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // En mode debug avec _forceOnboarding, réinitialiser les préférences
     if (kDebugMode && _forceOnboarding) {
       await prefs.remove('has_seen_welcome');
       debugPrint('🔄 Debug mode: Reset has_seen_welcome');
     }
-    
+
     final hasSeenWelcome = prefs.getBool('has_seen_welcome') ?? false;
-    
+
     // Vérifier l'état d'authentification Supabase
     final supabase = Supabase.instance.client;
     final session = supabase.auth.currentSession;
     final isAuthenticated = session != null;
-    
-    debugPrint('📱 Auth check - hasSeenWelcome: $hasSeenWelcome, isAuthenticated: $isAuthenticated, session: ${session?.user.email}');
-    
+
+    if (isAuthenticated) {
+      await _profileStore.load();
+    }
+
+    debugPrint(
+        '📱 Auth check - hasSeenWelcome: $hasSeenWelcome, isAuthenticated: $isAuthenticated, session: ${session?.user.email}');
+
     // Afficher l'onboarding si:
     // 1. L'utilisateur n'a jamais vu le welcome, OU
     // 2. L'utilisateur n'est pas authentifié (même s'il a vu le welcome), OU
     // 3. En mode debug avec _forceOnboarding activé
-    final shouldShowOnboarding = !hasSeenWelcome || 
-        !isAuthenticated ||
-        (kDebugMode && _forceOnboarding);
-    
+    final shouldShowOnboarding =
+        !hasSeenWelcome || !isAuthenticated || (kDebugMode && _forceOnboarding);
+
     debugPrint('📱 shouldShowOnboarding: $shouldShowOnboarding');
-    
+
+    if (!mounted) return;
     setState(() {
       _isFirstTime = shouldShowOnboarding;
       _isLoading = false;
@@ -132,7 +148,7 @@ class _AppInitializerState extends State<AppInitializer> {
   Future<void> _onWelcomeComplete() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('has_seen_welcome', true);
-    
+
     if (mounted) {
       setState(() {
         _isFirstTime = false;

@@ -6,6 +6,7 @@ class VocabularyItem {
   final String? exampleSentence;
   final String? exampleTranslation;
   final String audioUrl;
+  final String? basis;
   int? flashcardId;
   String? status; // "saved", "difficult", "training", "mastered"
   bool? isAddedByUser = false;
@@ -18,6 +19,7 @@ class VocabularyItem {
     this.exampleSentence,
     this.exampleTranslation,
     required this.audioUrl,
+    this.basis,
     this.flashcardId,
     this.status,
     this.isAddedByUser = false,

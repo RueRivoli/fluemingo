@@ -1,16 +1,19 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/quiz_question.dart';
+import 'language_table_resolver.dart';
 
 class QuizService {
   final SupabaseClient _supabase;
 
   QuizService(this._supabase);
 
+  String _table(String name) => LanguageTableResolver.table(name);
+
   // Fetch quiz questions for a specific content (article) ID
   Future<List<QuizQuestion>> getQuizQuestionsForArticleContent(int contentId) async {
     try {
       final response = await _supabase
-          .from('quiz_models_fr')
+          .from(_table('quiz_models'))
           .select()
           .eq('reference_id', contentId)
           .order('id', ascending: true);
@@ -26,14 +29,12 @@ class QuizService {
 
     Future<List<QuizQuestion>> getQuizQuestionsForChapterContent(String chapterId) async {
     try {
-      print('with chapter id: $chapterId');
       final response = await _supabase
-          .from('quiz_models_fr')
+          .from(_table('quiz_models'))
           .select()
           .eq('type', 2)
           .eq('chapter_id', int.parse(chapterId))
           .order('id', ascending: true);
-
       return (response as List)
           .map((json) => QuizQuestion.fromJson(json))
           .toList();
@@ -52,7 +53,7 @@ class QuizService {
   }) async {
     try {
         final existingQuiz = await _supabase
-          .from('quiz_results_fr')
+          .from(_table('quiz_results'))
           .select('id, number_correct_answers, filled_out')
           .eq('reference_id', referenceId)
           .eq('type', 1)
@@ -60,7 +61,7 @@ class QuizService {
           .maybeSingle();
       if (existingQuiz != null && existingQuiz['id'] != null) return existingQuiz;
 
-      final newQuiz = await _supabase.from('quiz_results_fr').insert({
+      final newQuiz = await _supabase.from(_table('quiz_results')).insert({
         'quiz_id': quizId,
         'user_id': userId,
         'reference_id': referenceId,
@@ -82,22 +83,20 @@ class QuizService {
   }) async {
     try {
         final existingQuiz = await _supabase
-          .from('quiz_results_fr')
+          .from(_table('quiz_results'))
           .select('id, number_correct_answers, filled_out')
-          .eq('chapter_id', chapterId)
+          .eq('reference_id', chapterId)
           .eq('type', 2)
           .limit(1)
           .maybeSingle();
       if (existingQuiz != null && existingQuiz['id'] != null) return existingQuiz;
-
-      final newQuiz = await _supabase.from('quiz_results_fr').insert({
+      final newQuiz = await _supabase.from(_table('quiz_results')).insert({
         'quiz_id': quizId,
         'user_id': userId,
-        'chapter_id': chapterId,
+        'reference_id': chapterId,
         'number_correct_answers': 0,
         'type': 2,
       }).select('id, filled_out').single();
-
       return newQuiz;
     } catch (e) {
       print('Error creating chapter quiz result: $e');
@@ -111,8 +110,10 @@ class QuizService {
     required int numberCorrectAnswers,
   }) async {
     try {
-      await _supabase.from('quiz_results_fr').update({
+      await _supabase.from(_table('quiz_results')).update({
         'number_correct_answers': numberCorrectAnswers,
+        'finished_datetime': DateTime.now().toIso8601String(),
+        'filled_out': true,
       }).eq('id', resultId);
     } catch (e) {
       print('Error updating quiz result: $e');
@@ -127,7 +128,7 @@ class QuizService {
   }) async {
     try {
       final response = await _supabase
-          .from('quiz_results_fr')
+          .from(_table('quiz_results'))
           .select()
           .eq('quiz_id', quizId)
           .eq('user_id', userId)
@@ -142,4 +143,3 @@ class QuizService {
     }
   }
 }
-
