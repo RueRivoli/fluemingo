@@ -52,18 +52,42 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
 			<key>CFBundleURLName</key>
 			<string>com.fluemingo.app</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.fluemingo.app</string>
-				<string>***GOOGLE_WEB_CLIENT_ID_REMOVED***</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
 				<string>com.googleusercontent.apps.117116639562-ftthuht2m4cbt9mvph0e2f2k7skua3nr</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
 				<string>fb1394772852098051</string>
 			</array>
 		</dict>
 	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>fbapi</string>
+		<string>fb-messenger-api</string>
+		<string>fbauth2</string>
+		<string>fbshareextension</string>
+	</array>
 	<key>GIDClientID</key>
 	<string>***GOOGLE_IOS_CLIENT_ID_REMOVED***</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Fluemingo uses the microphone for audio playback and speech-related features in language learning.</string>
 </dict>
 </plist>
