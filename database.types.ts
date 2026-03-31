@@ -27,13 +27,13 @@ export type Database = {
           order_id: number | null
           reviewed: number | null
           title: string | null
-          title_dt: string | null
-          title_en: string | null
-          title_ge: string | null
+          title_de: string | null
+          title_es: string | null
+          title_fr: string | null
           title_it: string | null
-          title_jp: string | null
+          title_ja: string | null
+          title_nl: string | null
           title_pt: string | null
-          title_sp: string | null
         }
         Insert: {
           audio_url?: string | null
@@ -47,13 +47,13 @@ export type Database = {
           order_id?: number | null
           reviewed?: number | null
           title?: string | null
-          title_dt?: string | null
-          title_en?: string | null
-          title_ge?: string | null
+          title_de?: string | null
+          title_es?: string | null
+          title_fr?: string | null
           title_it?: string | null
-          title_jp?: string | null
+          title_ja?: string | null
+          title_nl?: string | null
           title_pt?: string | null
-          title_sp?: string | null
         }
         Update: {
           audio_url?: string | null
@@ -67,13 +67,13 @@ export type Database = {
           order_id?: number | null
           reviewed?: number | null
           title?: string | null
-          title_dt?: string | null
-          title_en?: string | null
-          title_ge?: string | null
+          title_de?: string | null
+          title_es?: string | null
+          title_fr?: string | null
           title_it?: string | null
-          title_jp?: string | null
+          title_ja?: string | null
+          title_nl?: string | null
           title_pt?: string | null
-          title_sp?: string | null
         }
         Relationships: [
           {
@@ -97,16 +97,17 @@ export type Database = {
           content_type: number
           created_at: string
           description: string | null
-          description_dt: string | null
-          description_en: string | null
-          description_ge: string | null
+          description_de: string | null
+          description_es: string | null
+          description_fr: string | null
           description_it: string | null
-          description_jp: string | null
+          description_ja: string | null
+          description_nl: string | null
           description_pt: string | null
-          description_sp: string | null
           id: number
           img_url: string | null
           is_free: boolean | null
+          is_new: boolean | null
           level: string | null
           title: string | null
         }
@@ -121,16 +122,17 @@ export type Database = {
           content_type: number
           created_at?: string
           description?: string | null
-          description_dt?: string | null
-          description_en?: string | null
-          description_ge?: string | null
+          description_de?: string | null
+          description_es?: string | null
+          description_fr?: string | null
           description_it?: string | null
-          description_jp?: string | null
+          description_ja?: string | null
+          description_nl?: string | null
           description_pt?: string | null
-          description_sp?: string | null
           id?: number
           img_url?: string | null
           is_free?: boolean | null
+          is_new?: boolean | null
           level?: string | null
           title?: string | null
         }
@@ -145,16 +147,17 @@ export type Database = {
           content_type?: number
           created_at?: string
           description?: string | null
-          description_dt?: string | null
-          description_en?: string | null
-          description_ge?: string | null
+          description_de?: string | null
+          description_es?: string | null
+          description_fr?: string | null
           description_it?: string | null
-          description_jp?: string | null
+          description_ja?: string | null
+          description_nl?: string | null
           description_pt?: string | null
-          description_sp?: string | null
           id?: number
           img_url?: string | null
           is_free?: boolean | null
+          is_new?: boolean | null
           level?: string | null
           title?: string | null
         }
@@ -163,6 +166,7 @@ export type Database = {
       en_flashcards: {
         Row: {
           audio_url: string | null
+          basis: string | null
           chapter_id: number | null
           content_id: number | null
           created_at: string
@@ -171,6 +175,7 @@ export type Database = {
           finished_datetime: string | null
           function: string | null
           id: number
+          proper_name: boolean | null
           status: string | null
           text: string | null
           text_translation: string | null
@@ -179,6 +184,7 @@ export type Database = {
         }
         Insert: {
           audio_url?: string | null
+          basis?: string | null
           chapter_id?: number | null
           content_id?: number | null
           created_at?: string
@@ -187,6 +193,7 @@ export type Database = {
           finished_datetime?: string | null
           function?: string | null
           id?: number
+          proper_name?: boolean | null
           status?: string | null
           text?: string | null
           text_translation?: string | null
@@ -195,6 +202,7 @@ export type Database = {
         }
         Update: {
           audio_url?: string | null
+          basis?: string | null
           chapter_id?: number | null
           content_id?: number | null
           created_at?: string
@@ -203,6 +211,7 @@ export type Database = {
           finished_datetime?: string | null
           function?: string | null
           id?: number
+          proper_name?: boolean | null
           status?: string | null
           text?: string | null
           text_translation?: string | null
@@ -408,24 +417,25 @@ export type Database = {
           content_type: number | null
           created_at: string
           example: string | null
-          example_dt: string | null
-          example_en: string | null
-          example_ge: string | null
+          example_de: string | null
+          example_es: string | null
+          example_fr: string | null
           example_it: string | null
-          example_jp: string | null
+          example_ja: string | null
+          example_nl: string | null
           example_pt: string | null
-          example_sp: string | null
           function: string | null
           id: number
+          proper_name: boolean | null
           reference_id: number | null
           text: string | null
-          text_dt: string | null
-          text_en: string | null
-          text_ge: string | null
+          text_de: string | null
+          text_es: string | null
+          text_fr: string | null
           text_it: string | null
-          text_jp: string | null
+          text_ja: string | null
+          text_nl: string | null
           text_pt: string | null
-          text_sp: string | null
         }
         Insert: {
           audio_url?: string | null
@@ -433,24 +443,25 @@ export type Database = {
           content_type?: number | null
           created_at?: string
           example?: string | null
-          example_dt?: string | null
-          example_en?: string | null
-          example_ge?: string | null
+          example_de?: string | null
+          example_es?: string | null
+          example_fr?: string | null
           example_it?: string | null
-          example_jp?: string | null
+          example_ja?: string | null
+          example_nl?: string | null
           example_pt?: string | null
-          example_sp?: string | null
           function?: string | null
           id?: number
+          proper_name?: boolean | null
           reference_id?: number | null
           text?: string | null
-          text_dt?: string | null
-          text_en?: string | null
-          text_ge?: string | null
+          text_de?: string | null
+          text_es?: string | null
+          text_fr?: string | null
           text_it?: string | null
-          text_jp?: string | null
+          text_ja?: string | null
+          text_nl?: string | null
           text_pt?: string | null
-          text_sp?: string | null
         }
         Update: {
           audio_url?: string | null
@@ -458,24 +469,25 @@ export type Database = {
           content_type?: number | null
           created_at?: string
           example?: string | null
-          example_dt?: string | null
-          example_en?: string | null
-          example_ge?: string | null
+          example_de?: string | null
+          example_es?: string | null
+          example_fr?: string | null
           example_it?: string | null
-          example_jp?: string | null
+          example_ja?: string | null
+          example_nl?: string | null
           example_pt?: string | null
-          example_sp?: string | null
           function?: string | null
           id?: number
+          proper_name?: boolean | null
           reference_id?: number | null
           text?: string | null
-          text_dt?: string | null
-          text_en?: string | null
-          text_ge?: string | null
+          text_de?: string | null
+          text_es?: string | null
+          text_fr?: string | null
           text_it?: string | null
-          text_jp?: string | null
+          text_ja?: string | null
+          text_nl?: string | null
           text_pt?: string | null
-          text_sp?: string | null
         }
         Relationships: [
           {
@@ -507,13 +519,13 @@ export type Database = {
           order_id: number | null
           reviewed: number | null
           title: string | null
-          title_dt: string | null
+          title_de: string | null
           title_en: string | null
-          title_ge: string | null
+          title_fr: string | null
           title_it: string | null
-          title_jp: string | null
+          title_ja: string | null
+          title_nl: string | null
           title_pt: string | null
-          title_sp: string | null
         }
         Insert: {
           audio_url?: string | null
@@ -527,13 +539,13 @@ export type Database = {
           order_id?: number | null
           reviewed?: number | null
           title?: string | null
-          title_dt?: string | null
+          title_de?: string | null
           title_en?: string | null
-          title_ge?: string | null
+          title_fr?: string | null
           title_it?: string | null
-          title_jp?: string | null
+          title_ja?: string | null
+          title_nl?: string | null
           title_pt?: string | null
-          title_sp?: string | null
         }
         Update: {
           audio_url?: string | null
@@ -547,13 +559,13 @@ export type Database = {
           order_id?: number | null
           reviewed?: number | null
           title?: string | null
-          title_dt?: string | null
+          title_de?: string | null
           title_en?: string | null
-          title_ge?: string | null
+          title_fr?: string | null
           title_it?: string | null
-          title_jp?: string | null
+          title_ja?: string | null
+          title_nl?: string | null
           title_pt?: string | null
-          title_sp?: string | null
         }
         Relationships: [
           {
@@ -577,16 +589,17 @@ export type Database = {
           content_type: number
           created_at: string
           description: string | null
-          description_dt: string | null
+          description_de: string | null
           description_en: string | null
-          description_ge: string | null
+          description_fr: string | null
           description_it: string | null
-          description_jp: string | null
+          description_ja: string | null
+          description_nl: string | null
           description_pt: string | null
-          description_sp: string | null
           id: number
           img_url: string | null
           is_free: boolean | null
+          is_new: boolean | null
           level: string | null
           title: string | null
         }
@@ -601,16 +614,17 @@ export type Database = {
           content_type: number
           created_at?: string
           description?: string | null
-          description_dt?: string | null
+          description_de?: string | null
           description_en?: string | null
-          description_ge?: string | null
+          description_fr?: string | null
           description_it?: string | null
-          description_jp?: string | null
+          description_ja?: string | null
+          description_nl?: string | null
           description_pt?: string | null
-          description_sp?: string | null
           id?: number
           img_url?: string | null
           is_free?: boolean | null
+          is_new?: boolean | null
           level?: string | null
           title?: string | null
         }
@@ -625,16 +639,17 @@ export type Database = {
           content_type?: number
           created_at?: string
           description?: string | null
-          description_dt?: string | null
+          description_de?: string | null
           description_en?: string | null
-          description_ge?: string | null
+          description_fr?: string | null
           description_it?: string | null
-          description_jp?: string | null
+          description_ja?: string | null
+          description_nl?: string | null
           description_pt?: string | null
-          description_sp?: string | null
           id?: number
           img_url?: string | null
           is_free?: boolean | null
+          is_new?: boolean | null
           level?: string | null
           title?: string | null
         }
@@ -643,6 +658,7 @@ export type Database = {
       es_flashcards: {
         Row: {
           audio_url: string | null
+          basis: string | null
           chapter_id: number | null
           content_id: number | null
           created_at: string
@@ -651,6 +667,7 @@ export type Database = {
           finished_datetime: string | null
           function: string | null
           id: number
+          proper_name: boolean | null
           status: string | null
           text: string | null
           text_translation: string | null
@@ -659,6 +676,7 @@ export type Database = {
         }
         Insert: {
           audio_url?: string | null
+          basis?: string | null
           chapter_id?: number | null
           content_id?: number | null
           created_at?: string
@@ -667,6 +685,7 @@ export type Database = {
           finished_datetime?: string | null
           function?: string | null
           id?: number
+          proper_name?: boolean | null
           status?: string | null
           text?: string | null
           text_translation?: string | null
@@ -675,6 +694,7 @@ export type Database = {
         }
         Update: {
           audio_url?: string | null
+          basis?: string | null
           chapter_id?: number | null
           content_id?: number | null
           created_at?: string
@@ -683,6 +703,7 @@ export type Database = {
           finished_datetime?: string | null
           function?: string | null
           id?: number
+          proper_name?: boolean | null
           status?: string | null
           text?: string | null
           text_translation?: string | null
@@ -888,24 +909,24 @@ export type Database = {
           content_type: number | null
           created_at: string
           example: string | null
-          example_dt: string | null
+          example_de: string | null
           example_en: string | null
-          example_ge: string | null
+          example_fr: string | null
           example_it: string | null
-          example_jp: string | null
+          example_ja: string | null
+          example_nl: string | null
           example_pt: string | null
-          example_sp: string | null
           function: string | null
           id: number
           reference_id: number | null
           text: string | null
-          text_dt: string | null
+          text_de: string | null
           text_en: string | null
-          text_ge: string | null
+          text_fr: string | null
           text_it: string | null
-          text_jp: string | null
+          text_ja: string | null
+          text_nl: string | null
           text_pt: string | null
-          text_sp: string | null
         }
         Insert: {
           audio_url?: string | null
@@ -913,24 +934,24 @@ export type Database = {
           content_type?: number | null
           created_at?: string
           example?: string | null
-          example_dt?: string | null
+          example_de?: string | null
           example_en?: string | null
-          example_ge?: string | null
+          example_fr?: string | null
           example_it?: string | null
-          example_jp?: string | null
+          example_ja?: string | null
+          example_nl?: string | null
           example_pt?: string | null
-          example_sp?: string | null
           function?: string | null
           id?: number
           reference_id?: number | null
           text?: string | null
-          text_dt?: string | null
+          text_de?: string | null
           text_en?: string | null
-          text_ge?: string | null
+          text_fr?: string | null
           text_it?: string | null
-          text_jp?: string | null
+          text_ja?: string | null
+          text_nl?: string | null
           text_pt?: string | null
-          text_sp?: string | null
         }
         Update: {
           audio_url?: string | null
@@ -938,24 +959,24 @@ export type Database = {
           content_type?: number | null
           created_at?: string
           example?: string | null
-          example_dt?: string | null
+          example_de?: string | null
           example_en?: string | null
-          example_ge?: string | null
+          example_fr?: string | null
           example_it?: string | null
-          example_jp?: string | null
+          example_ja?: string | null
+          example_nl?: string | null
           example_pt?: string | null
-          example_sp?: string | null
           function?: string | null
           id?: number
           reference_id?: number | null
           text?: string | null
-          text_dt?: string | null
+          text_de?: string | null
           text_en?: string | null
-          text_ge?: string | null
+          text_fr?: string | null
           text_it?: string | null
-          text_jp?: string | null
+          text_ja?: string | null
+          text_nl?: string | null
           text_pt?: string | null
-          text_sp?: string | null
         }
         Relationships: [
           {
@@ -987,13 +1008,13 @@ export type Database = {
           order_id: number | null
           reviewed: number | null
           title: string | null
-          title_dt: string | null
+          title_de: string | null
           title_en: string | null
-          title_ge: string | null
+          title_es: string | null
           title_it: string | null
-          title_jp: string | null
+          title_ja: string | null
+          title_nl: string | null
           title_pt: string | null
-          title_sp: string | null
         }
         Insert: {
           audio_url?: string | null
@@ -1007,13 +1028,13 @@ export type Database = {
           order_id?: number | null
           reviewed?: number | null
           title?: string | null
-          title_dt?: string | null
+          title_de?: string | null
           title_en?: string | null
-          title_ge?: string | null
+          title_es?: string | null
           title_it?: string | null
-          title_jp?: string | null
+          title_ja?: string | null
+          title_nl?: string | null
           title_pt?: string | null
-          title_sp?: string | null
         }
         Update: {
           audio_url?: string | null
@@ -1027,13 +1048,13 @@ export type Database = {
           order_id?: number | null
           reviewed?: number | null
           title?: string | null
-          title_dt?: string | null
+          title_de?: string | null
           title_en?: string | null
-          title_ge?: string | null
+          title_es?: string | null
           title_it?: string | null
-          title_jp?: string | null
+          title_ja?: string | null
+          title_nl?: string | null
           title_pt?: string | null
-          title_sp?: string | null
         }
         Relationships: [
           {
@@ -1057,16 +1078,17 @@ export type Database = {
           content_type: number
           created_at: string
           description: string | null
-          description_dt: string | null
+          description_de: string | null
           description_en: string | null
-          description_ge: string | null
+          description_es: string | null
           description_it: string | null
-          description_jp: string | null
+          description_ja: string | null
+          description_nl: string | null
           description_pt: string | null
-          description_sp: string | null
           id: number
           img_url: string | null
           is_free: boolean | null
+          is_new: boolean | null
           level: string | null
           title: string | null
         }
@@ -1081,16 +1103,17 @@ export type Database = {
           content_type: number
           created_at?: string
           description?: string | null
-          description_dt?: string | null
+          description_de?: string | null
           description_en?: string | null
-          description_ge?: string | null
+          description_es?: string | null
           description_it?: string | null
-          description_jp?: string | null
+          description_ja?: string | null
+          description_nl?: string | null
           description_pt?: string | null
-          description_sp?: string | null
           id?: number
           img_url?: string | null
           is_free?: boolean | null
+          is_new?: boolean | null
           level?: string | null
           title?: string | null
         }
@@ -1105,16 +1128,17 @@ export type Database = {
           content_type?: number
           created_at?: string
           description?: string | null
-          description_dt?: string | null
+          description_de?: string | null
           description_en?: string | null
-          description_ge?: string | null
+          description_es?: string | null
           description_it?: string | null
-          description_jp?: string | null
+          description_ja?: string | null
+          description_nl?: string | null
           description_pt?: string | null
-          description_sp?: string | null
           id?: number
           img_url?: string | null
           is_free?: boolean | null
+          is_new?: boolean | null
           level?: string | null
           title?: string | null
         }
@@ -1123,6 +1147,7 @@ export type Database = {
       fr_flashcards: {
         Row: {
           audio_url: string | null
+          basis: string | null
           chapter_id: number | null
           content_id: number | null
           created_at: string
@@ -1131,6 +1156,7 @@ export type Database = {
           finished_datetime: string | null
           function: string | null
           id: number
+          proper_name: boolean | null
           status: string | null
           text: string | null
           text_translation: string | null
@@ -1139,6 +1165,7 @@ export type Database = {
         }
         Insert: {
           audio_url?: string | null
+          basis?: string | null
           chapter_id?: number | null
           content_id?: number | null
           created_at?: string
@@ -1147,6 +1174,7 @@ export type Database = {
           finished_datetime?: string | null
           function?: string | null
           id?: number
+          proper_name?: boolean | null
           status?: string | null
           text?: string | null
           text_translation?: string | null
@@ -1155,6 +1183,7 @@ export type Database = {
         }
         Update: {
           audio_url?: string | null
+          basis?: string | null
           chapter_id?: number | null
           content_id?: number | null
           created_at?: string
@@ -1163,6 +1192,7 @@ export type Database = {
           finished_datetime?: string | null
           function?: string | null
           id?: number
+          proper_name?: boolean | null
           status?: string | null
           text?: string | null
           text_translation?: string | null
@@ -1364,78 +1394,84 @@ export type Database = {
       fr_vocabulary: {
         Row: {
           audio_url: string | null
+          basis: string | null
           chapter_id: number | null
           content_type: number | null
           created_at: string
           example: string | null
-          example_dt: string | null
+          example_de: string | null
           example_en: string | null
-          example_ge: string | null
+          example_es: string | null
           example_it: string | null
-          example_jp: string | null
+          example_ja: string | null
+          example_nl: string | null
           example_pt: string | null
-          example_sp: string | null
           function: string | null
           id: number
+          properName: boolean | null
           reference_id: number | null
           text: string | null
-          text_dt: string | null
+          text_de: string | null
           text_en: string | null
-          text_ge: string | null
+          text_es: string | null
           text_it: string | null
-          text_jp: string | null
+          text_ja: string | null
+          text_nl: string | null
           text_pt: string | null
-          text_sp: string | null
         }
         Insert: {
           audio_url?: string | null
+          basis?: string | null
           chapter_id?: number | null
           content_type?: number | null
           created_at?: string
           example?: string | null
-          example_dt?: string | null
+          example_de?: string | null
           example_en?: string | null
-          example_ge?: string | null
+          example_es?: string | null
           example_it?: string | null
-          example_jp?: string | null
+          example_ja?: string | null
+          example_nl?: string | null
           example_pt?: string | null
-          example_sp?: string | null
           function?: string | null
           id?: number
+          properName?: boolean | null
           reference_id?: number | null
           text?: string | null
-          text_dt?: string | null
+          text_de?: string | null
           text_en?: string | null
-          text_ge?: string | null
+          text_es?: string | null
           text_it?: string | null
-          text_jp?: string | null
+          text_ja?: string | null
+          text_nl?: string | null
           text_pt?: string | null
-          text_sp?: string | null
         }
         Update: {
           audio_url?: string | null
+          basis?: string | null
           chapter_id?: number | null
           content_type?: number | null
           created_at?: string
           example?: string | null
-          example_dt?: string | null
+          example_de?: string | null
           example_en?: string | null
-          example_ge?: string | null
+          example_es?: string | null
           example_it?: string | null
-          example_jp?: string | null
+          example_ja?: string | null
+          example_nl?: string | null
           example_pt?: string | null
-          example_sp?: string | null
           function?: string | null
           id?: number
+          properName?: boolean | null
           reference_id?: number | null
           text?: string | null
-          text_dt?: string | null
+          text_de?: string | null
           text_en?: string | null
-          text_ge?: string | null
+          text_es?: string | null
           text_it?: string | null
-          text_jp?: string | null
+          text_ja?: string | null
+          text_nl?: string | null
           text_pt?: string | null
-          text_sp?: string | null
         }
         Relationships: [
           {
@@ -1456,6 +1492,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar: string | null
           avatar_url: string | null
           created_at: string | null
           email: string | null
@@ -1477,6 +1514,7 @@ export type Database = {
           weekly_goal: number | null
         }
         Insert: {
+          avatar?: string | null
           avatar_url?: string | null
           created_at?: string | null
           email?: string | null
@@ -1498,6 +1536,7 @@ export type Database = {
           weekly_goal?: number | null
         }
         Update: {
+          avatar?: string | null
           avatar_url?: string | null
           created_at?: string | null
           email?: string | null

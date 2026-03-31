@@ -9,23 +9,58 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
   cupertino_icons: ^1.0.6
   google_fonts: ^7.0.0
   supabase_flutter: ^2.5.6
   shared_preferences: ^2.2.2
+  path_provider: ^2.1.5
+  onesignal_flutter: ^5.3.4
   flutter_svg: ^2.0.9
   just_audio: ^0.9.40
+  google_sign_in: ^7.2.0
+  sign_in_with_apple: ^6.1.1
+  font_awesome_flutter: ^10.7.0
+  device_frame: ^1.4.0
+  purchases_flutter: ^9.15.1
+  purchases_ui_flutter: ^9.15.1
+  in_app_review: ^2.0.11
+  url_launcher: ^6.2.5
+
+dependency_overrides:
+  font_awesome_flutter:
+    path: lib/fonts/font_awesome_flutter
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
 
 flutter:
+  generate: true
   uses-material-design: true
   
   assets:
     - assets/images/
+    - assets/images/fr/
+    - assets/images/en/
+    - assets/images/es/
+    - assets/img/french/
     - assets/images/languages/
+    - assets/images/flashcards/
     - assets/logo/
+    - assets/logo/apple/continue-with-apple.png
+    - assets/logo/google/continue-with-google.png
+    - assets/logo/facebook/
+    - assets/sounds/
 
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/logo/app-logo.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/logo/app-logo.png"
