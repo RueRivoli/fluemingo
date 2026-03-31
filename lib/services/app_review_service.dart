@@ -17,14 +17,15 @@ class AppReviewService {
 
   final InAppReview _inAppReview = InAppReview.instance;
 
-  /// App Store ID (iOS/macOS). Find in App Store Connect > App > General > App Information > Apple ID.
-  /// Replace with your real ID so "Noter l'app" opens the store. On simulator, the store won't open.
-  static const String appStoreId = 'YOUR_APPLE_APP_ID';
+  /// App Store ID (iOS/macOS). Loaded from --dart-define=APPLE_APP_STORE_ID=...
+  /// Find in App Store Connect > App > General > App Information > Apple ID.
+  static const String appStoreId =
+      String.fromEnvironment('APPLE_APP_STORE_ID');
 
   /// Opens the store listing (App Store / Play Store). Use for a "Rate the app" button.
   /// Returns true if the call succeeded, false if ID is not set or opening failed (e.g. on simulator).
   Future<bool> openStoreListing() async {
-    if (appStoreId.isEmpty || appStoreId == 'YOUR_APPLE_APP_ID') {
+    if (appStoreId.isEmpty) {
       return false;
     }
     try {

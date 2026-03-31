@@ -98,7 +98,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get clickOnXToRemoveThisExpressionFromYourVocabularyList =>
-      'Klik op x om deze uitdrukking uit je woordenlijst te verwijderen';
+      'Tik op het prullenbak-icoon om deze uitdrukking uit je woordenlijst te verwijderen';
 
   @override
   String get completedQuizzes => 'Voltooide quizzen';
@@ -261,6 +261,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get interestingContent => 'Inhoud afgestemd op je favoriete thema\'s';
 
   @override
+  String get forYou => 'Voor jou';
+
+  @override
   String get items => 'Uitdrukkingen';
 
   @override
@@ -291,7 +294,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get languageJa => 'Japans';
 
   @override
-  String get learn => 'Leren';
+  String get learn => 'Leer';
 
   @override
   String get literature => 'Literatuur';
@@ -321,7 +324,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get navAudiobooks => 'Luisterboeken';
 
   @override
-  String get navFlashcards => 'Flitskaarten';
+  String get navFlashcards => 'Woordenschat';
 
   @override
   String get navLibrary => 'Artikelen';
@@ -357,6 +360,12 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get people => 'Mensen';
+
+  @override
+  String get philosophy => 'Filosofie';
+
+  @override
+  String get psychology => 'Psychologie';
 
   @override
   String get poetry => 'Poëzie';
@@ -500,6 +509,17 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String daysRemaining(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'dagen resterend',
+      one: 'dag resterend',
+    );
+    return '$days $_temp0';
+  }
+
+  @override
   String get weekGoal => 'Weekdoel';
 
   @override
@@ -510,7 +530,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get whichLanguageDoYouSpeakTheBest =>
-      'Welke taal spreek je het beste?';
+      'Welke taal wil je gebruiken als referentie?';
 
   @override
   String get withYour => 'met je';
@@ -545,4 +565,187 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get rateTheAppStoreUnavailable =>
       'Store niet beschikbaar (test op een echt apparaat).';
+
+  @override
+  String get flashcardCategoryUpdated => 'Flashcard-categorie bijgewerkt';
+
+  @override
+  String get flashcardMastered =>
+      'Gefeliciteerd, je hebt een nieuwe uitdrukking onder de knie! +1 XP';
+
+  @override
+  String get noFlashcardsAvailable => 'Geen flashcards beschikbaar';
+
+  @override
+  String get noFlashcardsFound => 'Geen flashcards gevonden';
+
+  @override
+  String get deleteFlashcard => 'Flashcard verwijderen';
+
+  @override
+  String get noContentInProgress => 'Geen inhoud in uitvoering';
+
+  @override
+  String get noLikedContentYet => 'Nog geen leuke inhoud';
+
+  @override
+  String get noSuggestionsYet => 'Nog geen suggesties';
+
+  @override
+  String get yourContentInProgress => 'Jouw inhoud in uitvoering';
+
+  @override
+  String get yourFavoriteContent => 'Jouw favoriete inhoud';
+
+  @override
+  String get yourContent => 'Jouw inhoud';
+
+  @override
+  String get finishContentToEarnXP => 'Voltooi deze inhoud om XP te verdienen';
+
+  @override
+  String get basedOnYourLikes => 'Gebaseerd op je likes';
+
+  @override
+  String get basedOnYourFavoriteThemes => 'Gebaseerd op je favoriete thema\'s';
+
+  @override
+  String get save => 'Opslaan';
+
+  @override
+  String get pleaseSelectAtLeastOneTheme =>
+      'Selecteer alstublieft minimaal één thema';
+
+  @override
+  String get logout => 'Uitloggen';
+
+  @override
+  String get downloading => 'Downloaden...';
+
+  @override
+  String get availableOffline => 'Offline beschikbaar';
+
+  @override
+  String get downloadedForOfflineAccess => 'Gedownload voor offline toegang';
+
+  @override
+  String get goBack => 'Terug';
+
+  @override
+  String get noAudioAvailable => 'Geen audio beschikbaar';
+
+  @override
+  String get pleaseEnterValidNumber => 'Voer een geldig positief getal in';
+
+  @override
+  String get yourTargetLanguage => 'Jouw doeltaal';
+
+  @override
+  String get yourReferenceLanguage => 'Jouw referentietaal';
+
+  @override
+  String get oops => 'Oeps';
+
+  @override
+  String get weeklyGoalReached => 'Weekdoel bereikt!';
+
+  @override
+  String get wellDone => 'Goed gedaan!';
+
+  @override
+  String youEarnedXp(Object xp) {
+    return 'Je hebt $xp XP verdiend!';
+  }
+
+  @override
+  String get quizFinishedMarkArticleAsFinished =>
+      'Je hebt de quiz afgerond! Wil je het artikel ook als afgerond markeren?';
+
+  @override
+  String get quizFinishedMarkChapterAsFinished =>
+      'Je hebt de quiz afgerond! Wil je het hoofdstuk ook als afgerond markeren?';
+
+  @override
+  String get congratsQuizAndArticle =>
+      'Je hebt de quiz en het artikel afgerond!';
+
+  @override
+  String get congratsQuizAndChapter =>
+      'Je hebt de quiz en het hoofdstuk afgerond!';
+
+  @override
+  String get congratsQuiz => 'Je hebt de quiz afgerond!';
+
+  @override
+  String get yes => 'Ja';
+
+  @override
+  String get no => 'Nee';
+
+  @override
+  String get vocabularyAddedToList => 'Woordenschat toegevoegd aan de lijst';
+
+  @override
+  String get retranslate => 'Opnieuw vertalen';
+
+  @override
+  String get withContent => 'met content';
+
+  @override
+  String get fitTasteLevel => 'die past bij jouw smaak en niveau';
+
+  @override
+  String get deleteAccount => 'Account verwijderen';
+
+  @override
+  String get deleteAccountConfirmation =>
+      'Weet je zeker dat je je account wilt verwijderen? Deze actie is onomkeerbaar en al je gegevens worden permanent verwijderd.';
+
+  @override
+  String get accountDeleted => 'Je account is verwijderd.';
+
+  @override
+  String get deleteAccountError =>
+      'Account kon niet worden verwijderd. Probeer het opnieuw.';
+
+  @override
+  String get privacyPolicy => 'Privacybeleid';
+
+  @override
+  String get termsOfService => 'Gebruiksvoorwaarden';
+
+  @override
+  String get termsAndPrivacyNotice =>
+      'Door in te loggen ga je akkoord met onze Gebruiksvoorwaarden en ons Privacybeleid.';
+
+  @override
+  String get restorePurchases => 'Aankopen herstellen';
+
+  @override
+  String get purchasesRestored => 'Aankopen succesvol hersteld.';
+
+  @override
+  String get restorePurchasesFailed => 'Aankopen konden niet worden hersteld.';
+
+  @override
+  String get orContinueWith => 'of ga verder met';
+
+  @override
+  String get signInWithEmail => 'Inloggen met e-mail';
+
+  @override
+  String get email => 'E-mail';
+
+  @override
+  String get password => 'Wachtwoord';
+
+  @override
+  String get enterEmailAndPassword =>
+      'Voer je e-mail en wachtwoord in om in te loggen.';
+
+  @override
+  String get signIn => 'Inloggen';
+
+  @override
+  String get start => 'Beginnen';
 }

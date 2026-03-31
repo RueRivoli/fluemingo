@@ -40,7 +40,11 @@ class ProfileStore extends ChangeNotifier {
       final profileData = await _profileService.getProfileData();
       LanguageTableResolver.setLanguage(
           profileData['target_language'] as String?);
-      final weeklyProgress = await _weekProgressService.getWeekProgress();
+      final createdAtStr = profileData['created_at']?.toString();
+      final anchorDate =
+          createdAtStr != null ? DateTime.tryParse(createdAtStr)?.toUtc() : null;
+      final weeklyProgress =
+          await _weekProgressService.getWeekProgress(anchorDate: anchorDate);
       final avatarSeed = profileData['avatar']?.toString();
       final avatarUrl = resolveAvatarUrl(
         avatar: avatarSeed,

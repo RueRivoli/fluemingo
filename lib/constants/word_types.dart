@@ -49,7 +49,8 @@ const WORD_SHORT_TYPES_FR = {
     "num": "num.",
     "lettre euphonique": "let euph.",
     "expr": "expr.",
-    "art": "art."
+    "art": "art.",
+    "properName": "nom propre"
 };
 
 
@@ -65,6 +66,7 @@ const WORD_TYPES_EN = {
     "pron": "pronoun",
     "pron poss": "possessive pronoun",
     "pron pers": "personal pronoun",
+    "properName": "proper name"
 };
 
 const WORD_SHORT_TYPES_EN = {

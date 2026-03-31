@@ -1,9 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/week_progress.dart';
 import 'language_table_resolver.dart';
 
 const int XP_PER_ARTICLE = 10;
-const int XP_PER_AUDIOBOOK = 50;
 const int XP_PER_AUDIOBOOK_CHAPTER = 10;
 const int XP_PER_FLASHCARD = 1;
 const int XP_PER_QUIZ = 4;
@@ -15,24 +15,50 @@ class WeekProgressService {
 
   String _table(String name) => LanguageTableResolver.table(name);
 
-  /// Start of current week (Monday 00:00 UTC) as ISO string.
-  static String _startOfWeekIso() {
+  static DateTime _rollingWeekStart(DateTime anchor) {
     final now = DateTime.now().toUtc();
-    final monday = now.subtract(Duration(days: now.weekday - 1));
-    final start = DateTime.utc(monday.year, monday.month, monday.day);
-    return start.toIso8601String();
+    final anchorDay = DateTime.utc(anchor.year, anchor.month, anchor.day);
+    final daysSinceAnchor = now.difference(anchorDay).inDays;
+    final weekStart =
+        anchorDay.add(Duration(days: (daysSinceAnchor ~/ 7) * 7));
+    return weekStart;
   }
 
-  static int _calculateWeekXP(int articlesReadCount, int audiobooksReadCount,
+  static int _daysRemaining(DateTime weekStart) {
+    final now = DateTime.now().toUtc();
+    final weekEnd = weekStart.add(const Duration(days: 7));
+    final days = weekEnd.difference(now).inDays.clamp(0, 7);
+    return days;
+  }
+
+  static int _calculateWeekXP(int articlesReadCount,
+      int audiobooksChaptersReadCount,
       int flashcardsAchievedCount, int quizzesCompletedCount) {
     return articlesReadCount * XP_PER_ARTICLE +
-        audiobooksReadCount * XP_PER_AUDIOBOOK +
+        audiobooksChaptersReadCount * XP_PER_AUDIOBOOK_CHAPTER +
         flashcardsAchievedCount * XP_PER_FLASHCARD +
         quizzesCompletedCount * XP_PER_QUIZ;
   }
 
-  /// Returns week progress for the current user since the beginning of this week.
-  Future<WeekProgress> getWeekProgress() async {
+  Future<DateTime?> _fetchAnchor() async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return null;
+      final res = await _supabase
+          .from('profiles')
+          .select('created_at')
+          .eq('id', user.id)
+          .single();
+      final str = res['created_at']?.toString();
+      final parsed = str != null ? DateTime.tryParse(str)?.toUtc() : null;
+      return parsed;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Returns week progress for the current user for the rolling personal week.
+  Future<WeekProgress> getWeekProgress({DateTime? anchorDate}) async {
     final user = _supabase.auth.currentUser;
     const empty = WeekProgress(
       weekArticlesReadCount: '0',
@@ -41,10 +67,15 @@ class WeekProgressService {
       weekFlashcardsAchievedCount: '0',
       weekQuizzesCompletedCount: '0',
       weekXP: 0,
+      daysRemainingInWeek: 7,
     );
     if (user == null) return empty;
 
-    final startOfWeek = _startOfWeekIso();
+    final fetched = anchorDate ?? await _fetchAnchor();
+    final anchor = fetched ?? DateTime.now().toUtc();
+    final weekStart = _rollingWeekStart(anchor);
+    final startOfWeek = weekStart.toIso8601String();
+    final daysLeft = _daysRemaining(weekStart);
     try {
       final articlesRes = await _supabase
           .from(_table('progress'))
@@ -81,8 +112,8 @@ class WeekProgressService {
           .eq('user_id', user.id)
           .eq('filled_out', true)
           .gte('finished_datetime', startOfWeek);
-      final weekXP = _calculateWeekXP(articlesRes.length, audiobooksRes.length,
-          flashcardsRes.length, quizzesRes.length);
+      final weekXP = _calculateWeekXP(articlesRes.length,
+          audiobooksChaptersRes.length, flashcardsRes.length, quizzesRes.length);
 
       return WeekProgress(
         weekArticlesReadCount: (articlesRes as List).length.toString(),
@@ -92,9 +123,10 @@ class WeekProgressService {
         weekFlashcardsAchievedCount: (flashcardsRes as List).length.toString(),
         weekQuizzesCompletedCount: (quizzesRes as List).length.toString(),
         weekXP: weekXP,
+        daysRemainingInWeek: daysLeft,
       );
     } catch (e) {
-      print('Error fetching week progress: $e');
+      debugPrint('Error fetching week progress: $e');
       return empty;
     }
   }
@@ -161,7 +193,7 @@ class WeekProgressService {
         weekXP: totalXP,
       );
     } catch (e) {
-      print('Error fetching overall progress: $e');
+      debugPrint('Error fetching overall progress: $e');
       return empty;
     }
   }

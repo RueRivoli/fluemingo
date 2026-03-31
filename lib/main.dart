@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_page.dart';
+import 'screens/onboarding/registration_page.dart';
 import 'screens/onboarding/welcome_page.dart';
 import 'constants/app_colors.dart';
 import 'config/supabase_config.dart';
@@ -13,9 +14,15 @@ import 'stores/profile_store.dart';
 import 'services/profile_service.dart';
 import 'services/week_progress_service.dart';
 import 'l10n/app_localizations.dart';
+import 'services/app_review_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (!SupabaseConfig.hasSupabaseConfig) {
+    runApp(const _ConfigurationErrorApp());
+    return;
+  }
 
   // Initialize RevenueCat (no-op on non-iOS/Android)
   await initializeRevenueCat();
@@ -40,8 +47,7 @@ void main() async {
 Locale? _localeFromLanguageCode(String? languageCode) {
   if (languageCode == null || languageCode.isEmpty) return null;
   const supported = {'en', 'fr', 'es', 'de', 'nl', 'it', 'pt', 'ja'};
-  const map = {'sp': 'es', 'ge': 'de', 'jp': 'ja'};
-  final code = map[languageCode] ?? languageCode;
+  final code = languageCode;
   if (supported.contains(code)) return Locale(code);
   return null;
 }
@@ -89,7 +95,7 @@ class AppInitializer extends StatefulWidget {
 
 class _AppInitializerState extends State<AppInitializer> {
   bool _isLoading = true;
-  bool _isFirstTime = true;
+  _AppLaunchDestination _destination = _AppLaunchDestination.welcome;
   bool _hasInitialized = false;
   late final ProfileStore _profileStore;
 
@@ -112,7 +118,6 @@ class _AppInitializerState extends State<AppInitializer> {
     // En mode debug avec _forceOnboarding, réinitialiser les préférences
     if (kDebugMode && _forceOnboarding) {
       await prefs.remove('has_seen_welcome');
-      debugPrint('🔄 Debug mode: Reset has_seen_welcome');
     }
 
     final hasSeenWelcome = prefs.getBool('has_seen_welcome') ?? false;
@@ -121,26 +126,25 @@ class _AppInitializerState extends State<AppInitializer> {
     final supabase = Supabase.instance.client;
     final session = supabase.auth.currentSession;
     final isAuthenticated = session != null;
+    late final _AppLaunchDestination destination;
 
     if (isAuthenticated) {
       await _profileStore.load();
     }
 
-    debugPrint(
-        '📱 Auth check - hasSeenWelcome: $hasSeenWelcome, isAuthenticated: $isAuthenticated, session: ${session?.user.email}');
-
-    // Afficher l'onboarding si:
-    // 1. L'utilisateur n'a jamais vu le welcome, OU
-    // 2. L'utilisateur n'est pas authentifié (même s'il a vu le welcome), OU
-    // 3. En mode debug avec _forceOnboarding activé
-    final shouldShowOnboarding =
-        !hasSeenWelcome || !isAuthenticated || (kDebugMode && _forceOnboarding);
-
-    debugPrint('📱 shouldShowOnboarding: $shouldShowOnboarding');
+    if (kDebugMode && _forceOnboarding) {
+      destination = _AppLaunchDestination.welcome;
+    } else if (isAuthenticated) {
+      destination = _AppLaunchDestination.home;
+    } else if (hasSeenWelcome) {
+      destination = _AppLaunchDestination.registration;
+    } else {
+      destination = _AppLaunchDestination.welcome;
+    }
 
     if (!mounted) return;
     setState(() {
-      _isFirstTime = shouldShowOnboarding;
+      _destination = destination;
       _isLoading = false;
     });
   }
@@ -151,8 +155,9 @@ class _AppInitializerState extends State<AppInitializer> {
 
     if (mounted) {
       setState(() {
-        _isFirstTime = false;
+        _destination = _AppLaunchDestination.home;
       });
+      AppReviewService.instance.requestReviewIfAppropriate();
     }
   }
 
@@ -167,10 +172,58 @@ class _AppInitializerState extends State<AppInitializer> {
       );
     }
 
-    if (_isFirstTime) {
-      return WelcomePage(onComplete: _onWelcomeComplete);
+    switch (_destination) {
+      case _AppLaunchDestination.welcome:
+        return WelcomePage(onComplete: _onWelcomeComplete);
+      case _AppLaunchDestination.registration:
+        return const RegistrationPage.loginOnly();
+      case _AppLaunchDestination.home:
+        return const ProfileLoader(child: HomePage());
     }
+  }
+}
 
-    return const ProfileLoader(child: HomePage());
+enum _AppLaunchDestination { welcome, registration, home }
+
+class _ConfigurationErrorApp extends StatelessWidget {
+  const _ConfigurationErrorApp();
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                SizedBox(height: 12),
+                Text(
+                  'Configuration manquante',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'SUPABASE_URL ou SUPABASE_ANON_KEY est vide. '
+                  'Relancez l’app avec vos dart-defines.',
+                  style: TextStyle(fontSize: 16, height: 1.4),
+                ),
+                SizedBox(height: 16),
+                SelectableText(
+                  'flutter run --dart-define-from-file=.env',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -1,85 +1,84 @@
-import '../config/config.dart';
-import 'dart:convert';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../constants/languages.dart';
-
-const String ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
+import 'edge_function_auth_exception.dart';
 
 class AnthropicGenerationService {
-  static String generatePrompt(
-    String targetLanguageName,
-    String word,
-    String translatedWord,
-  ) =>
-      'Create exactly one short natural sentence in $targetLanguageName with less than 20 words using the word "$word" with the meaning "$translatedWord". Return only the sentence without quotes.';
+  Map<String, String> _authHeaders(SupabaseClient client) {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ${client.auth.currentSession!.accessToken}',
+    };
+  }
+
+  Future<FunctionResponse> _invoke({
+    required String functionName,
+    required Map<String, dynamic> body,
+  }) async {
+    final client = Supabase.instance.client;
+    final session = client.auth.currentSession;
+    if (session == null || session.accessToken.trim().isEmpty) {
+      throw EdgeFunctionReauthRequiredException(
+        functionName: functionName,
+        reason: 'missing_session',
+      );
+    }
+
+    try {
+      final response = await client.functions
+          .invoke(functionName, body: body, headers: _authHeaders(client));
+      if (response.status == 401) {
+        throw EdgeFunctionReauthRequiredException(
+          functionName: functionName,
+          reason: 'unauthorized',
+        );
+      }
+      return response;
+    } on FunctionException catch (e) {
+      if (e.status == 401) {
+        throw EdgeFunctionReauthRequiredException(
+          functionName: functionName,
+          reason: 'unauthorized',
+        );
+      }
+      rethrow;
+    }
+  }
 
   Future<String?> generateExampleSentenceWithAnthropic({
     required String word,
     required String translatedWord,
     required String targetLanguageCode,
   }) async {
-    final apiKey = Config.anthropicApiKey.trim();
-    if (word.trim().isEmpty || apiKey.isEmpty) return null;
+    if (word.trim().isEmpty) return null;
 
     final targetLanguageName = languageNameFromCode(targetLanguageCode);
-    final client = HttpClient();
-    final prompt = generatePrompt(targetLanguageName, word, translatedWord);
     try {
-      final uri = Uri.parse(ANTHROPIC_URL);
-      final models = <String>[
-        'claude-sonnet-4-20250514',
-        'claude-3-5-sonnet-latest',
-        'claude-3-5-haiku-latest',
-      ];
+      final response = await _invoke(
+        functionName: 'generate-sentence',
+        body: {
+          'word': word,
+          'translated_word': translatedWord,
+          'target_language_name': targetLanguageName,
+        },
+      );
 
-      for (final model in models) {
-        final request = await client.postUrl(uri);
-        request.headers.contentType =
-            ContentType('application', 'json', charset: 'utf-8');
-        request.headers.set('x-api-key', apiKey);
-        request.headers.set('anthropic-version', '2023-06-01');
-
-        final payload = jsonEncode({
-          'model': model,
-          'max_tokens': 120,
-          'temperature': 0.3,
-          'messages': [
-            {'role': 'user', 'content': prompt}
-          ],
-        });
-
-        request.add(utf8.encode(payload));
-        final response = await request.close();
-        final body = await response.transform(utf8.decoder).join();
-        if (response.statusCode < 200 || response.statusCode >= 300) {
-          final isModelIssue =
-              (response.statusCode == 400 || response.statusCode == 404) &&
-                  (body.toLowerCase().contains('model') ||
-                      body.toLowerCase().contains('not_found_error'));
-          if (isModelIssue && model != models.last) {
-            print('Anthropic model unavailable ($model), trying next model...');
-            continue;
-          }
-          print('Anthropic error (${response.statusCode}): $body');
-          return null;
-        }
-
-        final decoded = jsonDecode(body);
-        if (decoded is! Map<String, dynamic>) return null;
-        final content = decoded['content'];
-        if (content is! List || content.isEmpty) return null;
-        final first = content.first;
-        if (first is! Map<String, dynamic>) return null;
-        final text = (first['text'] ?? '').toString().trim();
-        if (text.isNotEmpty) return text;
+      if (response.status >= 400) {
+        debugPrint(
+            'generate-sentence edge function error (${response.status}): ${response.data}');
+        return null;
       }
 
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        final sentence = data['sentence']?.toString().trim();
+        return (sentence != null && sentence.isNotEmpty) ? sentence : null;
+      }
       return null;
     } catch (e) {
-      print('Anthropic request failed: $e');
+      if (e is EdgeFunctionReauthRequiredException) rethrow;
+      debugPrint('Sentence generation request failed: $e');
       return null;
-    } finally {
-      client.close(force: true);
     }
   }
 }

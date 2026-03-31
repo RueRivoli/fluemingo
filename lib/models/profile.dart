@@ -33,4 +33,38 @@ class Profile {
     this.weeklyFlashcardsAchieved,
     this.weeklyQuizzesCompleted,
   });
+
+  Profile copyWith({
+    String? fullName,
+    String? email,
+    String? avatar,
+    String? avatarUrl,
+    bool? isPremium,
+    String? nativeLanguage,
+    String? targetLanguage,
+    int? weeklyGoalXP,
+    int? weekXP,
+    int? lastWeekXP,
+    int? weeklyArticlesRead,
+    int? weeklyAudiobooksRead,
+    int? weeklyFlashcardsAchieved,
+    int? weeklyQuizzesCompleted,
+  }) {
+    return Profile(
+      fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
+      avatar: avatar ?? this.avatar,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      isPremium: isPremium ?? this.isPremium,
+      nativeLanguage: nativeLanguage ?? this.nativeLanguage,
+      targetLanguage: targetLanguage ?? this.targetLanguage,
+      weeklyGoalXP: weeklyGoalXP ?? this.weeklyGoalXP,
+      weekXP: weekXP ?? this.weekXP,
+      lastWeekXP: lastWeekXP ?? this.lastWeekXP,
+      weeklyArticlesRead: weeklyArticlesRead ?? this.weeklyArticlesRead,
+      weeklyAudiobooksRead: weeklyAudiobooksRead ?? this.weeklyAudiobooksRead,
+      weeklyFlashcardsAchieved: weeklyFlashcardsAchieved ?? this.weeklyFlashcardsAchieved,
+      weeklyQuizzesCompleted: weeklyQuizzesCompleted ?? this.weeklyQuizzesCompleted,
+    );
+  }
 }

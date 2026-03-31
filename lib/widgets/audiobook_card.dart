@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/audiobook.dart';
 import '../screens/audiobook_overview_page.dart';
 import '../constants/app_colors.dart';
-import '../services/audiobook_service.dart';
-
+import 'favorite_toggle_button.dart';
 
 // If showLocker is true, the locker icon is shown.
 // otherwise, if showIsFavorite is true, the filled favorite icon is shown.
@@ -23,29 +23,40 @@ class AudiobookCard extends StatelessWidget {
     required this.onFavoriteToggled,
   });
 
+  Widget _buildNewBadge() {
+    return const Icon(
+      FontAwesomeIcons.burstNew,
+      size: 28,
+      color: AppColors.secondary,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final book = audiobook;
     return Container(
-        width: 120,
-        margin: const EdgeInsets.only(right: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Book Cover with level label
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AudiobookOverviewPage(audiobook: book, showLocker: showLocker, onFavoriteToggle: onFavoriteToggled),
-                      ),
-                    );
-                  },
-                  child: ClipRRect(
+      width: 120,
+      margin: const EdgeInsets.only(right: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Book Cover with level label
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AudiobookOverviewPage(
+                          audiobook: book,
+                          showLocker: showLocker,
+                          onFavoriteToggle: onFavoriteToggled),
+                    ),
+                  );
+                },
+                child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: book.imageUrl.isNotEmpty
                       ? Image.network(
@@ -54,7 +65,6 @@ class AudiobookCard extends StatelessWidget {
                           height: 160,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            debugPrint('AudiobookCard image failed: ${book.imageUrl} — $error');
                             return Container(
                               width: 120,
                               height: 160,
@@ -77,7 +87,8 @@ class AudiobookCard extends StatelessWidget {
                               height: 160,
                               color: Colors.grey[200],
                               child: const Center(
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               ),
                             );
                           },
@@ -97,112 +108,76 @@ class AudiobookCard extends StatelessWidget {
                           ),
                         ),
                 ),
+              ),
+              Positioned(
+                bottom: 6,
+                left: 6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    book.level,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
+              ),
+              if (book.isNew)
                 Positioned(
                   bottom: 6,
-                  left: 6,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.95),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      book.level,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                  right: 6,
+                  child: _buildNewBadge(),
                 ),
-                if (showLocker)
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Icon(
-                        Icons.lock_outline,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ) else if (showIsFavorite)
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: GestureDetector(
-                      onTap: onFavoriteToggled,
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Icon(
-                          Icons.favorite,
-                          color: book.isFavorite ? AppColors.secondary : Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ) else
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: GestureDetector(
-                      onTap: onFavoriteToggled,
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Icon(
-                          Icons.favorite_border,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            // Book Title
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AudiobookOverviewPage(audiobook: book, showLocker: showLocker, onFavoriteToggle: onFavoriteToggled),
-                  ),
-                );
-              },
-              child: Text(
-                book.title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+              Positioned(
+                top: 6,
+                right: 6,
+                child: FavoriteToggleButton(
+                  isFavorite: showIsFavorite
+                      ? book.isFavorite
+                      : false,
+                  showLocker: showLocker,
+                  onTap: onFavoriteToggled,
+                  padding: const EdgeInsets.all(4),
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Book Title
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AudiobookOverviewPage(
+                      audiobook: book,
+                      showLocker: showLocker,
+                      onFavoriteToggle: onFavoriteToggled),
+                ),
+              );
+            },
+            child: Text(
+              book.title,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
 }

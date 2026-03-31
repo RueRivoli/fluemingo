@@ -14,6 +14,7 @@ Map<String, dynamic> vocabularyItemToFlashcardRow(VocabularyItem item,
     'function': item.type,
     'text': item.word,
     'text_translation': item.translation,
+    'proper_name': item.properName,
     'example': item.exampleSentence,
     'example_translation': item.exampleTranslation,
     'basis': item.basis,
@@ -29,6 +30,16 @@ int? _rowInt(dynamic v) {
   if (v is int) return v;
   if (v is num) return v.toInt();
   return int.tryParse(v.toString());
+}
+
+bool _rowBool(dynamic value) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  final normalized = value?.toString().trim().toLowerCase();
+  if (normalized == 'true' || normalized == '1' || normalized == 'yes') {
+    return true;
+  }
+  return false;
 }
 
 String _rowAudioUrl(dynamic value) {
@@ -54,6 +65,7 @@ VocabularyItem flashcardRowToVocabularyItem(
     word: (row['text'] ?? '') as String,
     translation: (row['text_translation'] ?? '') as String,
     type: (row['function'] ?? 'n') as String,
+    properName: _rowBool(row['proper_name'] ?? row['properName']),
     exampleSentence: row['example'] as String?,
     exampleTranslation: row['example_translation'] as String?,
     audioUrl: _rowAudioUrl(row['audio_url']),
@@ -74,7 +86,5 @@ String flashcardStatusToText(BuildContext context, FlashcardStatus status) {
       return AppLocalizations.of(context)!.training;
     case FlashcardStatus.mastered:
       return AppLocalizations.of(context)!.mastered;
-    default:
-      return AppLocalizations.of(context)!.unknown;
   }
 }

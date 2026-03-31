@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-// const int XP_PER_ARTICLE = '10 XP';
-// const String XP_PER_AUDIOBOOK = 'u x 10XP';
-// const String XP_PER_FLASHCARD = '1 XP';
-// const int XP_PER_QUIZ = '4 XP';
 
 final List<String> AUDIOBOOK_TYPES = [
     'Fiction', 'Biography', 'Literature', 'Poetry', 'Travel', 'Tale'
@@ -32,6 +28,8 @@ final List<ThemeItem> THEMES = [
   ThemeItem(id: 'music', icon: FontAwesomeIcons.music),
   ThemeItem(id: 'news', icon: FontAwesomeIcons.newspaper),
   ThemeItem(id: 'people', icon: FontAwesomeIcons.users),
+  ThemeItem(id: 'philosophy', icon: FontAwesomeIcons.bookOpen),
+  ThemeItem(id: 'psychology', icon: FontAwesomeIcons.brain),
   ThemeItem(id: 'science', icon: FontAwesomeIcons.flask),
   ThemeItem(id: 'society', icon: FontAwesomeIcons.peopleGroup),
   ThemeItem(id: 'space', icon: FontAwesomeIcons.rocket),
@@ -42,15 +40,6 @@ final List<ThemeItem> THEMES = [
   ThemeItem(id: 'yoga', icon: FontAwesomeIcons.spa),
 ];
 
-
-final List<String> LONG_TERM_THEMES = [
-  'Adventure', 'Animals', 'Art', 'Business', 'Cinema', 'Comedy Shows',
-  'Culture', 'Economy', 'Education', 'Environment', 'Fashion', 'Festivals',
-  'Finance', 'Food', 'Health', 'History', 'Languages', 'Law', 'Literature',
-  'Music', 'Nature', 'News', 'People',
-  'Philosophy', 'Politics', 'Psychology', 'Religion', 'Science',
-  'Sports', 'Technology', 'Travel', 'Video Games', 'Watersports', 'Yoga'
-];
 
 String audiobookTypeLabel(BuildContext context, String type) {
   final l10n = AppLocalizations.of(context)!;

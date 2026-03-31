@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../services/profile_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/article.dart';
 import '../models/profile.dart';
-import '../widgets/article_card.dart';
-import '../widgets/audiobook_card.dart';
 import '../widgets/avatar_widget.dart';
 import '../services/week_progress_service.dart';
 import '../models/week_progress.dart';
@@ -13,9 +10,7 @@ import '../screens/profile_content.dart';
 import '../screens/profile_settings.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../l10n/app_localizations.dart';
-import '../constants/number_icons.dart';
 import '../stores/profile_store.dart';
-import '../constants/content.dart';
 
 class ProfilePage extends StatefulWidget {
   final bool isVisible;
@@ -69,61 +64,103 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildWeeklyProgressCard({
     required int value,
-    required int unitValue,
     required String label,
     required IconData icon,
     required Color iconColor,
     required Color backgroundColor,
     required Color textColor,
+    int? xpPerItem,
   }) {
     return Container(
-      height: 116,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      height: 120,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.black, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.07),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+        border: Border.all(color: AppColors.borderBlack, width: 1),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      child: Stack(
+        clipBehavior: Clip.hardEdge,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: textColor,
+          // Background watermark icon
+          Positioned(
+            right: -10,
+            bottom: -14,
+            child: FaIcon(
+              icon,
+              size: 76,
+              color: iconColor.withOpacity(0.12),
             ),
           ),
-          const SizedBox(height: 6),
-          Expanded(
-            child: Row(
-              children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      alignment: Alignment.center,
-                      child: FaIcon(icon, color: iconColor, size: 26),
+          // Foreground content
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
+                      letterSpacing: -0.1,
                     ),
-                    // Text(
-                    //   '(${unitValue} XP)',
-                    //   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: textColor),
-                    // ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (xpPerItem != null) ...[
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: textColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '+$xpPerItem XP',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: textColor.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ),
                   ],
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: numberToFontAwesomeIcons(value, 'thin')
-                      .map((icon) => Icon(icon, size: 26, color: iconColor))
-                      .toList(),
-                ),
-              ],
-            ),
+                ],
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    value.toString(),
+                    style: TextStyle(
+                      fontSize: 46,
+                      fontWeight: FontWeight.w500,
+                      color: textColor,
+                      height: 1.0,
+                      letterSpacing: -2,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FaIcon(
+                    icon,
+                    size: 20,
+                    color: iconColor,
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
@@ -140,12 +177,12 @@ class _ProfilePageState extends State<ProfilePage> {
             Expanded(
               child: _buildWeeklyProgressCard(
                 value: int.parse(progress?.weekArticlesReadCount ?? '0'),
-                unitValue: XP_PER_ARTICLE,
                 label: AppLocalizations.of(context)!.finishedArticles,
                 icon: FontAwesomeIcons.thinFileLines,
                 iconColor: AppColors.textPrimary,
                 backgroundColor: AppColors.secondary,
                 textColor: AppColors.textPrimary,
+                xpPerItem: XP_PER_ARTICLE,
               ),
             ),
             const SizedBox(width: 10),
@@ -153,12 +190,12 @@ class _ProfilePageState extends State<ProfilePage> {
               child: _buildWeeklyProgressCard(
                 value:
                     int.parse(progress?.weekAudiobooksChaptersReadCount ?? '0'),
-                unitValue: XP_PER_AUDIOBOOK_CHAPTER,
                 label: AppLocalizations.of(context)!.finishedChaptersAudiobooks,
                 icon: FontAwesomeIcons.thinHeadphones,
-                iconColor: AppColors.white,
+                iconColor: AppColors.textPrimary,
                 backgroundColor: AppColors.primary,
-                textColor: AppColors.white,
+                textColor: AppColors.textPrimary,
+                xpPerItem: XP_PER_AUDIOBOOK_CHAPTER,
               ),
             ),
           ],
@@ -169,24 +206,24 @@ class _ProfilePageState extends State<ProfilePage> {
             Expanded(
               child: _buildWeeklyProgressCard(
                 value: int.parse(progress?.weekFlashcardsAchievedCount ?? '0'),
-                unitValue: XP_PER_FLASHCARD,
                 label: AppLocalizations.of(context)!.masteredFlashcards,
                 icon: FontAwesomeIcons.thinCardsBlank,
                 iconColor: AppColors.textPrimary,
-                backgroundColor: AppColors.white,
+                backgroundColor: const Color(0xFFC8E6C9),
                 textColor: AppColors.textPrimary,
+                xpPerItem: XP_PER_FLASHCARD,
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _buildWeeklyProgressCard(
                 value: int.parse(progress?.weekQuizzesCompletedCount ?? '0'),
-                unitValue: XP_PER_QUIZ,
                 label: AppLocalizations.of(context)!.completedQuizzes,
                 icon: FontAwesomeIcons.thinBlockQuestion,
                 iconColor: AppColors.textPrimary,
-                backgroundColor: AppColors.neutral,
+                backgroundColor: const Color(0xFFFFD6C0),
                 textColor: AppColors.textPrimary,
+                xpPerItem: XP_PER_QUIZ,
               ),
             ),
           ],
@@ -196,35 +233,41 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildWeeklyProgressSection() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Wrap(
-          spacing: 10,
-          runSpacing: 8,
-          children: [
-            _buildProgressToggleChip(
-              label: AppLocalizations.of(context)!.yourWeekProgress,
-              isSelected: !_showOverallProgress,
-              onTap: () {
-                if (mounted) {
-                  setState(() => _showOverallProgress = false);
-                }
-              },
-            ),
-            _buildProgressToggleChip(
-              label: AppLocalizations.of(context)!.yourProgress,
-              isSelected: _showOverallProgress,
-              onTap: () {
-                if (mounted) {
-                  setState(() => _showOverallProgress = true);
-                }
-              },
-            ),
-          ],
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: AppColors.neutral,
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Row(
+            children: [
+              _buildProgressSegment(
+                label: l10n.yourWeekProgress,
+                isSelected: !_showOverallProgress,
+                onTap: () {
+                  if (mounted) setState(() => _showOverallProgress = false);
+                },
+                bgColor: AppColors.secondary,
+                textColor: AppColors.textPrimary,
+              ),
+              _buildProgressSegment(
+                label: l10n.yourProgress,
+                isSelected: _showOverallProgress,
+                onTap: () {
+                  if (mounted) setState(() => _showOverallProgress = true);
+                },
+                bgColor: AppColors.primary,
+                textColor: AppColors.textPrimary,
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         _showOverallProgress
             ? _buildProgressCards(_overallProgress)
             : _buildProgressCards(_weekProgress),
@@ -232,32 +275,34 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildProgressToggleChip({
+  Widget _buildProgressSegment({
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
+    required Color bgColor,
+    required Color textColor,
   }) {
-    final baseTextStyle =
-        Theme.of(context).textTheme.bodyMedium ?? const TextStyle();
-
-    return Material(
-      child: InkWell(
+    return Expanded(
+      child: GestureDetector(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? bgColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(26),
+            border: isSelected
+                ? Border.all(color: AppColors.borderBlack, width: 1)
+                : null,
+          ),
           child: Text(
             label,
-            style: baseTextStyle.copyWith(
-              fontSize: 18,
-              fontWeight:
-                  isSelected ? FontWeight.w600 : baseTextStyle.fontWeight,
-              color: isSelected
-                  ? AppColors.textPrimary
-                  : AppColors.textPrimary.withValues(alpha: 0.55),
-              decoration:
-                  isSelected ? TextDecoration.underline : TextDecoration.none,
-              decorationThickness: 1.5,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              color: isSelected ? textColor : AppColors.textPrimary,
             ),
           ),
         ),
@@ -269,6 +314,8 @@ class _ProfilePageState extends State<ProfilePage> {
     final goal = profile?.weeklyGoalXP ?? 500;
     final current = _weekProgress?.weekXP ?? 0;
     final progress = goal > 0 ? (current / goal).clamp(0.0, 1.0) : 0.0;
+    final goalReached = goal > 0 && current >= goal;
+    final l10n = AppLocalizations.of(context)!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,7 +325,7 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             Expanded(
               child: Text(
-                AppLocalizations.of(context)!.weekProgress,
+                l10n.weekProgress,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -316,89 +363,133 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
         ),
         const SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            const trackHeight = 14.0;
-            const fillHeight = 12.0;
-            final fillWidth = (constraints.maxWidth * progress)
-                .clamp(0.0, constraints.maxWidth);
-            return Container(
-              height: trackHeight,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(trackHeight / 2),
-                color: Colors.grey[300],
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 1),
-              child: Stack(
-                alignment: Alignment.centerLeft,
-                children: [
-                  SizedBox(width: constraints.maxWidth, height: fillHeight),
-                  if (progress > 0)
-                    Container(
-                      width:
-                          fillWidth.clamp(fillHeight, constraints.maxWidth - 2),
-                      height: fillHeight,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(fillHeight / 2),
-                        gradient: const LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Color(0xFFB0A8E8),
-                            Color(0xFF8A8BDE),
-                          ],
-                        ),
-                        border: Border.all(
-                          color: const Color(0xFF5C5499),
-                          width: 2,
+        if (goalReached)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.secondary,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.borderBlack, width: 1),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(FontAwesomeIcons.solidTrophy,
+                    size: 18, color: AppColors.textPrimary),
+                const SizedBox(width: 8),
+                Text(
+                  l10n.weeklyGoalReached,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const trackHeight = 14.0;
+              const fillHeight = 12.0;
+              final fillWidth = (constraints.maxWidth * progress)
+                  .clamp(0.0, constraints.maxWidth);
+              return Container(
+                height: trackHeight,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(trackHeight / 2),
+                  color: Colors.grey[300],
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 1),
+                child: Stack(
+                  alignment: Alignment.centerLeft,
+                  children: [
+                    SizedBox(width: constraints.maxWidth, height: fillHeight),
+                    if (progress > 0)
+                      Container(
+                        width: fillWidth.clamp(
+                            fillHeight, constraints.maxWidth - 2),
+                        height: fillHeight,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(fillHeight / 2),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Color(0xFFB0A8E8),
+                              Color(0xFF8A8BDE),
+                            ],
+                          ),
+                          border: Border.all(
+                            color: const Color(0xFF5C5499),
+                            width: 2,
+                          ),
                         ),
                       ),
-                    ),
-                ],
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 4),
-        Text(
-          AppLocalizations.of(context)!.weeklyGoal(goal),
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-            color: AppColors.textSecondary,
+                  ],
+                ),
+              );
+            },
           ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(
+              child: Text(
+                l10n.weeklyGoal(goal),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textSecondary,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (_weekProgress != null)
+              _buildDaysRemainingBadge(_weekProgress!.daysRemainingInWeek),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildVerticalMenuButton(String label, ContentMenu menu,
-      {IconData? icon}) {
+  Widget _buildDaysRemainingBadge(int days) {
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.neutral,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(FontAwesomeIcons.solidClock,
+              size: 12, color: AppColors.textSecondary),
+          const SizedBox(width: 4),
+          Text(
+            l10n.daysRemaining(days),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVerticalMenuButton(
+    String label,
+    ContentMenu menu, {
+    IconData? icon,
+    required Color iconColor,
+  }) {
     final isSelected = _selectedMenu == menu;
-    final isInProgress = menu == ContentMenu.inProgress;
-    final isFavorite = menu == ContentMenu.favorite;
-    //final textColor = isInProgress ? AppColors.white : AppColors.textPrimary;
-    final textColor = AppColors.textPrimary;
-
-    Color backgroundColor;
-    Color iconColor;
-    BoxBorder? border;
-
-    if (isInProgress) {
-      //  backgroundColor = AppColors.primary.withOpacity(0.85);
-      backgroundColor = AppColors.chipBackground;
-      border = Border.all(color: AppColors.textPrimary, width: 1);
-      iconColor = AppColors.chipText;
-    } else if (isFavorite) {
-      // backgroundColor = AppColors.secondary.withOpacity(0.85);
-      backgroundColor = AppColors.chipBackground;
-      border = Border.all(color: AppColors.textPrimary, width: 1);
-      iconColor = AppColors.chipText;
-    } else {
-      backgroundColor = AppColors.chipBackground;
-      border = Border.all(color: AppColors.textPrimary, width: 1);
-      iconColor = AppColors.chipText;
-    }
 
     return Material(
       color: Colors.transparent,
@@ -421,8 +512,12 @@ class _ProfilePageState extends State<ProfilePage> {
         borderRadius: BorderRadius.circular(12),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.chipBackground,
+            color: AppColors.white,
             borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: Colors.black,
+              width: 1,
+            ),
           ),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           child: Row(
@@ -491,10 +586,22 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    UserAvatar(
-                        avatar: profile?.avatar,
-                        avatarUrl: profile?.avatarUrl,
-                        fullName: profile?.fullName),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: (_weekProgress != null &&
+                                (profile?.weeklyGoalXP ?? 0) > 0 &&
+                                (_weekProgress!.weekXP) >=
+                                    (profile?.weeklyGoalXP ?? 0))
+                            ? Border.all(color: AppColors.secondary, width: 3)
+                            : null,
+                      ),
+                      padding: const EdgeInsets.all(2),
+                      child: UserAvatar(
+                          avatar: profile?.avatar,
+                          avatarUrl: profile?.avatarUrl,
+                          fullName: profile?.fullName),
+                    ),
                     const SizedBox(width: 16),
                     Expanded(child: _buildWeekProgress(profile)),
                     const SizedBox(width: 12),
@@ -576,27 +683,28 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: Column(
                   children: [
                     _buildVerticalMenuButton(
-                        AppLocalizations.of(context)!.contentInProgress,
-                        ContentMenu.inProgress,
-                        icon: FontAwesomeIcons.ellipsis),
+                      AppLocalizations.of(context)!.contentInProgress,
+                      ContentMenu.inProgress,
+                      icon: FontAwesomeIcons.ellipsis,
+                      iconColor: AppColors.textPrimary,
+                    ),
                     const SizedBox(height: 12),
                     _buildVerticalMenuButton(
                         AppLocalizations.of(context)!.favoriteContent,
                         ContentMenu.favorite,
-                        icon: FontAwesomeIcons.heart),
+                        icon: FontAwesomeIcons.solidHeart,
+                        iconColor: AppColors.primary),
                     const SizedBox(height: 12),
                     _buildVerticalMenuButton(
-                        AppLocalizations.of(context)!.interestingContent,
-                        ContentMenu.interesting,
-                        icon: FontAwesomeIcons.bolt),
+                      AppLocalizations.of(context)!.forYou,
+                      ContentMenu.interesting,
+                      icon: FontAwesomeIcons.solidBolt,
+                      iconColor: AppColors.secondary,
+                    ),
+                    const SizedBox(height: 70),
                   ],
                 ),
               ),
-              // Content below the buttons (inline, no navigation)
-              // ContentCategory(
-              //   category: _selectedMenu.name,
-              //   embedded: true,
-              // ),
             ],
           ),
         ),

@@ -10,6 +10,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../constants/word_types.dart';
 import '../l10n/app_localizations.dart';
 import '../constants/number_icons.dart';
+import '../utils/flashcard_snackbar.dart';
+import '../services/feedback_service.dart';
 
 class FlashcardsDeckPage extends StatefulWidget {
   final List<VocabularyItem> flashcards;
@@ -46,33 +48,8 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
   int _transitionDirection = 0; // 0 none, 1 next, -1 previous
   double _dragOffsetAtTransitionStart = 0.0;
 
-  void _showFlashcardCategoryUpdatedSnackBar() {
-    if (!mounted) return;
-
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      const SnackBar(
-        backgroundColor: AppColors.primary,
-        content: Row(
-          children: [
-            FaIcon(
-              FontAwesomeIcons.thinCardsBlank,
-              color: Colors.white,
-              size: 18,
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Flashcard category updated',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  void _showFlashcardCategoryUpdatedSnackBar(String status) =>
+      FlashcardSnackbar.show(context, status, showAtTop: true);
 
   @override
   void initState() {
@@ -124,13 +101,12 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
       default:
         return Colors.black;
     }
-    return Colors.black;
   }
 
   Future<void> _playAudio(String? audioUrl) async {
     if (audioUrl == null || audioUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No audio available')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.noAudioAvailable)),
       );
       return;
     }
@@ -188,31 +164,57 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
 
   Color getCardBorderColor() {
     return Colors.transparent;
-    switch (widget.categoryName) {
-      case 'saved':
-        return AppColors.primary.withOpacity(0.2);
-      case 'difficult':
-        return AppColors.error.withOpacity(0.2);
-      case 'training':
-        return AppColors.secondary.withOpacity(0.2);
-      case 'mastered':
-        return AppColors.success.withOpacity(0.2);
-      default:
-        return Colors.black.withOpacity(0.2);
-    }
+  }
+
+  Color _categoryColor() {
+    return widget.categoryName == 'saved'
+        ? AppColors.primary
+        : widget.categoryName == 'difficult'
+            ? AppColors.error
+            : widget.categoryName == 'training'
+                ? AppColors.secondary
+                : widget.categoryName == 'mastered'
+                    ? AppColors.success
+                    : AppColors.textSecondary;
   }
 
   Future<void> _updateStatusAndNext(VocabularyItem card, String status) async {
     try {
       if (card.flashcardId != null) {
         await flashcardService.updateFlashcardStatus(card.flashcardId!, status);
-        _showFlashcardCategoryUpdatedSnackBar();
+        _showFlashcardCategoryUpdatedSnackBar(status);
+        if (status == 'mastered') {
+          FeedbackService.instance.playSuccess();
+        }
       }
     } catch (e) {
-      print('Error updating flashcard status: $e');
+      debugPrint('Error updating flashcard status: $e');
     } finally {
       _moveToNext();
     }
+  }
+
+  Future<bool> _confirmDeleteFlashcard(VocabularyItem card) async {
+    final l10n = AppLocalizations.of(context)!;
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.deleteFlashcard),
+        content: Text(l10n.areYouSureYouWantToDeleteWord(card.word)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+    return shouldDelete == true;
   }
 
   String _getPartOfSpeech(String type) {
@@ -226,10 +228,17 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
       _revealTurns += 0.5;
     });
 
-    await Future.delayed(_revealDuration);
+    // Reveal content as soon as the card reaches the midpoint of the flip.
+    await Future.delayed(Duration(milliseconds: _revealDuration.inMilliseconds ~/ 2));
     if (!mounted) return;
     setState(() {
       _isRevealed = true;
+    });
+
+    // Let the second half of the flip complete.
+    await Future.delayed(Duration(milliseconds: _revealDuration.inMilliseconds ~/ 2));
+    if (!mounted) return;
+    setState(() {
       _isRevealAnimating = false;
     });
   }
@@ -238,7 +247,6 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
     required String title,
     required String text,
     required Color textColor,
-    required Color iconColor,
     required bool emphasized,
   }) {
     if (text.trim().isEmpty) return const SizedBox.shrink();
@@ -254,47 +262,22 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
       children: [
         Text(title, style: titleStyle),
         const SizedBox(height: 6),
-        Container(
-          width: double.infinity,
+        Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: AppColors.chipBackground.withValues(
-              alpha: emphasized ? 0.82 : 0.62,
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Icon(
-                  FontAwesomeIcons.quoteLeft,
-                  size: 11,
-                  color: iconColor,
-                ),
-              ),
-              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   text,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 18,
-                    fontWeight: emphasized ? FontWeight.w600 : FontWeight.w400,
+                    fontWeight: emphasized ? FontWeight.w500 : FontWeight.w400,
                     fontStyle: emphasized ? FontStyle.normal : FontStyle.normal,
                     color: textColor,
                     height: 1.35,
                   ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Icon(
-                  FontAwesomeIcons.quoteRight,
-                  size: 11,
-                  color: iconColor,
                 ),
               ),
             ],
@@ -322,9 +305,9 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  'No flashcards available',
-                  style: TextStyle(
+                Text(
+                  AppLocalizations.of(context)!.noFlashcardsAvailable,
+                  style: const TextStyle(
                     fontSize: 18,
                     color: AppColors.textSecondary,
                   ),
@@ -335,7 +318,7 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                   ),
-                  child: const Text('Go Back'),
+                  child: Text(AppLocalizations.of(context)!.goBack),
                 ),
               ],
             ),
@@ -436,9 +419,9 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          'Go Back',
-                          style: TextStyle(
+                        child: Text(
+                          AppLocalizations.of(context)!.goBack,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -453,8 +436,6 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
         ),
       );
     }
-
-    final currentCard = _flashcards[_currentIndex];
 
     return Scaffold(
       backgroundColor: widget.categoryName == 'saved'
@@ -737,15 +718,7 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                           // Bookmark section in top-left, delete icon in top-right
                           Builder(
                             builder: (context) {
-                              final statusColor = widget.categoryName == 'saved'
-                                  ? AppColors.primary
-                                  : widget.categoryName == 'difficult'
-                                      ? AppColors.error
-                                      : widget.categoryName == 'training'
-                                          ? AppColors.secondary
-                                          : widget.categoryName == 'mastered'
-                                              ? AppColors.success
-                                              : AppColors.textSecondary;
+                              final statusColor = _categoryColor();
                               final statusIcon = card.status == 'saved'
                                   ? FontAwesomeIcons.solidFloppyDisk
                                   : card.status == 'difficult'
@@ -778,6 +751,9 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                                       card.flashcardId != null)
                                     GestureDetector(
                                       onTap: () async {
+                                        final confirmed =
+                                            await _confirmDeleteFlashcard(card);
+                                        if (!confirmed || !mounted) return;
                                         try {
                                           await flashcardService
                                               .deleteFlashcard(
@@ -818,7 +794,7 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                           ),
                           const SizedBox(height: 16),
                           // Part of speech label
-                          if (card.type != null && card.type!.isNotEmpty)
+                          if (card.type.isNotEmpty)
                             Text(
                               _getPartOfSpeech(card.type),
                               style: const TextStyle(
@@ -848,19 +824,30 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                                     child: Icon(
                                       _isPlaying
                                           ? FontAwesomeIcons.pause
-                                          : FontAwesomeIcons.solidPlayCircle,
+                                          : FontAwesomeIcons.solidCirclePlay,
                                       size: 36,
                                       color: getColorPlayIcon(card.status),
                                     ),
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                Text(
-                                  card.word,
-                                  style: const TextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
+                                Container(
+                                  padding: const EdgeInsets.only(bottom: 0.5),
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(
+                                        color: _categoryColor(),
+                                        width: 2,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    card.word,
+                                    style: TextStyle(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w600,
+                                      color: _categoryColor(),
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -962,7 +949,6 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                               title: 'EXAMPLE',
                               text: card.exampleSentence ?? '',
                               textColor: AppColors.textPrimary,
-                              iconColor: AppColors.textPrimary,
                               emphasized: true,
                             ),
                             const SizedBox(height: 12),
@@ -970,7 +956,6 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                               title: 'TRANSLATION',
                               text: card.exampleTranslation ?? '',
                               textColor: AppColors.textSecondary,
-                              iconColor: AppColors.textSecondary,
                               emphasized: false,
                             ),
                           ],

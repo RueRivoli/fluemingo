@@ -132,7 +132,7 @@ class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => RegistrationPage(
+                            builder: (context) => RegistrationPage.onboarding(
                               targetLanguage: widget.targetLanguage,
                               nativeLanguage: widget.nativeLanguage,
                               avatar: widget.avatar,

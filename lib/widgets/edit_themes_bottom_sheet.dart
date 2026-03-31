@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
 import '../constants/content.dart';
+import '../l10n/app_localizations.dart';
 import 'theme_chip.dart';
 
 /// Reusable bottom sheet to edit "interesting themes" selection.
@@ -70,8 +71,8 @@ class _EditThemesBottomSheetState extends State<EditThemesBottomSheet> {
     if (_localSelected.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select at least one theme.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.pleaseSelectAtLeastOneTheme),
           ),
         );
       }
@@ -108,8 +109,8 @@ class _EditThemesBottomSheetState extends State<EditThemesBottomSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Your favorite themes',
-              style: TextStyle(
+              AppLocalizations.of(context)!.favoriteThemes,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
@@ -117,8 +118,8 @@ class _EditThemesBottomSheetState extends State<EditThemesBottomSheet> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Select up to $_maxSelections themes that you are interested in (${_localSelected.length}/$_maxSelections)',
-              style: TextStyle(
+              AppLocalizations.of(context)!.selectUpToThemes(_maxSelections),
+              style: const TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondary,
               ),
@@ -156,7 +157,7 @@ class _EditThemesBottomSheetState extends State<EditThemesBottomSheet> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Cancel'),
+                    child: Text(AppLocalizations.of(context)!.cancel),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -170,7 +171,7 @@ class _EditThemesBottomSheetState extends State<EditThemesBottomSheet> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Save'),
+                    child: Text(AppLocalizations.of(context)!.save),
                   ),
                 ),
               ],

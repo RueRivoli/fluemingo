@@ -1,67 +1,23 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/audiobook.dart';
-import '../models/vocabulary_item.dart';
 import '../models/article.dart';
-import '../models/chapter_overview.dart';
+import '../utils/storage_url_helper.dart';
+import '../utils/reference_language.dart';
+import '../utils/json_utils.dart';
 import 'article_service.dart';
 import 'language_table_resolver.dart';
 
 class AudiobookService {
   final SupabaseClient _supabase;
   static const String _storageBucket = 'content'; // Main storage bucket
-  String? _cachedReferenceLanguageCode;
 
   AudiobookService(this._supabase);
 
   String _table(String name) => LanguageTableResolver.table(name);
 
-  String _normalizeReferenceLanguageCode(String? code) {
-    final normalized = (code ?? '').trim().toLowerCase();
-    switch (normalized) {
-      case 'es':
-      case 'sp':
-        return 'sp';
-      case 'de':
-      case 'ge':
-        return 'ge';
-      case 'nl':
-      case 'dt':
-        return 'dt';
-      case 'ja':
-      case 'jp':
-        return 'jp';
-      default:
-        return normalized;
-    }
-  }
-
-  Future<String> _getReferenceLanguageCode() async {
-    if (_cachedReferenceLanguageCode != null &&
-        _cachedReferenceLanguageCode!.isNotEmpty) {
-      return _cachedReferenceLanguageCode!;
-    }
-
-    final user = _supabase.auth.currentUser;
-    if (user == null) return 'en';
-
-    try {
-      final profile = await _supabase
-          .from('profiles')
-          .select('native_language')
-          .eq('id', user.id)
-          .maybeSingle();
-      final referenceLanguage =
-          _normalizeReferenceLanguageCode(profile?['native_language']);
-      if (referenceLanguage.isNotEmpty) {
-        _cachedReferenceLanguageCode = referenceLanguage;
-        return referenceLanguage;
-      }
-    } catch (e) {
-      print('Error fetching reference language for audiobook: $e');
-    }
-
-    return 'en';
-  }
+  Future<String> _getReferenceLanguageCode() =>
+      ReferenceLanguage.getReferenceLanguageCode(_supabase);
 
   Future<void> _setAllChaptersFinished(int audiobookId, String userId) async {
     final chapters = await _supabase
@@ -114,34 +70,8 @@ class AudiobookService {
     }
   }
 
-  /// Get full public URL for a file stored in Supabase Storage
-  String _getStorageUrl(String? path) {
-    if (path == null || path.isEmpty) {
-      return '';
-    }
-
-    // If the path already contains the full URL, return it as is
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      return path;
-    }
-
-    // Remove leading slash if present
-    String cleanPath = path.startsWith('/') ? path.substring(1) : path;
-
-    // If path starts with "content/", remove it since bucket is already "content"
-    if (cleanPath.startsWith('content/')) {
-      cleanPath = cleanPath.substring('content/'.length);
-    }
-
-    try {
-      final url =
-          _supabase.storage.from(_storageBucket).getPublicUrl(cleanPath);
-      return url;
-    } catch (e) {
-      print('Error constructing storage URL: $e');
-      return '';
-    }
-  }
+  String _getImageUrl(String? imgPath) =>
+      StorageUrlHelper.getImageUrl(_supabase, imgPath);
 
   /// Normalize storage path (no leading slash, no "content/" prefix).
   String? _normalizeStoragePath(String? path) {
@@ -153,33 +83,18 @@ class AudiobookService {
     return clean.isEmpty ? null : clean;
   }
 
-  /// Get full public URL for an image stored in Supabase Storage
-  String _getImageUrl(String? imgPath) {
-    return _getStorageUrl(imgPath);
-  }
-
   /// Resolve image URL: try signed URL first (for private buckets), fall back to public URL.
-  /// Use this when images don't load with getPublicUrl (e.g. bucket is private).
   Future<String> _getImageUrlResolved(String? imgPath) async {
     final cleanPath = _normalizeStoragePath(imgPath);
-    if (cleanPath == null) return _getStorageUrl(imgPath);
+    if (cleanPath == null) return StorageUrlHelper.getStorageUrl(_supabase, imgPath);
     try {
       final signedUrl = await _supabase.storage
           .from(_storageBucket)
           .createSignedUrl(cleanPath, 3600);
       return signedUrl;
     } catch (e) {
-      // Fallback to public URL (e.g. if bucket is public or signed URL fails)
-      return _getStorageUrl(imgPath);
+      return StorageUrlHelper.getStorageUrl(_supabase, imgPath);
     }
-  }
-
-  /// Get full public URL for an audio file stored in Supabase Storage
-  String? _getAudioUrl(String? audioPath) {
-    if (audioPath == null || audioPath.isEmpty) {
-      return null;
-    }
-    return _getStorageUrl(audioPath);
   }
 
   /// Fetch all audiobooks from Supabase (fr_content table with content_type = 2)
@@ -209,16 +124,18 @@ class AudiobookService {
       }
 
       final response = await query;
+      final referenceLanguageCode = await _getReferenceLanguageCode();
       final list = <Audiobook>[];
       for (final json in response as List) {
         final rawPath =
             (json['image_url'] ?? json['img_url'])?.toString() ?? '';
         final imageUrl = await _getImageUrlResolved(rawPath);
-        list.add(_audiobookFromJson(json, imageUrlOverride: imageUrl));
+        list.add(_audiobookFromJson(json,
+            imageUrlOverride: imageUrl,
+            referenceLanguageCode: referenceLanguageCode));
       }
       return list;
     } catch (e) {
-      print('Error fetching audiobooks: $e');
       rethrow;
     }
   }
@@ -245,14 +162,16 @@ class AudiobookService {
           final orderIdB = b['order_id'] as int? ?? 0;
           return orderIdA.compareTo(orderIdB);
         });
-      print('sortedChapters: ${sortedChapters.map((e) => e['order_id'])}');
-      final progressResponse = await _supabase
-          .from(_table('progress'))
-          .select('reading_status, is_liked')
-          .eq('content_id', id)
-          .eq('content_type', 2)
-          .filter('chapter_id', 'is', 'null')
-          .maybeSingle();
+      final progressResponse = user != null
+          ? await _supabase
+              .from(_table('progress'))
+              .select('reading_status, is_liked')
+              .eq('content_id', id)
+              .eq('content_type', 2)
+              .eq('user_id', user.id)
+              .filter('chapter_id', 'is', 'null')
+              .maybeSingle()
+          : null;
       final chapterProgressRows = user != null
           ? await _supabase
               .from(_table('progress'))
@@ -263,7 +182,7 @@ class AudiobookService {
               .not('chapter_id', 'is', null)
           : <dynamic>[];
       final chapterStatusById = <int, String>{};
-      for (final row in (chapterProgressRows as List)) {
+      for (final row in chapterProgressRows) {
         final chapterId = row['chapter_id'];
         final readingStatus = row['reading_status'];
         if (chapterId is num && readingStatus is String) {
@@ -282,7 +201,9 @@ class AudiobookService {
           id: audiobookResponse['id'].toString(),
           chapterId: chapterId?.toString(),
           title: chapterJson['title'] ?? '',
-          description: chapterJson['description'] ?? '',
+          parentTitle: audiobookResponse['title'] ?? '',
+          description: ArticleService.localizedDescription(
+              chapterJson, referenceLanguageCode),
           author: audiobookResponse['author'] ?? '',
           imageUrl: resolvedImageUrl,
           level: audiobookResponse['level']?.toString() ?? 'A1',
@@ -304,17 +225,13 @@ class AudiobookService {
           contentType: 2,
         );
       }).toList();
-      print('chapters: ${chapters.map((e) => e.orderId)}');
       // Create audiobook with all related data
-      final descriptionRef = audiobookResponse['description_en']?.toString();
       return Audiobook(
         id: audiobookResponse['id'],
         title: audiobookResponse['title'] ?? '',
         author: audiobookResponse['author'] ?? '',
-        description: audiobookResponse['description'] ?? '',
-        descriptionRef: descriptionRef != null && descriptionRef.isNotEmpty
-            ? descriptionRef
-            : null,
+        description: ArticleService.localizedDescription(
+            audiobookResponse, referenceLanguageCode),
         imageUrl: resolvedImageUrl,
         level: audiobookResponse['level'] ?? 'A1',
         category1: audiobookResponse['category_1'] ?? '',
@@ -325,9 +242,10 @@ class AudiobookService {
         readingStatus: progressResponse?['reading_status'] ?? null,
         isFavorite: progressResponse?['is_liked'] == true,
         isFree: audiobookResponse['is_free'] == true,
+        isNew: JsonUtils.readIsNew(audiobookResponse),
       );
     } catch (e) {
-      print('Error fetching audiobook: $e');
+      debugPrint('Error fetching audiobook: $e');
       return null;
     }
   }
@@ -336,7 +254,7 @@ class AudiobookService {
   /// When logged in, fr_progress is filtered to the row with chapter_id=null (overall audiobook progress).
   /// [imageUrlOverride] is used when resolved (e.g. signed) URL was computed by the caller.
   Audiobook _audiobookFromJson(Map<String, dynamic> json,
-      {String? imageUrlOverride}) {
+      {String? imageUrlOverride, String referenceLanguageCode = 'en'}) {
     bool isFavorite = false;
     String? readingStatus;
     final progressFr = json[_table('progress')];
@@ -347,17 +265,14 @@ class AudiobookService {
         readingStatus = progress['reading_status'] as String?;
       }
     }
-    final descriptionRef = json['description_en']?.toString();
     final imageUrl = imageUrlOverride ??
         _getImageUrl((json['image_url'] ?? json['img_url'])?.toString() ?? '');
     return Audiobook(
       id: json['id'] as int,
       title: json['title'] ?? '',
       author: json['author'] ?? '',
-      description: json['description'] ?? '',
-      descriptionRef: descriptionRef != null && descriptionRef.isNotEmpty
-          ? descriptionRef
-          : null,
+      description:
+          ArticleService.localizedDescription(json, referenceLanguageCode),
       imageUrl: imageUrl,
       level: json['level'] ?? 'A1',
       category1: json['category_1'] ?? '',
@@ -369,6 +284,7 @@ class AudiobookService {
       readingStatus: readingStatus,
       isFavorite: isFavorite,
       isFree: json['is_free'] == true,
+      isNew: JsonUtils.readIsNew(json),
     );
   }
 
@@ -426,7 +342,7 @@ class AudiobookService {
         await _setAllChaptersFinished(contentId, user.id);
       }
     } catch (e) {
-      print('Error editing audiobook status: $e');
+      debugPrint('Error editing audiobook status: $e');
     }
   }
 
@@ -464,7 +380,7 @@ class AudiobookService {
         await _supabase.from(_table('progress')).insert(payload);
       }
     } catch (e) {
-      print('Error toggling audiobook favorite: $e');
+      debugPrint('Error toggling audiobook favorite: $e');
     }
   }
 }

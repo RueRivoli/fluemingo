@@ -130,7 +130,7 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                       borderColor: Colors.white,
                       textColor: Colors.black,
                       imagePath: 'assets/images/flashcards/difficult_red.png',
-                      title: 'Oops',
+                      title: AppLocalizations.of(context)!.oops,
                       bodyText:
                           AppLocalizations.of(context)!.difficultVocabulary,
                       count: counts[1],
@@ -218,7 +218,6 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
     required int count,
     required String categoryName,
     IconData? icon,
-    bool isPremium = false,
     required Color shapeColor,
   }) {
     return Container(
@@ -396,8 +395,8 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'items',
-                                style: TextStyle(
+                                AppLocalizations.of(context)!.items,
+                                style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                   color: Colors.black,

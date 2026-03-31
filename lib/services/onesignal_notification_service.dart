@@ -20,11 +20,7 @@ class OneSignalNotificationService {
     if (_isInitialized) return;
 
     final appId = _envOneSignalAppId.trim();
-    if (appId.isEmpty) {
-      debugPrint(
-          'OneSignal init skipped: missing --dart-define=ONESIGNAL_APP_ID');
-      return;
-    }
+    if (appId.isEmpty) return;
 
     try {
       OneSignal.initialize(appId);

@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/revenue_cat_config.dart';
-import '../models/article.dart';
-import '../models/vocabulary_item.dart';
-import '../models/grammar_point.dart';
 import '../constants/app_colors.dart';
-import '../services/article_service.dart';
-import 'article_reading_page.dart';
-import '../widgets/vocabulary_item_card.dart';
-import '../widgets/content_status_badge.dart';
+import '../widgets/content_header_image.dart';
 import '../widgets/content_category_chip.dart';
+import '../widgets/favorite_toggle_button.dart';
 import '../models/audiobook.dart';
 import '../services/audiobook_service.dart';
-import '../services/profile_service.dart';
 import 'article_overview_page.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../l10n/app_localizations.dart';
@@ -37,55 +31,25 @@ class AudiobookOverviewPage extends StatefulWidget {
 class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
   Audiobook? _audiobook;
   late final AudiobookService _audiobookService;
-  late final ProfileService _profileService;
-  bool _isLoadingAudiobook = true;
-  String? _referenceLanguage;
 
   @override
   void initState() {
     super.initState();
     _audiobookService = AudiobookService(Supabase.instance.client);
-    _profileService = ProfileService(Supabase.instance.client);
     _loadFullAudiobook();
-    _loadProfileForReferenceLanguage();
-  }
-
-  Future<void> _loadProfileForReferenceLanguage() async {
-    try {
-      final profileData = await _profileService.getProfileData();
-      if (mounted) {
-        setState(() {
-          _referenceLanguage = profileData['native_language']?.toString();
-        });
-      }
-    } catch (_) {
-      // User may not be logged in; keep _referenceLanguage null
-    }
   }
 
   Future<void> _loadFullAudiobook() async {
-    setState(() {
-      _isLoadingAudiobook = true;
-    });
-
     try {
       final audioBook =
           await _audiobookService.getAudiobookById(widget.audiobook.id);
-      if (audioBook != null) {
+      if (audioBook != null && mounted) {
         setState(() {
           _audiobook = audioBook;
-          _isLoadingAudiobook = false;
-        });
-      } else {
-        setState(() {
-          _isLoadingAudiobook = false;
         });
       }
     } catch (e) {
-      print('Error loading audiobbok: $e');
-      setState(() {
-        _isLoadingAudiobook = false;
-      });
+      debugPrint('Error loading audiobook: $e');
     }
   }
 
@@ -94,18 +58,6 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
     final minutes = seconds ~/ 60;
     final remainingSeconds = seconds % 60;
     return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
-  }
-
-  /// Description in the user's reference (native) language when available, otherwise default.
-  String _getDescriptionForDisplay(Audiobook? book) {
-    if (book == null) return widget.audiobook.description;
-    final ref = _referenceLanguage?.toLowerCase();
-    if (ref == 'en' &&
-        book.descriptionRef != null &&
-        book.descriptionRef!.isNotEmpty) {
-      return book.descriptionRef!;
-    }
-    return book.description;
   }
 
   @override
@@ -120,67 +72,18 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header Image
-                  Stack(
-                    children: [
-                      Image.network(
-                        _audiobook?.imageUrl ?? '',
-                        height: 280,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: 280,
-                            color: Colors.grey[300],
-                            child: const Center(
-                              child: Icon(
-                                Icons.image_outlined,
-                                size: 48,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      // Back button
-                      Positioned(
-                        top: MediaQuery.of(context).padding.top + 8,
-                        left: 16,
-                        child: GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              FontAwesomeIcons.chevronLeft,
-                              color: AppColors.textPrimary,
-                              size: 24,
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Status badge bottom left
-                      Positioned(
-                        bottom: 12,
-                        left: 16,
-                        child: ContentStatusBadge(
-                          status: _audiobook?.readingStatus ?? null,
-                          compact: false,
-                          showStatusMenu: true,
-                          onStatusChange: (newStatus) async {
-                            final audiobook = _audiobook ?? widget.audiobook;
-                            await _audiobookService.editAudiobookStatus(
-                              audiobook,
-                              newStatus,
-                            );
-                            await _loadFullAudiobook();
-                          },
-                        ),
-                      ),
-                    ],
+                  ContentHeaderImage(
+                    imageUrl: _audiobook?.imageUrl ?? '',
+                    status: _audiobook?.readingStatus,
+                    showStatusMenu: true,
+                    onStatusChange: (newStatus) async {
+                      final audiobook = _audiobook ?? widget.audiobook;
+                      await _audiobookService.editAudiobookStatus(
+                        audiobook,
+                        newStatus,
+                      );
+                      await _loadFullAudiobook();
+                    },
                   ),
 
                   // Content
@@ -242,7 +145,7 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
                                 ),
                               ),
                             ),
-                            if (_audiobook?.category1?.isNotEmpty ?? false)
+                            if (_audiobook?.category1.isNotEmpty ?? false)
                               ContentCategoryChip(
                                 category: widget.audiobook.category1,
                                 useAudiobookTypeLabel: true,
@@ -266,7 +169,9 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
                                 verticalPadding: 8,
                                 borderRadius: 6,
                               ),
-                            GestureDetector(
+                            FavoriteToggleButton(
+                              isFavorite: _audiobook?.isFavorite ?? false,
+                              showLocker: widget.showLocker,
                               onTap: () async {
                                 if (widget.showLocker) {
                                   await presentPaywall();
@@ -282,35 +187,14 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
                                       !_audiobook!.isFavorite;
                                 });
                               },
-                              behavior: HitTestBehavior.opaque,
-                              child: Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: Colors.black54,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Icon(
-                                  widget.showLocker
-                                      ? FontAwesomeIcons.lock
-                                      : (_audiobook?.isFavorite ?? false
-                                          ? FontAwesomeIcons.solidHeart
-                                          : FontAwesomeIcons.lightHeart),
-                                  size: 20,
-                                  color: widget.showLocker
-                                      ? Colors.white
-                                      : (_audiobook?.isFavorite ?? false
-                                          ? AppColors.secondary
-                                          : Colors.white),
-                                ),
-                              ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 16),
 
-                        // Description (in reference language when available)
+                        // Description in the user's native language
                         Text(
-                          _getDescriptionForDisplay(_audiobook),
+                          (_audiobook ?? widget.audiobook).description,
                           style: TextStyle(
                             fontSize: 15,
                             color: Colors.grey[600],

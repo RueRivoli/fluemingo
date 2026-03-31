@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 /// Reusable badge showing content progress: "Not Started", "In Progress", "Finished".
@@ -35,11 +36,11 @@ class ContentStatusBadge extends StatelessWidget {
 
   static const Color _orange = Color(0xFFE67E22);
 
-  String get _label {
+  String _labelText(AppLocalizations l10n) {
     final s = status?.toLowerCase().trim();
-    if (s == 'started') return 'In Progress';
-    if (s == 'finished') return 'Finished';
-    return 'Not Started';
+    if (s == 'started') return l10n.inProgress;
+    if (s == 'finished') return l10n.finished;
+    return l10n.notStarted;
   }
 
   Widget? get _icon {
@@ -62,23 +63,23 @@ class ContentStatusBadge extends StatelessWidget {
   }
 
   /// Menu items for the status popup. Returns list of (displayLabel, apiStatus).
-  List<({String displayLabel, String apiStatus})> get _menuItems {
+  List<({String displayLabel, String apiStatus})> _menuItemsList(AppLocalizations l10n) {
     final s = status?.toLowerCase().trim();
     if (s == 'started') {
       return [
-        (displayLabel: 'Not Started', apiStatus: 'not_started'),
-        (displayLabel: 'Finished', apiStatus: 'finished'),
+        (displayLabel: l10n.notStarted, apiStatus: 'not_started'),
+        (displayLabel: l10n.finished, apiStatus: 'finished'),
       ];
     }
     if (s == 'finished') {
       return [
-        (displayLabel: 'Not Started', apiStatus: 'not_started'),
-        (displayLabel: 'In Progress', apiStatus: 'started'),
+        (displayLabel: l10n.notStarted, apiStatus: 'not_started'),
+        (displayLabel: l10n.inProgress, apiStatus: 'started'),
       ];
     }
     return [
-      (displayLabel: 'In Progress', apiStatus: 'started'),
-      (displayLabel: 'Finished', apiStatus: 'finished'),
+      (displayLabel: l10n.inProgress, apiStatus: 'started'),
+      (displayLabel: l10n.finished, apiStatus: 'finished'),
     ];
   }
 
@@ -112,9 +113,9 @@ class ContentStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final padding = compact
-        ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2)
-        : const EdgeInsets.symmetric(horizontal: 8, vertical: 2);
+    final l10n = AppLocalizations.of(context)!;
+    final label = _labelText(l10n);
+    final menuItems = _menuItemsList(l10n);
     final fontSize = compact ? 11.0 : 13.0;
 
     if (showOnlyStatus) {
@@ -127,7 +128,7 @@ class ContentStatusBadge extends StatelessWidget {
               SizedBox(width: compact ? 3 : 4),
             ],
             Text(
-              _label,
+              label,
               style: TextStyle(
                 fontSize: fontSize,
                 fontWeight: FontWeight.w600,
@@ -153,7 +154,7 @@ class ContentStatusBadge extends StatelessWidget {
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           onSelected: (String apiStatus) => onStatusChange!(apiStatus),
-          itemBuilder: (context) => _menuItems
+          itemBuilder: (context) => menuItems
               .map((e) => PopupMenuItem<String>(
                     value: e.apiStatus,
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
@@ -196,7 +197,7 @@ class ContentStatusBadge extends StatelessWidget {
             SizedBox(width: compact ? 3 : 4),
           ],
           Text(
-            _label,
+            label,
             style: TextStyle(
               fontSize: fontSize,
               fontWeight: FontWeight.w600,
@@ -216,7 +217,7 @@ class ContentStatusBadge extends StatelessWidget {
               surfaceTintColor: Colors.transparent,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               onSelected: (String apiStatus) => onStatusChange!(apiStatus),
-              itemBuilder: (context) => _menuItems
+              itemBuilder: (context) => menuItems
                   .map((e) => PopupMenuItem<String>(
                         value: e.apiStatus,
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),

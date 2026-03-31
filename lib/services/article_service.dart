@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/article.dart';
@@ -5,106 +6,25 @@ import '../models/vocabulary_item.dart';
 import '../models/grammar_point.dart';
 import '../models/article_paragraph.dart';
 import '../models/article_sentence.dart';
-import '../models/word_timestamp.dart';
-import '../models/sentence_timestamp.dart';
 import '../models/unit.dart';
+import '../utils/storage_url_helper.dart';
+import '../utils/reference_language.dart';
+import '../utils/localization_field_resolver.dart';
+import '../utils/json_utils.dart';
 import 'language_table_resolver.dart';
 import 'offline_content_service.dart';
 
 class ArticleService {
   final SupabaseClient _supabase;
   final OfflineContentService _offlineContentService;
-  static const String _storageBucket = 'content'; // Main storage bucket
-  String? _cachedReferenceLanguageCode;
-
   ArticleService(this._supabase)
       : _offlineContentService = OfflineContentService();
 
   String _table(String name) => LanguageTableResolver.table(name);
 
-  static String _normalizeReferenceLanguageCode(String? code) {
-    final normalized = (code ?? '').trim().toLowerCase();
-    switch (normalized) {
-      case 'es':
-      case 'sp':
-        return 'sp';
-      case 'de':
-      case 'ge':
-        return 'ge';
-      case 'nl':
-      case 'dt':
-        return 'dt';
-      case 'ja':
-      case 'jp':
-        return 'jp';
-      default:
-        return normalized;
-    }
-  }
-
-  static List<String> _referenceLanguageAliases(String? code) {
-    final normalized = _normalizeReferenceLanguageCode(code);
-    switch (normalized) {
-      case 'sp':
-        return const ['sp', 'es'];
-      case 'ge':
-        return const ['ge', 'de'];
-      case 'dt':
-        return const ['dt', 'nl'];
-      case 'jp':
-        return const ['jp', 'ja'];
-      default:
-        return normalized.isEmpty ? const [] : [normalized];
-    }
-  }
-
   static String _toPascal(String value) {
     if (value.isEmpty) return value;
     return value[0].toUpperCase() + value.substring(1).toLowerCase();
-  }
-
-  static String _readFirstNonEmptyFromMap(
-      Map<dynamic, dynamic> source, List<String> candidates) {
-    for (final key in candidates) {
-      final value = source[key];
-      if (value != null && value.toString().trim().isNotEmpty) {
-        return value.toString();
-      }
-    }
-
-    if (source.keys.any((key) => key is String)) {
-      final lowerCaseIndex = <String, dynamic>{};
-      for (final entry in source.entries) {
-        final key = entry.key;
-        if (key is String) {
-          lowerCaseIndex[key.toLowerCase()] = entry.value;
-        }
-      }
-      for (final key in candidates) {
-        final value = lowerCaseIndex[key.toLowerCase()];
-        if (value != null && value.toString().trim().isNotEmpty) {
-          return value.toString();
-        }
-      }
-    }
-
-    return '';
-  }
-
-  static String _localizedVocabularyFieldValue({
-    required Map<dynamic, dynamic> source,
-    required String baseField,
-    required String referenceLanguageCode,
-  }) {
-    final aliases = _referenceLanguageAliases(referenceLanguageCode);
-    final candidates = <String>[
-      ...aliases.map((code) => '${baseField}_$code'),
-      ...aliases.map((code) => '${baseField}_${code.toUpperCase()}'),
-      '${baseField}_en',
-      '${baseField}_EN',
-    ];
-
-    return _readFirstNonEmptyFromMap(source, candidates);
   }
 
   static String _localizedContentFieldValue({
@@ -112,7 +32,8 @@ class ArticleService {
     required String baseField,
     required String referenceLanguageCode,
   }) {
-    final aliases = _referenceLanguageAliases(referenceLanguageCode);
+    final aliases =
+        LocalizationFieldResolver.referenceLanguageAliases(referenceLanguageCode);
     final candidates = <String>[
       ...aliases.map((code) => '$baseField${_toPascal(code)}'),
       ...aliases.map((code) => '${baseField}_$code'),
@@ -122,80 +43,17 @@ class ArticleService {
       '${baseField}_EN',
     ];
 
-    return _readFirstNonEmptyFromMap(source, candidates);
+    return LocalizationFieldResolver.readFirstNonEmptyFromMap(source, candidates);
   }
 
-  Future<String> _getReferenceLanguageCode() async {
-    if (_cachedReferenceLanguageCode != null &&
-        _cachedReferenceLanguageCode!.isNotEmpty) {
-      return _cachedReferenceLanguageCode!;
-    }
+  Future<String> _getReferenceLanguageCode() =>
+      ReferenceLanguage.getReferenceLanguageCode(_supabase);
 
-    final user = _supabase.auth.currentUser;
-    if (user == null) return 'en';
+  String _getImageUrl(String? imgPath) =>
+      StorageUrlHelper.getImageUrl(_supabase, imgPath);
 
-    try {
-      final profile = await _supabase
-          .from('profiles')
-          .select('native_language')
-          .eq('id', user.id)
-          .maybeSingle();
-      final referenceLanguage =
-          _normalizeReferenceLanguageCode(profile?['native_language']);
-      if (referenceLanguage.isNotEmpty) {
-        _cachedReferenceLanguageCode = referenceLanguage;
-        return referenceLanguage;
-      }
-    } catch (e) {
-      print('Error fetching reference language: $e');
-    }
-
-    return 'en';
-  }
-
-  /// Get full public URL for a file stored in Supabase Storage
-  /// Path format expected: "content/images/filename.jpg" -> extracts "images/filename.jpg"
-  String _getStorageUrl(String? path) {
-    if (path == null || path.isEmpty) {
-      return '';
-    }
-
-    // If the path already contains the full URL, return it as is
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      return path;
-    }
-
-    // Remove leading slash if present
-    String cleanPath = path.startsWith('/') ? path.substring(1) : path;
-
-    // If path starts with "content/", remove it since bucket is already "content"
-    if (cleanPath.startsWith('content/')) {
-      cleanPath = cleanPath.substring('content/'.length);
-    }
-
-    try {
-      // Construct the full public URL
-      final url =
-          _supabase.storage.from(_storageBucket).getPublicUrl(cleanPath);
-      return url;
-    } catch (e) {
-      print('Error constructing storage URL: $e');
-      return '';
-    }
-  }
-
-  /// Get full public URL for an image stored in Supabase Storage
-  String _getImageUrl(String? imgPath) {
-    return _getStorageUrl(imgPath);
-  }
-
-  /// Get full public URL for an audio file stored in Supabase Storage
-  String? _getAudioUrl(String? audioPath) {
-    if (audioPath == null || audioPath.isEmpty) {
-      return null;
-    }
-    return _getStorageUrl(audioPath);
-  }
+  String? _getAudioUrl(String? audioPath) =>
+      StorageUrlHelper.getAudioUrl(_supabase, audioPath);
 
   Future<List<Article>> getArticles({String? level}) async {
     try {
@@ -221,7 +79,6 @@ class ArticleService {
       }
 
       final response = await query;
-
       return (response as List)
           .map((json) => _articleFromJson(
                 json,
@@ -229,29 +86,7 @@ class ArticleService {
               ))
           .toList();
     } catch (e) {
-      print('Error fetching articles: $e');
       rethrow;
-    }
-  }
-
-  /// Check if a vocabulary item is saved in fr_flashcards for the current user
-  Future<bool> _isVocabularyItemSaved(String word, String articleId) async {
-    try {
-      final user = _supabase.auth.currentUser;
-      if (user == null) return false;
-
-      final response = await _supabase
-          .from(_table('flashcards'))
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('text', word)
-          .eq('content_id', int.parse(articleId))
-          .maybeSingle();
-
-      return response != null;
-    } catch (e) {
-      print('Error checking if vocabulary item is saved: $e');
-      return false;
     }
   }
 
@@ -272,12 +107,6 @@ class ArticleService {
           .eq('id', int.parse(id))
           .eq('content_type', 1)
           .single();
-      if (articleResponse == null) {
-        return _offlineContentService.getCachedArticle(
-          contentType: 1,
-          contentId: id,
-        );
-      }
 
       // Fetch proposed vocabulary saved in flashcards
       final mainVocabularyResponse = await _supabase
@@ -286,16 +115,6 @@ class ArticleService {
           .eq('reference_id', int.parse(id))
           .eq('content_type', 1);
 
-      // Rank rows with an associated fr_flashcards row first
-      final mainList = mainVocabularyResponse as List;
-      mainList.sort((a, b) {
-        final aHasFlashcard = a[_table('flashcards')] is List &&
-            (a[_table('flashcards')] as List).isNotEmpty;
-        final bHasFlashcard = b[_table('flashcards')] is List &&
-            (b[_table('flashcards')] as List).isNotEmpty;
-        if (aHasFlashcard == bHasFlashcard) return 0;
-        return aHasFlashcard ? -1 : 1; // rows with flashcard first
-      });
       // Fetch vocabulary added by user to flashcards
       final vocabularyAddedByUser = await _supabase
           .from(_table('flashcards'))
@@ -305,52 +124,12 @@ class ArticleService {
           .filter('vocabulary_id', 'is', 'null')
           .order('status', ascending: true, nullsFirst: false);
 
-      final vocabulary = (mainVocabularyResponse as List).map((json) {
-        String? status;
-        bool isAddedByUser = false;
-        int? flashcardId = null;
-        if (json[_table('flashcards')] is List &&
-            (json[_table('flashcards')] as List).isNotEmpty) {
-          final flashcards = json[_table('flashcards')] as List;
-          status = flashcards[0]?['status'];
-          flashcardId = flashcards[0]?['id'];
-        }
-        return VocabularyItem(
-          id: json['id'],
-          word: json['text'] ?? '',
-          translation: _localizedVocabularyFieldValue(
-            source: json,
-            baseField: 'text',
-            referenceLanguageCode: referenceLanguageCode,
-          ),
-          type: json['function'] ?? 'expr',
-          exampleSentence: json['example'] ?? '',
-          exampleTranslation: _localizedVocabularyFieldValue(
-            source: json,
-            baseField: 'example',
-            referenceLanguageCode: referenceLanguageCode,
-          ),
-          audioUrl: _getAudioUrl(json['audio_url']) ?? '',
-          basis: json['basis'] is String ? json['basis'] as String : '',
-          flashcardId: flashcardId,
-          status: status,
-          isAddedByUser: false,
-        );
-      }).toList();
-
-      vocabulary.addAll(vocabularyAddedByUser.map((item) => VocabularyItem(
-            id: item['id'],
-            word: item['text'] ?? '',
-            translation: item['text_translation'] ?? '',
-            type: item['function'] ?? 'expr',
-            exampleSentence: item['example'] ?? '',
-            exampleTranslation: item['example_translation'] ?? '',
-            audioUrl: _getAudioUrl(item['audio_url']) ?? '',
-            basis: item['basis'] is String ? item['basis'] as String : '',
-            flashcardId: item['id'],
-            status: item['status'],
-            isAddedByUser: true,
-          )));
+      final vocabulary = _parseVocabulary(
+        mainVocabularyResponse: mainVocabularyResponse as List,
+        vocabularyAddedByUser: vocabularyAddedByUser as List,
+        referenceLanguageCode: referenceLanguageCode,
+        fallbackId: int.parse(id),
+      );
       final progressFr = articleResponse[_table('progress')];
       final progressList =
           progressFr is List && progressFr.isNotEmpty ? progressFr : null;
@@ -367,7 +146,8 @@ class ArticleService {
         id: articleResponse['id']?.toString() ?? '',
         chapterId: articleResponse['chapter_id'] ?? null,
         title: articleResponse['title'] ?? '',
-        description: articleResponse['description'] ?? '',
+        description:
+            localizedDescription(articleResponse, referenceLanguageCode),
         author: articleResponse['author'] ?? '',
         imageUrl: _getImageUrl(articleResponse['img_url']),
         level: articleResponse['level'] ?? 'A1',
@@ -382,9 +162,10 @@ class ArticleService {
         readingStatus: progressRow?['reading_status'] ?? null,
         isFavorite: progressRow?['is_liked'] == true,
         isFree: articleResponse['is_free'] ?? false,
+        isNew: JsonUtils.readIsNew(articleResponse),
       );
     } catch (e) {
-      print('Error fetching article: $e');
+      debugPrint('Error fetching article: $e');
       return _offlineContentService.getCachedArticle(
         contentType: 1,
         contentId: id,
@@ -438,7 +219,7 @@ class ArticleService {
         await _supabase.from(_table('progress')).insert(payload);
       }
     } catch (e) {
-      print('Error editing article status: $e');
+      debugPrint('Error editing article status: $e');
     }
   }
 
@@ -503,7 +284,7 @@ class ArticleService {
         userId: user.id,
       );
     } catch (e) {
-      print('Error editing chapter status: $e');
+      debugPrint('Error editing chapter status: $e');
     }
   }
 
@@ -601,7 +382,8 @@ class ArticleService {
   }
 
   /// Fetch a single article by ID with all related data
-  Future<Article?> getChapterById(String contentId, String chapterId) async {
+  Future<Article?> getChapterById(String contentId, String chapterId,
+      {String? parentTitle}) async {
     final user = _supabase.auth.currentUser;
     if (user == null) {
       return _offlineContentService.getCachedArticle(
@@ -619,14 +401,6 @@ class ArticleService {
           .eq('id', int.parse(chapterId))
           .single();
 
-      if (chapterResponse == null) {
-        return _offlineContentService.getCachedArticle(
-          contentType: 2,
-          contentId: contentId,
-          chapterId: chapterId,
-        );
-      }
-
       final chapterProgress = await _supabase
           .from(_table('progress'))
           .select('reading_status')
@@ -642,16 +416,6 @@ class ArticleService {
           .select('*, ${_table('flashcards')}!vocabulary_id(*)')
           .eq('content_type', 2)
           .eq('chapter_id', int.parse(chapterId));
-      // Rank rows with an associated fr_flashcards row first
-      final mainList = mainVocabularyResponse as List;
-      mainList.sort((a, b) {
-        final aHasFlashcard = a[_table('flashcards')] is List &&
-            (a[_table('flashcards')] as List).isNotEmpty;
-        final bHasFlashcard = b[_table('flashcards')] is List &&
-            (b[_table('flashcards')] as List).isNotEmpty;
-        if (aHasFlashcard == bHasFlashcard) return 0;
-        return aHasFlashcard ? -1 : 1; // rows with flashcard first
-      });
 
       // Fetch vocabulary added by user to flashcards
       final vocabularyAddedByUser = await _supabase
@@ -662,52 +426,12 @@ class ArticleService {
           .filter('vocabulary_id', 'is', 'null')
           .order('status', ascending: true, nullsFirst: false);
 
-      final vocabulary = (mainVocabularyResponse as List).map((json) {
-        String? status;
-        bool isAddedByUser = false;
-        int? flashcardId = null;
-        if (json[_table('flashcards')] is List &&
-            (json[_table('flashcards')] as List).isNotEmpty) {
-          final flashcards = json[_table('flashcards')] as List;
-          status = flashcards[0]?['status'];
-          flashcardId = flashcards[0]?['id'];
-        }
-        return VocabularyItem(
-          id: int.parse(contentId),
-          word: json['text'] ?? '',
-          translation: _localizedVocabularyFieldValue(
-            source: json,
-            baseField: 'text',
-            referenceLanguageCode: referenceLanguageCode,
-          ),
-          type: json['function'] ?? 'expr',
-          exampleSentence: json['example'] ?? '',
-          exampleTranslation: _localizedVocabularyFieldValue(
-            source: json,
-            baseField: 'example',
-            referenceLanguageCode: referenceLanguageCode,
-          ),
-          audioUrl: _getAudioUrl(json['audio_url']) ?? '',
-          basis: json['basis'] is String ? json['basis'] as String : '',
-          flashcardId: flashcardId,
-          status: status,
-          isAddedByUser: false,
-        );
-      }).toList();
-
-      vocabulary.addAll(vocabularyAddedByUser.map((item) => VocabularyItem(
-            id: item['id'],
-            word: item['text'] ?? '',
-            translation: item['text_translation'] ?? '',
-            type: item['function'] ?? 'expr',
-            exampleSentence: item['example'] ?? '',
-            exampleTranslation: item['example_translation'] ?? '',
-            audioUrl: _getAudioUrl(item['audio_url']) ?? '',
-            basis: item['basis'] is String ? item['basis'] as String : '',
-            flashcardId: item['id'],
-            status: item['status'],
-            isAddedByUser: true,
-          )));
+      final vocabulary = _parseVocabulary(
+        mainVocabularyResponse: mainVocabularyResponse as List,
+        vocabularyAddedByUser: vocabularyAddedByUser as List,
+        referenceLanguageCode: referenceLanguageCode,
+        fallbackId: int.parse(contentId),
+      );
 
       final contentMulti = chapterResponse['content_multi'] ?? '';
       final paragraphs = parseContentToArticleParagraphs(
@@ -720,7 +444,9 @@ class ArticleService {
         id: contentId,
         chapterId: chapterResponse['id']?.toString() ?? '',
         title: chapterResponse['title'] ?? '',
-        description: chapterResponse['description'] ?? '',
+        parentTitle: parentTitle,
+        description:
+            localizedDescription(chapterResponse, referenceLanguageCode),
         author: '',
         imageUrl: _getImageUrl(chapterResponse['img_url']),
         readingStatus: chapterProgress?['reading_status'] ?? null,
@@ -735,10 +461,11 @@ class ArticleService {
         audioUrl: _getAudioUrl(chapterResponse['audio_url']),
         isFavorite: false,
         orderId: chapterResponse['order_id'] as int?,
+        isNew: JsonUtils.readIsNew(chapterResponse),
         // isFree: chapterResponse['is_free'] ?? false,
       );
     } catch (e) {
-      print('Error fetching chapter: $e');
+      debugPrint('Error fetching chapter: $e');
       return _offlineContentService.getCachedArticle(
         contentType: 2,
         contentId: contentId,
@@ -749,6 +476,89 @@ class ArticleService {
 
   /// Parse content_multi JSON structure to List<ArticleParagraph>
   /// Expected structure: Object with "paragraphs" array, each paragraph contains "sentences" array
+  /// Returns the description in the user's native language (`description_{lg}`),
+  /// falling back to `description_en` only. Never falls back to the target-language
+  /// `description` column.
+  static String localizedDescription(
+      Map<dynamic, dynamic> source, String referenceLanguageCode) {
+    return _localizedContentFieldValue(
+      source: source,
+      baseField: 'description',
+      referenceLanguageCode: referenceLanguageCode,
+    );
+  }
+
+  /// Parse vocabulary rows (from `{lang}_vocabulary` joined with flashcards)
+  /// and user-added flashcard rows into a single [VocabularyItem] list.
+  List<VocabularyItem> _parseVocabulary({
+    required List<dynamic> mainVocabularyResponse,
+    required List<dynamic> vocabularyAddedByUser,
+    required String referenceLanguageCode,
+    required int fallbackId,
+  }) {
+    // Sort: rows with an associated flashcard first
+    final mainList = List<dynamic>.from(mainVocabularyResponse);
+    mainList.sort((a, b) {
+      final aHasFlashcard = a[_table('flashcards')] is List &&
+          (a[_table('flashcards')] as List).isNotEmpty;
+      final bHasFlashcard = b[_table('flashcards')] is List &&
+          (b[_table('flashcards')] as List).isNotEmpty;
+      if (aHasFlashcard == bHasFlashcard) return 0;
+      return aHasFlashcard ? -1 : 1;
+    });
+
+    final vocabulary = mainList.map((json) {
+      String? status;
+      int? flashcardId;
+      if (json[_table('flashcards')] is List &&
+          (json[_table('flashcards')] as List).isNotEmpty) {
+        final flashcards = json[_table('flashcards')] as List;
+        status = flashcards[0]?['status'];
+        flashcardId = flashcards[0]?['id'];
+      }
+      return VocabularyItem(
+        id: json['id'] ?? fallbackId,
+        word: json['text'] ?? '',
+        translation: LocalizationFieldResolver.localizedVocabularyFieldValue(
+          source: json,
+          baseField: 'text',
+          referenceLanguageCode: referenceLanguageCode,
+        ),
+        type: json['function'] ?? 'expr',
+        properName: json['properName'] ?? false,
+        exampleSentence: json['example'] ?? '',
+        exampleTranslation:
+            LocalizationFieldResolver.localizedVocabularyFieldValue(
+          source: json,
+          baseField: 'example',
+          referenceLanguageCode: referenceLanguageCode,
+        ),
+        audioUrl: _getAudioUrl(json['audio_url']) ?? '',
+        basis: json['basis'] is String ? json['basis'] as String : '',
+        flashcardId: flashcardId,
+        status: status,
+        isAddedByUser: false,
+      );
+    }).toList();
+
+    vocabulary.addAll(vocabularyAddedByUser.map((item) => VocabularyItem(
+          id: item['id'],
+          word: item['text'] ?? '',
+          translation: item['text_translation'] ?? '',
+          type: item['function'] ?? 'expr',
+          properName: item['properName'] ?? false,
+          exampleSentence: item['example'] ?? '',
+          exampleTranslation: item['example_translation'] ?? '',
+          audioUrl: _getAudioUrl(item['audio_url']) ?? '',
+          basis: item['basis'] is String ? item['basis'] as String : '',
+          flashcardId: item['id'],
+          status: item['status'],
+          isAddedByUser: true,
+        )));
+
+    return vocabulary;
+  }
+
   static List<ArticleParagraph> parseContentToArticleParagraphs(
     dynamic contentMulti, {
     String referenceLanguageCode = 'en',
@@ -771,13 +581,13 @@ class ArticleService {
 
       // Expect an object with "paragraphs" key
       if (parsed is! Map) {
-        print('Error: parsed is not a Map, it is: ${parsed.runtimeType}');
+        debugPrint('Error: parsed is not a Map, it is: ${parsed.runtimeType}');
         return [];
       }
 
       final paragraphsData = parsed['paragraphs'];
       if (paragraphsData == null || paragraphsData is! List) {
-        print('Error: paragraphs key not found or not a List');
+        debugPrint('Error: paragraphs key not found or not a List');
         return [];
       }
 
@@ -859,9 +669,8 @@ class ArticleService {
           .whereType<ArticleParagraph>()
           .where((paragraph) => paragraph.sentences.isNotEmpty)
           .toList();
-    } catch (e, stackTrace) {
-      print('Error parsing content_multi: $e');
-      print('Stack trace: $stackTrace');
+    } catch (e) {
+      debugPrint('Error parsing content_multi: $e');
       return [];
     }
   }
@@ -895,7 +704,7 @@ class ArticleService {
       id: json['id']?.toString() ?? '',
       chapterId: json['chapter_id'] ?? null,
       title: json['title'] ?? '',
-      description: json['description'] ?? '',
+      description: localizedDescription(json, referenceLanguageCode),
       author: json['author'] ?? '',
       imageUrl: _getImageUrl(json['img_url']),
       readingStatus: readingStatus,
@@ -906,6 +715,7 @@ class ArticleService {
       audioUrl: _getAudioUrl(json['audio_url']),
       isFavorite: isFavorite,
       isFree: json['is_free'] ?? false,
+      isNew: JsonUtils.readIsNew(json),
       vocabulary: [],
       grammarPoints: [],
       paragraphs: paragraphs,
@@ -946,7 +756,7 @@ class ArticleService {
         await _supabase.from(_table('progress')).insert(payload);
       }
     } catch (e) {
-      print('Error toggling favorite: $e');
+      debugPrint('Error toggling favorite: $e');
     }
   }
 }

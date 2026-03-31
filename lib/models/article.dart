@@ -1,7 +1,6 @@
 import 'vocabulary_item.dart';
 import 'grammar_point.dart';
 import 'article_paragraph.dart';
-import 'sentence_timestamp.dart';
 
 class Article {
   final String id;
@@ -22,13 +21,16 @@ class Article {
   final int? orderId;
   final int? duration;
   final int contentType;
+  final String? parentTitle; // audiobook title when article is a chapter
   bool isFavorite;
   bool isFree;
+  final bool isNew;
 
   Article({
     required this.id,
     this.chapterId,
     required this.title,
+    this.parentTitle,
     required this.description,
     required this.author,
     required this.imageUrl,
@@ -46,6 +48,7 @@ class Article {
     this.isFavorite = false,
     this.contentType = 1, 
     this.isFree = false,
+    this.isNew = false,
   });
 
   List<VocabularyItem> get addedByUserVocabularyItems {
@@ -53,7 +56,7 @@ class Article {
   }
 
  List<VocabularyItem> get mainVocabularyItems {
-    return vocabulary.where((item) => item.isAddedByUser == false).toList();
+    return orderedListOfVocabularyItems;
   }
 
     bool get hasAddedByUserVocabularyItems {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/quiz_question.dart';
 import 'language_table_resolver.dart';
@@ -22,7 +23,6 @@ class QuizService {
           .map((json) => QuizQuestion.fromJson(json))
           .toList();
     } catch (e) {
-      print('Error fetching quiz questions: $e');
       rethrow;
     }
   }
@@ -39,7 +39,6 @@ class QuizService {
           .map((json) => QuizQuestion.fromJson(json))
           .toList();
     } catch (e) {
-      print('Error fetching quiz questions for chapter: $e');
       rethrow;
     }
   }
@@ -56,6 +55,7 @@ class QuizService {
           .from(_table('quiz_results'))
           .select('id, number_correct_answers, filled_out')
           .eq('reference_id', referenceId)
+          .eq('user_id', userId)
           .eq('type', 1)
           .limit(1)
           .maybeSingle();
@@ -71,7 +71,7 @@ class QuizService {
 
       return newQuiz;
     } catch (e) {
-      print('Error creating quiz result: $e');
+      debugPrint('Error creating quiz result: $e');
       return null;
     }
   }
@@ -86,6 +86,7 @@ class QuizService {
           .from(_table('quiz_results'))
           .select('id, number_correct_answers, filled_out')
           .eq('reference_id', chapterId)
+          .eq('user_id', userId)
           .eq('type', 2)
           .limit(1)
           .maybeSingle();
@@ -99,7 +100,7 @@ class QuizService {
       }).select('id, filled_out').single();
       return newQuiz;
     } catch (e) {
-      print('Error creating chapter quiz result: $e');
+      debugPrint('Error creating chapter quiz result: $e');
       return null;
     }
   }
@@ -110,13 +111,13 @@ class QuizService {
     required int numberCorrectAnswers,
   }) async {
     try {
+      final user = _supabase.auth.currentUser;
       await _supabase.from(_table('quiz_results')).update({
         'number_correct_answers': numberCorrectAnswers,
         'finished_datetime': DateTime.now().toIso8601String(),
         'filled_out': true,
-      }).eq('id', resultId);
+      }).eq('id', resultId).eq('user_id', user!.id);
     } catch (e) {
-      print('Error updating quiz result: $e');
       rethrow;
     }
   }
@@ -138,7 +139,7 @@ class QuizService {
 
       return response;
     } catch (e) {
-      print('Error fetching quiz result: $e');
+      debugPrint('Error fetching quiz result: $e');
       return null;
     }
   }

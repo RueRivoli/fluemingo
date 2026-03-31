@@ -145,48 +145,53 @@ class _AvatarSelectionPageState extends State<AvatarSelectionPage> {
                     crossAxisCount: 3,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    childAspectRatio: 0.92,
+                    childAspectRatio: 0.85,
                   ),
                   itemBuilder: (context, index) {
                     final seed = _avatarSeeds[index];
                     final isSelected = seed == _selectedAvatarSeed;
                     return GestureDetector(
                       onTap: () => setState(() => _selectedAvatarSeed = seed),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppColors.white.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.textPrimary
-                                : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Expanded(
+                            child: FractionallySizedBox(
+                              widthFactor: 0.65,
+                              child: AspectRatio(
+                              aspectRatio: 1,
                               child: Container(
-                                width: double.infinity,
                                 decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.textPrimary
+                                        : Colors.transparent,
+                                    width: 3,
+                                  ),
+                                  boxShadow: isSelected
+                                      ? [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.15),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
+                                          )
+                                        ]
+                                      : null,
                                 ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(14),
+                                child: ClipOval(
                                   child: Padding(
-                                    padding: const EdgeInsets.all(6),
+                                    padding: const EdgeInsets.all(4),
                                     child: SvgPicture.network(
-                                      buildOpenPeepsAvatarUrl(seed),
-                                      fit: BoxFit.contain,
-                                      placeholderBuilder: (_) => const Center(
-                                        child: SizedBox(
-                                          width: 18,
-                                          height: 18,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
+                                    buildOpenPeepsAvatarUrl(seed),
+                                    fit: BoxFit.contain,
+                                    placeholderBuilder: (_) => const Center(
+                                      child: SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
                                         ),
                                       ),
                                     ),
@@ -194,17 +199,19 @@ class _AvatarSelectionPageState extends State<AvatarSelectionPage> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              seed[0].toUpperCase() + seed.substring(1),
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
+                      ),
+                          const SizedBox(height: 6),
+                          Text(
+                            seed[0].toUpperCase() + seed.substring(1),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   },

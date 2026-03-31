@@ -1,23 +1,49 @@
-import 'dart:convert';
-import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import '../config/config.dart';
-import 'language_table_resolver.dart';
+import 'edge_function_auth_exception.dart';
 
 class DeeplService {
-  final SupabaseClient _supabase;
+  const DeeplService();
 
-  DeeplService(this._supabase);
+  Map<String, String> _authHeaders(SupabaseClient client) {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ${client.auth.currentSession!.accessToken}',
+    };
+  }
 
-  String _table(String name) => LanguageTableResolver.table(name);
+  Future<FunctionResponse> _invoke({
+    required String functionName,
+    required Map<String, dynamic> body,
+  }) async {
+    final client = Supabase.instance.client;
+    final session = client.auth.currentSession;
+    if (session == null || session.accessToken.trim().isEmpty) {
+      throw EdgeFunctionReauthRequiredException(
+        functionName: functionName,
+        reason: 'missing_session',
+      );
+    }
 
-  Uri _deepLTranslateUri() {
-    final key = Config.deepLApiKey.trim();
-    final isFreeKey = key.endsWith(':fx');
-    final host = isFreeKey ? 'api-free.deepl.com' : 'api.deepl.com';
-    return Uri.https(host, '/v2/translate');
+    try {
+      final response = await client.functions
+          .invoke(functionName, body: body, headers: _authHeaders(client));
+      if (response.status == 401) {
+        throw EdgeFunctionReauthRequiredException(
+          functionName: functionName,
+          reason: 'unauthorized',
+        );
+      }
+      return response;
+    } on FunctionException catch (e) {
+      if (e.status == 401) {
+        throw EdgeFunctionReauthRequiredException(
+          functionName: functionName,
+          reason: 'unauthorized',
+        );
+      }
+      rethrow;
+    }
   }
 
   Future<String?> translateWithDeepL({
@@ -26,48 +52,32 @@ class DeeplService {
     required String targetLanguage,
     String? context,
   }) async {
-    if (text.trim().isEmpty || Config.deepLApiKey.trim().isEmpty) return null;
-    print('--------------------------------');
-    print('text: $text');
-    print('sourceLanguage: $sourceLanguage');
-    print('targetLanguage: $targetLanguage');
-    print('context: $context');
-    final client = HttpClient();
+    final normalizedText = text.trim();
+    if (normalizedText.isEmpty) return null;
+    if (sourceLanguage.isEmpty || targetLanguage.isEmpty) return null;
+
     try {
-      final uri = _deepLTranslateUri();
-      final request = await client.postUrl(uri);
-      request.headers.set(
-          HttpHeaders.contentTypeHeader, 'application/x-www-form-urlencoded');
-      request.headers.set(HttpHeaders.authorizationHeader,
-          'DeepL-Auth-Key ${Config.deepLApiKey.trim()}');
-
-      final bodyParts = <String>[
-        'text=${Uri.encodeQueryComponent(text)}',
-        'source_lang=${Uri.encodeQueryComponent(sourceLanguage)}',
-        'target_lang=${Uri.encodeQueryComponent(targetLanguage)}',
-      ];
+      final body = <String, dynamic>{
+        'text': normalizedText,
+        'source_lang': sourceLanguage,
+        'target_lang': targetLanguage,
+      };
       if (context != null && context.trim().isNotEmpty) {
-        bodyParts.add('context=${Uri.encodeQueryComponent(context)}');
+        body['context'] = context;
       }
-      request.write(bodyParts.join('&'));
-
-      final response = await request.close();
-      final responseBody = await response.transform(utf8.decoder).join();
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        print('DeepL error (${response.statusCode}): $responseBody');
-        return null;
+      final response = await _invoke(
+        functionName: 'translate',
+        body: body,
+      );
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data['translated_text']?.toString();
       }
-
-      final decoded = jsonDecode(responseBody);
-      if (decoded is! Map<String, dynamic>) return null;
-      final translations = decoded['translations'];
-      if (translations is! List || translations.isEmpty) return null;
-      return (translations.first['text'] ?? '').toString();
-    } catch (e) {
-      print('DeepL request failed: $e');
       return null;
-    } finally {
-      client.close(force: true);
+    } catch (e) {
+      if (e is EdgeFunctionReauthRequiredException) rethrow;
+      debugPrint('Translation request failed: $e');
+      return null;
     }
   }
 }

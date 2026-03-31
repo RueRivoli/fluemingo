@@ -83,7 +83,7 @@ class QuizController extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print('Error initializing quiz: $e');
+      debugPrint('Error initializing quiz: $e');
       isLoading = false;
       notifyListeners();
     }
@@ -104,7 +104,7 @@ class QuizController extends ChangeNotifier {
           numberCorrectAnswers: correctAnswers,
         );
       } catch (e) {
-        print('Error updating quiz result: $e');
+        debugPrint('Error updating quiz result: $e');
       }
     }
   }

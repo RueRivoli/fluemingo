@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 import '../services/profile_service.dart';
 import '../services/audiobook_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -41,7 +42,6 @@ class _ProfileContentState extends State<ProfileContent> {
   List<Article> _interestingArticles = [];
   List<Audiobook> _interestingAudiobooks = [];
   List<String> _interestThemes = [];
-  Set<String> _selectedThemes = {};
 
   @override
   void initState() {
@@ -72,7 +72,6 @@ class _ProfileContentState extends State<ProfileContent> {
       _favoriteAudiobooks = favoriteAudiobooksRaw.where((audiobook) => audiobook.readingStatus != 'finished').toList();
     } else if (widget.category == 'interesting') {
       _interestThemes = await profileService.getThemeInterests();
-      _selectedThemes = _interestThemes.toSet();
       final interestingArticlesRaw = await profileService.getInterestingArticles();
       _interestingArticles = interestingArticlesRaw.where((article) => article.readingStatus != 'started' && article.readingStatus != 'finished').toList();
       final interestingAudiobooksRaw = await profileService.getInterestingAudiobooks();
@@ -84,13 +83,14 @@ class _ProfileContentState extends State<ProfileContent> {
   }
 
   List<Widget> _buildMenuContent() {
+    final l10n = AppLocalizations.of(context)!;
     switch (widget.category) {
       case 'inProgress':
         return [
           if (_inProgressArticles.isNotEmpty) ...[
-            const Text(
-              'Articles',
-              style: TextStyle(
+            Text(
+              l10n.navLibrary,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -125,9 +125,9 @@ class _ProfileContentState extends State<ProfileContent> {
             const SizedBox(height: 24),
           ],
           if (_inProgressAudiobooks.isNotEmpty) ...[
-            const Text(
-              'Audiobooks',
-              style: TextStyle(
+            Text(
+              l10n.audiobooks,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -145,7 +145,7 @@ class _ProfileContentState extends State<ProfileContent> {
                   final profileStore = ProfileStoreScope.of(context);
                   final isSubscribed = profileStore.isSubscribed;
                   return AudiobookCard(audiobook: audiobook, showIsFavorite: audiobook.isFavorite, showLocker: !isSubscribed && !audiobook.isFree, onFavoriteToggled: () {
-                    if (!isSubscribed && !audiobook.isFree != null) return;
+                    if (!isSubscribed && !audiobook.isFree) return;
                     _audiobookService.toggleFavorite(audiobook.id);
                     setState(() {
                       audiobook.isFavorite = !audiobook.isFavorite;
@@ -156,11 +156,11 @@ class _ProfileContentState extends State<ProfileContent> {
             ),
           ],
             if (_inProgressArticles.isEmpty && _inProgressAudiobooks.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 24),
+            Padding(
+              padding: const EdgeInsets.only(top: 24),
               child: Text(
-                'No content in Progress.',
-                style: TextStyle(
+                l10n.noContentInProgress,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.normal,
                   color: AppColors.textSecondary,
@@ -171,9 +171,9 @@ class _ProfileContentState extends State<ProfileContent> {
       case 'favorite':
         return [
           if (_favoriteArticles.isNotEmpty) ...[
-            const Text(
-              'Articles',
-              style: TextStyle(
+            Text(
+              l10n.navLibrary,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -207,9 +207,9 @@ class _ProfileContentState extends State<ProfileContent> {
             const SizedBox(height: 24),
           ],
           if (_favoriteAudiobooks.isNotEmpty) ...[
-            const Text(
-              'Audiobooks',
-              style: TextStyle(
+            Text(
+              l10n.audiobooks,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -227,7 +227,7 @@ class _ProfileContentState extends State<ProfileContent> {
                   final profileStore = ProfileStoreScope.of(context);
                   final isSubscribed = profileStore.isSubscribed;
                   return AudiobookCard(audiobook: audiobook, showIsFavorite: audiobook.isFavorite, showLocker: !isSubscribed && !audiobook.isFree, onFavoriteToggled: () {
-                    if (!isSubscribed && !audiobook.isFree != null) return;
+                    if (!isSubscribed && !audiobook.isFree) return;
                     _audiobookService.toggleFavorite(audiobook.id);
                     setState(() {
                       audiobook.isFavorite = !audiobook.isFavorite;
@@ -238,11 +238,11 @@ class _ProfileContentState extends State<ProfileContent> {
             ),
           ],
           if (_favoriteArticles.isEmpty && _favoriteAudiobooks.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 24),
+            Padding(
+              padding: const EdgeInsets.only(top: 24),
               child: Text(
-                'No liked content yet. Click on the heart icon to like a content.',
-                style: TextStyle(
+                l10n.noLikedContentYet,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.normal,
                   color: AppColors.textSecondary,
@@ -253,9 +253,9 @@ class _ProfileContentState extends State<ProfileContent> {
       case 'interesting':
         return [
           if (_interestingArticles.isNotEmpty) ...[
-            const Text(
-              'Articles',
-              style: TextStyle(
+            Text(
+              l10n.navLibrary,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -289,9 +289,9 @@ class _ProfileContentState extends State<ProfileContent> {
             const SizedBox(height: 24),
           ],
           if (_interestingAudiobooks.isNotEmpty) ...[
-            const Text(
-              'Audiobooks',
-              style: TextStyle(
+            Text(
+              l10n.audiobooks,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -309,7 +309,7 @@ class _ProfileContentState extends State<ProfileContent> {
                   final profileStore = ProfileStoreScope.of(context);
                   final isSubscribed = profileStore.isSubscribed;
                   return AudiobookCard(audiobook: audiobook, showIsFavorite: audiobook.isFavorite, showLocker: !isSubscribed && !audiobook.isFree, onFavoriteToggled: () {
-                    if (!isSubscribed && !audiobook.isFree != null) return;
+                    if (!isSubscribed && !audiobook.isFree) return;
                     _audiobookService.toggleFavorite(audiobook.id);
                     setState(() {
                       audiobook.isFavorite = !audiobook.isFavorite;
@@ -320,11 +320,11 @@ class _ProfileContentState extends State<ProfileContent> {
             ),
           ],
           if (_interestingArticles.isEmpty && _interestingAudiobooks.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 24),
+            Padding(
+              padding: const EdgeInsets.only(top: 24),
               child: Text(
-                'No suggestions yet.',
-                style: TextStyle(
+                l10n.noSuggestionsYet,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.normal,
                   color: AppColors.textSecondary,
@@ -337,20 +337,25 @@ class _ProfileContentState extends State<ProfileContent> {
     }
   }
 
-  String get _categoryTitle {
+  String _categoryTitle(AppLocalizations l10n) {
     switch (widget.category) {
       case 'inProgress':
-        return 'Your Content in Progress';
+        return l10n.yourContentInProgress;
       case 'favorite':
-        return 'Your Favorite Content';
+        return l10n.yourFavoriteContent;
       case 'interesting':
-        return 'Content Matching Your Interests';
+        return l10n.interestingContent;
       default:
-        return 'Your content';
+        return l10n.yourContent;
     }
   }
 
-  static const double _kTopBarHeight = 60; // 8 + 40 + 12
+  double get _topBarHeight {
+    // Measure approximate height: back button (40) + bottom padding (12)
+    // For titles that wrap to 2 lines, add extra space
+    final title = _categoryTitle(AppLocalizations.of(context)!);
+    return title.length > 30 ? 80 : 60;
+  }
 
   Widget _buildTopBar() {
     return Container(
@@ -383,7 +388,7 @@ class _ProfileContentState extends State<ProfileContent> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              _categoryTitle,
+              _categoryTitle(AppLocalizations.of(context)!),
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -408,7 +413,6 @@ class _ProfileContentState extends State<ProfileContent> {
         await profileService.updateThemeInterests(selected);
         if (mounted) {
           setState(() {
-            _selectedThemes = selected.toSet();
             _interestThemes = selected;
           });
           _loadProfileContentData();
@@ -417,22 +421,8 @@ class _ProfileContentState extends State<ProfileContent> {
     );
   }
 
-  void _onThemeTap(String theme) {
-    setState(() {
-      if (_selectedThemes.contains(theme)) {
-        _selectedThemes.remove(theme);
-      } else if (_selectedThemes.length < _maxSelections) {
-        _selectedThemes.add(theme);
-      }
-    });
-  }
-
-  bool _isSelected(String theme) {
-    return _selectedThemes.contains(theme);
-  }
-
-
   Widget _buildScrollableContent() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -441,7 +431,7 @@ class _ProfileContentState extends State<ProfileContent> {
           Padding(
             padding: const EdgeInsets.fromLTRB(0, 0, 20, 12),
             child: Text(
-              'Finish this content to earn XP',
+              l10n.finishContentToEarnXP,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
@@ -453,7 +443,7 @@ class _ProfileContentState extends State<ProfileContent> {
           Padding(
             padding: const EdgeInsets.fromLTRB(0, 0, 20, 12),
             child: Text(
-              'Based on your Likes',
+              l10n.basedOnYourLikes,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
@@ -465,7 +455,7 @@ class _ProfileContentState extends State<ProfileContent> {
           Padding(
             padding: const EdgeInsets.fromLTRB(0, 0, 20, 4),
             child: Text(
-              'Based on your Favorite Themes',
+              l10n.basedOnYourFavoriteThemes,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
@@ -498,16 +488,16 @@ class _ProfileContentState extends State<ProfileContent> {
                   child: InkWell(
                     onTap: _showInterestingThemesBottomSheet,
                     borderRadius: BorderRadius.circular(8),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(FontAwesomeIcons.pencil, size: 20, color: Colors.black),
-                          SizedBox(width: 8),
+                          const Icon(FontAwesomeIcons.pencil, size: 20, color: Colors.black),
+                          const SizedBox(width: 8),
                           Text(
-                            'Edit',
-                            style: TextStyle(
+                            l10n.edit,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: Colors.black,
@@ -545,7 +535,7 @@ class _ProfileContentState extends State<ProfileContent> {
       );
     }
     // Full screen: list first (behind), then top bar on top so it receives taps
-    final topPadding = MediaQuery.of(context).padding.top + _kTopBarHeight;
+    final topPadding = MediaQuery.of(context).padding.top + _topBarHeight;
     return Stack(
       children: [
         Positioned(

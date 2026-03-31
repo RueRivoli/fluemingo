@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/revenue_cat_config.dart';
@@ -10,16 +8,20 @@ import '../constants/app_colors.dart';
 import '../services/article_service.dart';
 import 'article_reading_page.dart';
 import '../widgets/vocabulary_item_card.dart';
-import '../widgets/content_status_badge.dart';
+import '../widgets/content_header_image.dart';
 import '../widgets/content_category_chip.dart';
+import '../widgets/favorite_toggle_button.dart';
 import '../services/flashcard_service.dart';
-import '../utils/vocabulary_items.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../l10n/app_localizations.dart';
 import '../constants/number_icons.dart';
 import '../stores/profile_store.dart';
 import '../services/app_review_service.dart';
 import '../services/offline_content_service.dart';
+import '../services/feedback_service.dart';
+import '../widgets/xp_reward_bottom_sheet.dart';
+import '../services/week_progress_service.dart';
+import '../utils/flashcard_snackbar.dart';
 
 class ArticleOverviewPage extends StatefulWidget {
   final Article article;
@@ -74,7 +76,8 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
       final fullArticle = widget.article.contentType == 1
           ? await _articleService.getArticleById(widget.article.id)
           : await _articleService.getChapterById(
-              widget.article.id, widget.article.chapterId ?? '');
+              widget.article.id, widget.article.chapterId ?? '',
+              parentTitle: widget.article.parentTitle);
       setState(() {
         _fullArticle = fullArticle;
         _isLoadingVocabulary = false;
@@ -84,7 +87,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
       });
       await _refreshOfflineAvailability();
     } catch (e) {
-      print('Error loading full article: $e');
+      debugPrint('Error loading full article: $e');
       setState(() {
         _isLoadingVocabulary = false;
       });
@@ -138,7 +141,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
         _isOfflineAvailable = true;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Downloaded for offline access')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.downloadedForOfflineAccess)),
       );
     } catch (e) {
       if (!mounted) return;
@@ -155,31 +158,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
   }
 
   void _showFlashcardAddedSnackBar() {
-    if (!mounted) return;
-
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        backgroundColor: AppColors.primary,
-        content: Row(
-          children: [
-            const FaIcon(
-              FontAwesomeIcons.thinCardsBlank,
-              color: Colors.white,
-              size: 18,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                AppLocalizations.of(context)!.expressionAddedToFlashcards,
-                style: const TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    FlashcardSnackbar.show(context, 'added');
   }
 
   @override
@@ -188,10 +167,6 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
     final rawHeaderImagePath = displayArticle.imageUrl.isNotEmpty
         ? displayArticle.imageUrl
         : widget.article.imageUrl;
-    final normalizedHeaderImagePath = rawHeaderImagePath.startsWith('file://')
-        ? rawHeaderImagePath.replaceFirst('file://', '')
-        : rawHeaderImagePath;
-    final isLocalHeaderImage = normalizedHeaderImagePath.startsWith('/');
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -203,101 +178,39 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header Image
-                  Stack(
-                    children: [
-                      isLocalHeaderImage
-                          ? Image.file(
-                              File(normalizedHeaderImagePath),
-                              height: 280,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  height: 280,
-                                  color: Colors.grey[300],
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.image_outlined,
-                                      size: 48,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                );
-                              },
-                            )
-                          : Image.network(
-                              normalizedHeaderImagePath,
-                              height: 280,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  height: 280,
-                                  color: Colors.grey[300],
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.image_outlined,
-                                      size: 48,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                      // Back button
-                      Positioned(
-                        top: MediaQuery.of(context).padding.top + 8,
-                        left: 16,
-                        child: GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              FontAwesomeIcons.chevronLeft,
-                              color: AppColors.textPrimary,
-                              size: 24,
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Status badge (with menu on overview)
-                      Positioned(
-                        bottom: 12,
-                        left: 16,
-                        child: ContentStatusBadge(
-                          status: _fullArticle?.readingStatus,
-                          compact: false,
-                          showStatusMenu: true,
-                          onStatusChange: (newStatus) async {
-                            final article = _fullArticle ?? widget.article;
-                            if (widget.article.contentType == 1) {
-                              await _articleService.editArticleStatus(
-                                article,
-                                newStatus,
-                              );
-                            } else if (widget.article.contentType == 2) {
-                              final audiobookId =
-                                  _fullArticle?.id ?? widget.article.id;
-                              final chapterId = widget.article.chapterId ??
-                                  _fullArticle?.chapterId;
-                              if (chapterId != null && chapterId.isNotEmpty) {
-                                await _articleService.editChapterStatus(
-                                  audiobookId: audiobookId,
-                                  chapterId: chapterId,
-                                  status: newStatus,
-                                );
-                              }
-                            }
-                            await _loadFullArticle();
-                          },
-                        ),
-                      ),
-                    ],
+                  ContentHeaderImage(
+                    imageUrl: rawHeaderImagePath,
+                    status: _fullArticle?.readingStatus,
+                    showStatusMenu: true,
+                    onStatusChange: (newStatus) async {
+                      final article = _fullArticle ?? widget.article;
+                      if (widget.article.contentType == 1) {
+                        await _articleService.editArticleStatus(
+                          article,
+                          newStatus,
+                        );
+                      } else if (widget.article.contentType == 2) {
+                        final audiobookId =
+                            _fullArticle?.id ?? widget.article.id;
+                        final chapterId = widget.article.chapterId ??
+                            _fullArticle?.chapterId;
+                        if (chapterId != null && chapterId.isNotEmpty) {
+                          await _articleService.editChapterStatus(
+                            audiobookId: audiobookId,
+                            chapterId: chapterId,
+                            status: newStatus,
+                          );
+                        }
+                      }
+                      await _loadFullArticle();
+                      if (newStatus == 'finished' && mounted) {
+                        final xp = widget.article.contentType == 1
+                            ? XP_PER_ARTICLE
+                            : XP_PER_AUDIOBOOK_CHAPTER;
+                        FeedbackService.instance.playSuccess();
+                        await XpRewardBottomSheet.show(context, xp: xp);
+                      }
+                    },
                   ),
 
                   // Content
@@ -383,7 +296,9 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                             if (_fullArticle?.contentType == 1 ||
                                 widget.showLocker) ...[
                               const SizedBox(width: 8),
-                              GestureDetector(
+                              FavoriteToggleButton(
+                                isFavorite: _fullArticle?.isFavorite ?? false,
+                                showLocker: widget.showLocker,
                                 onTap: () async {
                                   if (widget.showLocker) {
                                     await presentPaywall();
@@ -399,27 +314,6 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                                         !_fullArticle!.isFavorite;
                                   });
                                 },
-                                behavior: HitTestBehavior.opaque,
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Icon(
-                                    widget.showLocker
-                                        ? FontAwesomeIcons.lock
-                                        : (_fullArticle?.isFavorite ?? false
-                                            ? FontAwesomeIcons.solidHeart
-                                            : FontAwesomeIcons.lightHeart),
-                                    size: 20,
-                                    color: widget.showLocker
-                                        ? Colors.white
-                                        : (_fullArticle?.isFavorite ?? false
-                                            ? AppColors.secondary
-                                            : Colors.white),
-                                  ),
-                                ),
                               ),
                             ],
                             const SizedBox(width: 8),
@@ -715,9 +609,9 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                           const SizedBox(width: 8),
                           Text(
                             _isDownloadingOffline
-                                ? 'Downloading...'
+                                ? AppLocalizations.of(context)!.downloading
                                 : (_isOfflineAvailable
-                                    ? 'Available offline'
+                                    ? AppLocalizations.of(context)!.availableOffline
                                     : AppLocalizations.of(context)!
                                         .downloadForOfflineAccess),
                             style: TextStyle(

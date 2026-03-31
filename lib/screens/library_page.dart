@@ -3,13 +3,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/article.dart';
 import '../widgets/article_card.dart';
 import '../widgets/library_skeleton.dart';
+import '../widgets/content_filter_sheet.dart';
+import '../widgets/level_chip_row.dart';
 import '../services/article_service.dart';
 import '../constants/app_colors.dart';
-import '../constants/levels.dart';
 import '../constants/content.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/label_localization.dart';
-import '../widgets/theme_chip.dart';
 import '../stores/profile_store.dart';
 
 class LibraryPage extends StatefulWidget {
@@ -30,9 +30,10 @@ class _LibraryPageState extends State<LibraryPage> {
   List<Article> _articles = [];
   String? _errorMessage;
   bool _isSubscribed = false;
-  late final ArticleService _articleService;
+  late ArticleService _articleService;
   late ProfileStore _profileStore;
   bool _didLoadInitial = false;
+  String _lastNativeLanguage = '';
 
   @override
   void initState() {
@@ -45,8 +46,15 @@ class _LibraryPageState extends State<LibraryPage> {
     super.didChangeDependencies();
     _profileStore = ProfileStoreScope.of(context);
     _isSubscribed = _profileStore.isSubscribed;
+    final currentNativeLanguage = _profileStore.nativeLanguage;
     if (!_didLoadInitial) {
       _didLoadInitial = true;
+      _lastNativeLanguage = currentNativeLanguage;
+      _loadArticles();
+    } else if (currentNativeLanguage.isNotEmpty &&
+        currentNativeLanguage != _lastNativeLanguage) {
+      _lastNativeLanguage = currentNativeLanguage;
+      _articleService = ArticleService(Supabase.instance.client);
       _loadArticles();
     }
   }
@@ -107,7 +115,7 @@ class _LibraryPageState extends State<LibraryPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _LibraryFilterSheet(
+      builder: (ctx) => ContentFilterSheet(
         selectedLevel: selectedLevel,
         onLevelChanged: (v) => setState(() => selectedLevel = v),
         themes: THEMES.map((e) => e.id).toList(),
@@ -117,6 +125,8 @@ class _LibraryPageState extends State<LibraryPage> {
         onIncludeFinishedChanged: (v) => setState(() => includeFinished = v),
         favoritesOnly: favoritesOnly,
         onFavoritesOnlyChanged: (v) => setState(() => favoritesOnly = v),
+        includeFinishedLabel:
+            AppLocalizations.of(context)!.includeFinishedArticles,
         onApply: () => Navigator.pop(ctx),
       ),
     );
@@ -137,7 +147,7 @@ class _LibraryPageState extends State<LibraryPage> {
             article.isFavorite = !article.isFavorite;
           });
         } catch (e) {
-          print('Error toggling favorite: $e');
+          debugPrint('Error toggling favorite: $e');
         }
       },
     );
@@ -145,7 +155,6 @@ class _LibraryPageState extends State<LibraryPage> {
 
   @override
   Widget build(BuildContext context) {
-    //  final readingLevels = getReadingLevels(context);
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -200,50 +209,12 @@ class _LibraryPageState extends State<LibraryPage> {
             // Level Filter Chips
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: LEVELS.map((level) {
-                    final isSelected = selectedLevel == level;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedLevel = level;
-                          });
-                          _loadArticles();
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected ? AppColors.secondary : Colors.white,
-                            border: isSelected
-                                ? Border.all(color: AppColors.borderBlack)
-                                : Border.all(color: Colors.white),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            level == 'All'
-                                ? AppLocalizations.of(context)!.allLevels
-                                : level,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: isSelected
-                                  ? AppColors.textPrimary
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
+              child: LevelChipRow(
+                selectedLevel: selectedLevel,
+                onLevelChanged: (level) {
+                  setState(() => selectedLevel = level);
+                  _loadArticles();
+                },
               ),
             ),
 
@@ -451,7 +422,7 @@ class _LibraryPageState extends State<LibraryPage> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                 ),
-                                child: const Text('Retry'),
+                                child: Text(AppLocalizations.of(context)!.retry),
                               ),
                             ],
                           ),
@@ -510,255 +481,6 @@ class _LibraryPageState extends State<LibraryPage> {
                                 );
                               },
                             ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LibraryFilterSheet extends StatefulWidget {
-  final String selectedLevel;
-  final ValueChanged<String> onLevelChanged;
-  final List<String> themes;
-  final Set<String> selectedThemes;
-  final ValueChanged<Set<String>> onThemesChanged;
-  final bool includeFinished;
-  final ValueChanged<bool> onIncludeFinishedChanged;
-  final bool favoritesOnly;
-  final ValueChanged<bool> onFavoritesOnlyChanged;
-  final VoidCallback onApply;
-
-  const _LibraryFilterSheet({
-    required this.selectedLevel,
-    required this.onLevelChanged,
-    required this.themes,
-    required this.selectedThemes,
-    required this.onThemesChanged,
-    required this.includeFinished,
-    required this.onIncludeFinishedChanged,
-    required this.favoritesOnly,
-    required this.onFavoritesOnlyChanged,
-    required this.onApply,
-  });
-
-  @override
-  State<_LibraryFilterSheet> createState() => _LibraryFilterSheetState();
-}
-
-class _LibraryFilterSheetState extends State<_LibraryFilterSheet> {
-  /// Local copy so the sheet rebuilds and shows selection when chips/switches are tapped.
-  late String _selectedLevel;
-  late Set<String> _selectedThemes;
-  late bool _includeFinished;
-  late bool _favoritesOnly;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedLevel = widget.selectedLevel;
-    _selectedThemes = Set<String>.from(widget.selectedThemes);
-    _includeFinished = widget.includeFinished;
-    _favoritesOnly = widget.favoritesOnly;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 20,
-        bottom: MediaQuery.of(context).padding.bottom + 20,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[400],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              AppLocalizations.of(context)!.filters,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Level
-            Text(
-              AppLocalizations.of(context)!.level,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 10),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: LEVELS.map((level) {
-                  final isSelected = _selectedLevel == level;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() => _selectedLevel = level);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              isSelected ? AppColors.secondary : Colors.white,
-                          border: isSelected
-                              ? Border.all(color: AppColors.borderBlack)
-                              : Border.all(color: Colors.white),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          level == 'All'
-                              ? AppLocalizations.of(context)!.allLevels
-                              : level,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: isSelected
-                                ? AppColors.textPrimary
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Themes
-            Text(
-              AppLocalizations.of(context)!.themes,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: widget.themes.map((theme) {
-                final isAll = theme == 'All';
-                final isSelected = isAll
-                    ? _selectedThemes.isEmpty
-                    : _selectedThemes.contains(theme);
-                final leadingIcon = theme == 'All'
-                    ? null
-                    : THEMES.where((e) => e.id == theme).firstOrNull?.icon;
-                return ThemeChip(
-                  label: theme,
-                  isSelected: isSelected,
-                  leadingIcon: leadingIcon,
-                  onTap: () {
-                    if (isAll) {
-                      setState(() => _selectedThemes = {});
-                    } else {
-                      final next = Set<String>.from(_selectedThemes);
-                      if (next.contains(theme)) {
-                        next.remove(theme);
-                      } else {
-                        next.add(theme);
-                      }
-                      setState(() => _selectedThemes = next);
-                    }
-                  },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 24),
-            // Include Finished Articles
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  AppLocalizations.of(context)!.includeFinishedArticles,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                Switch(
-                  value: _includeFinished,
-                  onChanged: (v) => setState(() => _includeFinished = v),
-                  activeColor: AppColors.primary,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Favorite Articles
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  AppLocalizations.of(context)!.showOnlyFavoriteArticles,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                Switch(
-                  value: _favoritesOnly,
-                  onChanged: (v) => setState(() => _favoritesOnly = v),
-                  activeColor: AppColors.primary,
-                ),
-              ],
-            ),
-            const SizedBox(height: 28),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  widget.onLevelChanged(_selectedLevel);
-                  widget.onThemesChanged(_selectedThemes);
-                  widget.onIncludeFinishedChanged(_includeFinished);
-                  widget.onFavoritesOnlyChanged(_favoritesOnly);
-                  widget.onApply();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Text(
-                  AppLocalizations.of(context)!.apply,
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-                ),
-              ),
             ),
           ],
         ),

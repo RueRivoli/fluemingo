@@ -1,6 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/vocabulary_item.dart';
 import '../utils/flashcards.dart';
+import '../utils/storage_url_helper.dart';
+import '../utils/reference_language.dart';
+import '../utils/localization_field_resolver.dart';
 import 'language_table_resolver.dart';
 
 enum FlashcardStatus {
@@ -26,130 +30,16 @@ enum FlashcardStatus {
 
 class FlashcardService {
   final SupabaseClient _supabase;
-  String? _cachedReferenceLanguageCode;
 
   FlashcardService(this._supabase);
 
   String _table(String name) => LanguageTableResolver.table(name);
-  static const String _storageBucket = 'content';
 
-  static String _normalizeReferenceLanguageCode(String? code) {
-    final normalized = (code ?? '').trim().toLowerCase();
-    switch (normalized) {
-      case 'es':
-      case 'sp':
-        return 'sp';
-      case 'de':
-      case 'ge':
-        return 'ge';
-      case 'nl':
-      case 'dt':
-        return 'dt';
-      case 'ja':
-      case 'jp':
-        return 'jp';
-      default:
-        return normalized;
-    }
-  }
+  Future<String> _getReferenceLanguageCode() =>
+      ReferenceLanguage.getReferenceLanguageCode(_supabase);
 
-  static List<String> _referenceLanguageAliases(String? code) {
-    final normalized = _normalizeReferenceLanguageCode(code);
-    switch (normalized) {
-      case 'sp':
-        return const ['sp', 'es'];
-      case 'ge':
-        return const ['ge', 'de'];
-      case 'dt':
-        return const ['dt', 'nl'];
-      case 'jp':
-        return const ['jp', 'ja'];
-      default:
-        return normalized.isEmpty ? const [] : [normalized];
-    }
-  }
-
-  static String _readFirstNonEmptyFromMap(
-      Map<dynamic, dynamic> source, List<String> candidates) {
-    for (final key in candidates) {
-      final value = source[key];
-      if (value != null && value.toString().trim().isNotEmpty) {
-        return value.toString();
-      }
-    }
-
-    if (source.keys.any((key) => key is String)) {
-      final lowerCaseIndex = <String, dynamic>{};
-      for (final entry in source.entries) {
-        final key = entry.key;
-        if (key is String) {
-          lowerCaseIndex[key.toLowerCase()] = entry.value;
-        }
-      }
-      for (final key in candidates) {
-        final value = lowerCaseIndex[key.toLowerCase()];
-        if (value != null && value.toString().trim().isNotEmpty) {
-          return value.toString();
-        }
-      }
-    }
-
-    return '';
-  }
-
-  static String _localizedVocabularyFieldValue({
-    required Map<dynamic, dynamic> source,
-    required String baseField,
-    required String referenceLanguageCode,
-  }) {
-    final aliases = _referenceLanguageAliases(referenceLanguageCode);
-    final candidates = <String>[
-      ...aliases.map((code) => '${baseField}_$code'),
-      ...aliases.map((code) => '${baseField}_${code.toUpperCase()}'),
-      '${baseField}_en',
-      '${baseField}_EN',
-    ];
-    return _readFirstNonEmptyFromMap(source, candidates);
-  }
-
-  Future<String> _getReferenceLanguageCode() async {
-    if (_cachedReferenceLanguageCode != null &&
-        _cachedReferenceLanguageCode!.isNotEmpty) {
-      return _cachedReferenceLanguageCode!;
-    }
-
-    final user = _supabase.auth.currentUser;
-    if (user == null) return 'en';
-
-    try {
-      final profile = await _supabase
-          .from('profiles')
-          .select('native_language')
-          .eq('id', user.id)
-          .maybeSingle();
-      final referenceLanguage =
-          _normalizeReferenceLanguageCode(profile?['native_language']);
-      if (referenceLanguage.isNotEmpty) {
-        _cachedReferenceLanguageCode = referenceLanguage;
-        return referenceLanguage;
-      }
-    } catch (e) {
-      print('Error fetching reference language for flashcards: $e');
-    }
-
-    return 'en';
-  }
-
-  String _getAudioUrl(String? path) {
-    if (path == null || path.isEmpty) return '';
-    if (path.startsWith('http://') || path.startsWith('https://')) return path;
-
-    var cleanPath = path.startsWith('/') ? path.substring(1) : path;
-    if (cleanPath.startsWith('content/')) {
-      cleanPath = cleanPath.substring('content/'.length);
-    }
-    return _supabase.storage.from(_storageBucket).getPublicUrl(cleanPath);
-  }
+  String _getAudioUrl(String? path) =>
+      StorageUrlHelper.getAudioUrl(_supabase, path) ?? '';
 
   /// Fetch all articles from Supabase
   Future<List<int>> getFlashcardsCount() async {
@@ -196,7 +86,6 @@ class FlashcardService {
         (responses[3] as List).length,
       ];
     } catch (e) {
-      print('Error fetching flashcards count: $e');
       rethrow;
     }
   }
@@ -212,7 +101,6 @@ class FlashcardService {
           .select('*, ${_table('vocabulary')}!vocabulary_id(*)')
           .eq('user_id', user.id)
           .eq('status', status ?? '');
-      print('response: ${response.map((e) => e['vocabulary_id'])}');
       return (response as List)
           .map((json) => _vocabularyItemFromJson(
                 json,
@@ -220,7 +108,6 @@ class FlashcardService {
               ))
           .toList();
     } catch (e) {
-      print('Error fetching flashcards: $e');
       rethrow;
     }
   }
@@ -230,7 +117,7 @@ class FlashcardService {
       final user = _supabase.auth.currentUser;
       if (user == null) return;
 
-      final response = await _supabase
+      await _supabase
           .from(_table('flashcards'))
           .update({
             'status': status,
@@ -240,7 +127,6 @@ class FlashcardService {
           .eq('id', id)
           .eq('user_id', user.id);
     } catch (e) {
-      print('Error updating flashcard status: $e');
       rethrow;
     }
   }
@@ -269,7 +155,6 @@ class FlashcardService {
               ))
           .toList();
     } catch (e) {
-      print('Error fetching flashcards: $e');
       rethrow;
     }
   }
@@ -290,14 +175,14 @@ class FlashcardService {
     }
 
     final localizedTranslation = vocabularyRow != null
-        ? _localizedVocabularyFieldValue(
+        ? LocalizationFieldResolver.localizedVocabularyFieldValue(
             source: vocabularyRow,
             baseField: 'text',
             referenceLanguageCode: referenceLanguageCode,
           )
         : '';
     final localizedExampleTranslation = vocabularyRow != null
-        ? _localizedVocabularyFieldValue(
+        ? LocalizationFieldResolver.localizedVocabularyFieldValue(
             source: vocabularyRow,
             baseField: 'example',
             referenceLanguageCode: referenceLanguageCode,
@@ -311,6 +196,7 @@ class FlashcardService {
           ? localizedTranslation
           : (json['text_translation'] ?? ''),
       type: json['function'] ?? 'n',
+       properName: json['properName'] ?? false,
       exampleSentence: json['example'],
       exampleTranslation: localizedExampleTranslation.isNotEmpty
           ? localizedExampleTranslation
@@ -330,18 +216,34 @@ class FlashcardService {
       if (user == null) return null;
       final newFlashcardRow = vocabularyItemToFlashcardRow(vocabularyItem,
           userId: user.id, contentId: contentId, chapterId: chapterId);
+
+      // Check if this flashcard already exists for this user/word/content
+      final existing = await isVocabularyItemAlreadySavedInThatArticle(
+          vocabularyItem.word, contentId, chapterId);
+      if (existing != null) {
+        // Update existing flashcard
+        await _supabase
+            .from(_table('flashcards'))
+            .update(newFlashcardRow)
+            .eq('id', existing['id']);
+        return await _supabase
+            .from(_table('flashcards'))
+            .select()
+            .eq('id', existing['id'])
+            .single();
+      }
       return await _supabase
           .from(_table('flashcards'))
           .insert(newFlashcardRow)
           .select()
           .single();
     } catch (e) {
-      print('Error adding flashcard: $e');
+      debugPrint('Error adding flashcard: $e');
       return null;
     }
   }
 
-  Future<VocabularyItem?> deleteFlashcard(int id) async {
+  Future<void> deleteFlashcard(int id) async {
     try {
       final user = _supabase.auth.currentUser;
       if (user == null) return null;
@@ -351,7 +253,6 @@ class FlashcardService {
           .eq('id', id)
           .eq('user_id', user.id);
     } catch (e) {
-      print('Error deleting flashcard: $e');
       rethrow;
     }
   }
@@ -369,7 +270,6 @@ class FlashcardService {
           .eq('user_id', user.id);
       return response;
     } catch (e) {
-      print('Error deleting flashcard: $e');
       rethrow;
     }
   }
@@ -401,7 +301,7 @@ class FlashcardService {
       }
       return response;
     } catch (e) {
-      print('Error checking if vocabulary item is saved: $e');
+      debugPrint('Error checking if vocabulary item is saved: $e');
       return null;
     }
   }

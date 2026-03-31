@@ -8,6 +8,7 @@ import '../services/flashcard_service.dart';
 import 'flashcards_deck.dart';
 import '../widgets/flashcard_status_sheet.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/flashcard_snackbar.dart';
 
 class FlashcardsCategoryPage extends StatefulWidget {
   final String categoryName;
@@ -36,33 +37,6 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
         .join(' ');
   }
 
-  void _showFlashcardCategoryUpdatedSnackBar() {
-    if (!mounted) return;
-
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      const SnackBar(
-        backgroundColor: AppColors.primary,
-        content: Row(
-          children: [
-            FaIcon(
-              FontAwesomeIcons.thinCardsBlank,
-              color: Colors.white,
-              size: 18,
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Flashcard category updated',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   @override
   void initState() {
@@ -78,7 +52,6 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
     });
     final flashcards = await flashcardService.getFlashcardsWithStatus(
         status: widget.categoryName);
-    print('flashcards: ${flashcards.map((e) => e.isAddedByUser)}');
     setState(() {
       _flashcards = flashcards;
       _isLoading = false;
@@ -92,8 +65,7 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
         _flashcards
             .removeWhere((flashcard) => flashcard.flashcardId == flashcardId);
       });
-    } catch (e) {
-      print('Error deleting flashcard: $e');
+    } catch (_) {
       rethrow;
     }
   }
@@ -109,14 +81,13 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
 
     if (newStatus != null && mounted && newStatus != widget.categoryName) {
       try {
-        print('newStatus: $newStatus');
         await flashcardService.updateFlashcardStatus(
             item.flashcardId!, newStatus);
         if (mounted) {
           setState(() {
             _flashcards.removeWhere((f) => f.flashcardId == item.flashcardId);
           });
-          _showFlashcardCategoryUpdatedSnackBar();
+          FlashcardSnackbar.show(context, newStatus);
         }
       } catch (e) {
         if (mounted) {
@@ -132,7 +103,7 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
     // Navigate to flashcard deck screen with the loaded flashcards
     if (_flashcards.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No flashcards available')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.noFlashcardsAvailable)),
       );
       return;
     }
@@ -171,24 +142,26 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
       confirmDismiss: (direction) async {
         return await showDialog<bool>(
               context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Delete Flashcard'),
-                content: Text(
-                    'Are you sure you want delete "${item.word}" from your ${widget.categoryName == 'saved' ? 'Saved' : widget.categoryName == 'difficult' ? 'Difficult' : widget.categoryName == 'training' ? 'Training' : widget.categoryName == 'mastered' ? 'Mastered' : ''} Vocabulary?'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.red,
+              builder: (context) {
+                final l10n = AppLocalizations.of(context)!;
+                return AlertDialog(
+                  title: Text(l10n.deleteFlashcard),
+                  content: Text(l10n.areYouSureYouWantToDeleteWord(item.word)),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: Text(l10n.cancel),
                     ),
-                    child: const Text('Delete'),
-                  ),
-                ],
-              ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.red,
+                      ),
+                      child: Text(l10n.delete),
+                    ),
+                  ],
+                );
+              },
             ) ??
             false;
       },
@@ -201,7 +174,6 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
         item: item,
         displayType: 'flashcard',
         onIconToggle: () => _onIconToggle(item),
-        onDelete: () => _deleteFlashcard(item.flashcardId!),
       ),
     );
   }
@@ -316,16 +288,16 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppColors.primary,
                                   ),
-                                  child: const Text('Retry'),
+                                  child: Text(AppLocalizations.of(context)!.retry),
                                 ),
                               ],
                             ),
                           )
                         : _flashcards.isEmpty
-                            ? const Center(
+                            ? Center(
                                 child: Text(
-                                  'No flashcards found',
-                                  style: TextStyle(
+                                  AppLocalizations.of(context)!.noFlashcardsFound,
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     color: AppColors.textSecondary,
                                   ),

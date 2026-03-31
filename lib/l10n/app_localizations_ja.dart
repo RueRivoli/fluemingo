@@ -98,7 +98,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get clickOnXToRemoveThisExpressionFromYourVocabularyList =>
-      'xをクリックしてこの表現を単語帳から削除';
+      'ゴミ箱アイコンをタップしてこの表現を単語帳から削除';
 
   @override
   String get completedQuizzes => '完了したクイズ';
@@ -260,6 +260,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get interestingContent => 'お気に入りのテーマに合ったコンテンツ';
 
   @override
+  String get forYou => 'あなたへ';
+
+  @override
   String get items => '表現';
 
   @override
@@ -320,7 +323,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get navAudiobooks => 'オーディオブック';
 
   @override
-  String get navFlashcards => 'フラッシュカード';
+  String get navFlashcards => '単語帳';
 
   @override
   String get navLibrary => '記事';
@@ -354,6 +357,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get people => '人物';
+
+  @override
+  String get philosophy => '哲学';
+
+  @override
+  String get psychology => '心理学';
 
   @override
   String get poetry => '詩';
@@ -495,6 +504,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String daysRemaining(int days) {
+    return '残り$days日';
+  }
+
+  @override
   String get weekGoal => '週間目標';
 
   @override
@@ -504,7 +518,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get selectOne => '1つ選んでください';
 
   @override
-  String get whichLanguageDoYouSpeakTheBest => '最も得意な言語はどれですか？';
+  String get whichLanguageDoYouSpeakTheBest => '参照言語として使用したい言語はどれですか？';
 
   @override
   String get withYour => 'あなたの〜で';
@@ -538,4 +552,178 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get rateTheAppStoreUnavailable => 'ストアを開けません（実機でお試しください）。';
+
+  @override
+  String get flashcardCategoryUpdated => 'フラッシュカードカテゴリを更新しました';
+
+  @override
+  String get flashcardMastered => 'おめでとうございます、新しい表現をマスターしました！+1 XP';
+
+  @override
+  String get noFlashcardsAvailable => 'フラッシュカードはありません';
+
+  @override
+  String get noFlashcardsFound => 'フラッシュカードが見つかりません';
+
+  @override
+  String get deleteFlashcard => 'フラッシュカードを削除';
+
+  @override
+  String get noContentInProgress => '進行中のコンテンツはありません';
+
+  @override
+  String get noLikedContentYet => 'まだお気に入りのコンテンツはありません';
+
+  @override
+  String get noSuggestionsYet => 'まだ提案はありません';
+
+  @override
+  String get yourContentInProgress => '進行中のコンテンツ';
+
+  @override
+  String get yourFavoriteContent => 'お気に入りのコンテンツ';
+
+  @override
+  String get yourContent => 'あなたのコンテンツ';
+
+  @override
+  String get finishContentToEarnXP => 'XPを獲得するにはこのコンテンツを完了してください';
+
+  @override
+  String get basedOnYourLikes => 'あなたのいいねに基づく';
+
+  @override
+  String get basedOnYourFavoriteThemes => 'お気に入りのテーマに基づく';
+
+  @override
+  String get save => '保存';
+
+  @override
+  String get pleaseSelectAtLeastOneTheme => '少なくとも1つのテーマを選択してください';
+
+  @override
+  String get logout => 'ログアウト';
+
+  @override
+  String get downloading => 'ダウンロード中...';
+
+  @override
+  String get availableOffline => 'オフラインで利用可能';
+
+  @override
+  String get downloadedForOfflineAccess => 'オフラインアクセス用にダウンロード済み';
+
+  @override
+  String get goBack => '戻る';
+
+  @override
+  String get noAudioAvailable => '音声がありません';
+
+  @override
+  String get pleaseEnterValidNumber => '有効な正の数を入力してください';
+
+  @override
+  String get yourTargetLanguage => '学習言語';
+
+  @override
+  String get yourReferenceLanguage => '参照言語';
+
+  @override
+  String get oops => 'おっと';
+
+  @override
+  String get weeklyGoalReached => '週間目標達成！';
+
+  @override
+  String get wellDone => 'よくできました！';
+
+  @override
+  String youEarnedXp(Object xp) {
+    return '$xp XP 獲得しました！';
+  }
+
+  @override
+  String get quizFinishedMarkArticleAsFinished => 'クイズが完了しました！記事も完了にしますか？';
+
+  @override
+  String get quizFinishedMarkChapterAsFinished => 'クイズが完了しました！チャプターも完了にしますか？';
+
+  @override
+  String get congratsQuizAndArticle => 'クイズと記事を完了しました！';
+
+  @override
+  String get congratsQuizAndChapter => 'クイズとチャプターを完了しました！';
+
+  @override
+  String get congratsQuiz => 'クイズを完了しました！';
+
+  @override
+  String get yes => 'はい';
+
+  @override
+  String get no => 'いいえ';
+
+  @override
+  String get vocabularyAddedToList => '単語リストに追加しました';
+
+  @override
+  String get retranslate => '再翻訳';
+
+  @override
+  String get withContent => 'あなた向けのコンテンツで';
+
+  @override
+  String get fitTasteLevel => 'あなたの好みとレベルに合った';
+
+  @override
+  String get deleteAccount => 'アカウントを削除';
+
+  @override
+  String get deleteAccountConfirmation =>
+      'アカウントを削除してもよろしいですか？この操作は元に戻せず、すべてのデータが完全に削除されます。';
+
+  @override
+  String get accountDeleted => 'アカウントが削除されました。';
+
+  @override
+  String get deleteAccountError => 'アカウントを削除できませんでした。もう一度お試しください。';
+
+  @override
+  String get privacyPolicy => 'プライバシーポリシー';
+
+  @override
+  String get termsOfService => '利用規約';
+
+  @override
+  String get termsAndPrivacyNotice => 'ログインすると、利用規約とプライバシーポリシーに同意したことになります。';
+
+  @override
+  String get restorePurchases => '購入を復元';
+
+  @override
+  String get purchasesRestored => '購入が正常に復元されました。';
+
+  @override
+  String get restorePurchasesFailed => '購入を復元できませんでした。';
+
+  @override
+  String get orContinueWith => 'または次で続行';
+
+  @override
+  String get signInWithEmail => 'メールでログイン';
+
+  @override
+  String get email => 'メール';
+
+  @override
+  String get password => 'パスワード';
+
+  @override
+  String get enterEmailAndPassword => 'メールアドレスとパスワードを入力してログインしてください。';
+
+  @override
+  String get signIn => 'ログイン';
+
+  @override
+  String get start => '始める';
 }

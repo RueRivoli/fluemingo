@@ -1,6 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../config/revenue_cat_config.dart';
 import '../constants/app_colors.dart';
@@ -17,6 +22,7 @@ import '../constants/languages.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/week_progress_service.dart';
 import '../services/onesignal_notification_service.dart';
+import 'onboarding/registration_page.dart';
 import 'onboarding/welcome_page.dart';
 
 class ProfileSettingsPage extends StatefulWidget {
@@ -100,25 +106,9 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       await profileService.updateWeeklyGoal(xp);
       if (mounted) {
         setState(() {
-          profile = profile != null
-              ? Profile(
-                  fullName: profile!.fullName,
-                  email: profile!.email,
-                  avatar: profile!.avatar,
-                  avatarUrl: profile!.avatarUrl,
-                  isPremium: profile!.isPremium,
-                  nativeLanguage: profile!.nativeLanguage,
-                  targetLanguage: profile!.targetLanguage,
-                  weeklyGoalXP: xp,
-                  weekXP: profile!.weekXP,
-                  lastWeekXP: profile!.lastWeekXP,
-                  weeklyArticlesRead: profile!.weeklyArticlesRead,
-                  weeklyAudiobooksRead: profile!.weeklyAudiobooksRead,
-                  weeklyFlashcardsAchieved: profile!.weeklyFlashcardsAchieved,
-                  weeklyQuizzesCompleted: profile!.weeklyQuizzesCompleted,
-                )
-              : null;
+          profile = profile?.copyWith(weeklyGoalXP: xp);
         });
+        ProfileStoreScope.of(context).setProfile(profile);
       }
     } catch (e) {
       if (mounted) {
@@ -134,24 +124,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       await profileService.updateTargetLanguage(code);
       if (mounted) {
         setState(() {
-          profile = profile != null
-              ? Profile(
-                  fullName: profile!.fullName,
-                  email: profile!.email,
-                  avatar: profile!.avatar,
-                  avatarUrl: profile!.avatarUrl,
-                  isPremium: profile!.isPremium,
-                  nativeLanguage: profile!.nativeLanguage,
-                  targetLanguage: code,
-                  weeklyGoalXP: profile!.weeklyGoalXP,
-                  weekXP: profile!.weekXP,
-                  lastWeekXP: profile!.lastWeekXP,
-                  weeklyArticlesRead: profile!.weeklyArticlesRead,
-                  weeklyAudiobooksRead: profile!.weeklyAudiobooksRead,
-                  weeklyFlashcardsAchieved: profile!.weeklyFlashcardsAchieved,
-                  weeklyQuizzesCompleted: profile!.weeklyQuizzesCompleted,
-                )
-              : null;
+          profile = profile?.copyWith(targetLanguage: code);
         });
         ProfileStoreScope.of(context).setProfile(profile);
       }
@@ -169,24 +142,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       await profileService.updateNativeLanguage(code);
       if (mounted) {
         setState(() {
-          profile = profile != null
-              ? Profile(
-                  fullName: profile!.fullName,
-                  email: profile!.email,
-                  avatar: profile!.avatar,
-                  avatarUrl: profile!.avatarUrl,
-                  isPremium: profile!.isPremium,
-                  nativeLanguage: code,
-                  targetLanguage: profile!.targetLanguage,
-                  weeklyGoalXP: profile!.weeklyGoalXP,
-                  weekXP: profile!.weekXP,
-                  lastWeekXP: profile!.lastWeekXP,
-                  weeklyArticlesRead: profile!.weeklyArticlesRead,
-                  weeklyAudiobooksRead: profile!.weeklyAudiobooksRead,
-                  weeklyFlashcardsAchieved: profile!.weeklyFlashcardsAchieved,
-                  weeklyQuizzesCompleted: profile!.weeklyQuizzesCompleted,
-                )
-              : null;
+          profile = profile?.copyWith(nativeLanguage: code);
         });
         // Update global store so app locale (MyApp) refreshes to the new reference language
         ProfileStoreScope.of(context).setProfile(profile);
@@ -206,7 +162,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (modalContext) => _buildLanguagePickerModal(
-        title: 'Your target language',
+        title: AppLocalizations.of(context)!.yourTargetLanguage,
         languages: getTargetLanguages(context),
         currentCode: current,
         onSelect: (code) {
@@ -234,7 +190,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (modalContext) => _buildLanguagePickerModal(
-        title: 'Your reference language',
+        title: AppLocalizations.of(context)!.yourReferenceLanguage,
         languages: getReferenceLanguages(context),
         currentCode: current,
         onSelect: (code) {
@@ -449,7 +405,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Cancel'),
+                      child: Text(AppLocalizations.of(context)!.cancel),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -462,9 +418,9 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                           Navigator.of(context).pop();
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content:
-                                  Text('Please enter a valid positive number.'),
+                            SnackBar(
+                              content: Text(AppLocalizations.of(context)!
+                                  .pleaseEnterValidNumber),
                             ),
                           );
                         }
@@ -476,7 +432,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Save'),
+                      child: Text(AppLocalizations.of(context)!.save),
                     ),
                   ),
                 ],
@@ -501,15 +457,91 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     );
   }
 
+  Future<void> _restorePurchases() async {
+    try {
+      await Purchases.restorePurchases();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.purchasesRestored),
+        ),
+      );
+      _loadProfileData();
+      ProfileStoreScope.of(context).load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.restorePurchasesFailed),
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.deleteAccount),
+        content: Text(
+          AppLocalizations.of(context)!.deleteAccountConfirmation,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(AppLocalizations.of(context)!.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: Text(AppLocalizations.of(context)!.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await profileService.deleteAccount();
+      await _oneSignalNotificationService.logout();
+      if (!mounted) return;
+      ProfileStoreScope.of(context).clear();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.accountDeleted),
+        ),
+      );
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const WelcomePage()),
+        (route) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.deleteAccountError),
+        ),
+      );
+    }
+  }
+
   Future<void> _logout() async {
     try {
       await _oneSignalNotificationService.logout();
       await Supabase.instance.client.auth.signOut();
       if (!mounted) return;
       ProfileStoreScope.of(context).clear();
+      final prefs = await SharedPreferences.getInstance();
+      final hasSeenWelcome = prefs.getBool('has_seen_welcome') ?? false;
+      if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (context) => const WelcomePage(),
+          builder: (context) => hasSeenWelcome
+              ? const RegistrationPage.loginOnly()
+              : const WelcomePage(),
         ),
         (route) => false,
       );
@@ -556,6 +588,19 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                                 color: AppColors.textPrimary,
                               ),
                             ),
+                            if (profile?.email != null &&
+                                profile!.email.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  '${profile?.email}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.textPrimary.withOpacity(0.6),
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -702,6 +747,24 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                               ),
                             ),
                           ),
+                          if (Platform.isIOS || Platform.isAndroid) ...[
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: GestureDetector(
+                                onTap: _restorePurchases,
+                                child: Text(
+                                  AppLocalizations.of(context)!
+                                      .restorePurchases,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 24),
                           // Your weekly goal + edit button
                           Text(
@@ -933,6 +996,28 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                             ),
                           ),
                           const SizedBox(height: 24),
+                          // Privacy Policy & Terms of Service
+                          _buildSettingsLink(
+                            icon: FontAwesomeIcons.shieldHalved,
+                            label: AppLocalizations.of(context)!.privacyPolicy,
+                            onTap: () => launchUrl(
+                              Uri.parse(
+                                  'https://fluemingo-app.com/privacy-policy/'),
+                              mode: LaunchMode.externalApplication,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildSettingsLink(
+                            icon: FontAwesomeIcons.fileContract,
+                            label:
+                                AppLocalizations.of(context)!.termsOfService,
+                            onTap: () => launchUrl(
+                              Uri.parse(
+                                  'https://fluemingo-app.com/terms/'),
+                              mode: LaunchMode.externalApplication,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
                           SizedBox(
                             width: double.infinity,
                             child: OutlinedButton.icon(
@@ -952,11 +1037,37 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                                 FontAwesomeIcons.rightFromBracket,
                                 size: 18,
                               ),
-                              label: const Text(
-                                'Log out',
-                                style: TextStyle(
+                              label: Text(
+                                AppLocalizations.of(context)!.logout,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: TextButton.icon(
+                              onPressed: _deleteAccount,
+                              style: TextButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                foregroundColor: AppColors.error,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              icon: const Icon(
+                                FontAwesomeIcons.trash,
+                                size: 16,
+                              ),
+                              label: Text(
+                                AppLocalizations.of(context)!.deleteAccount,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
@@ -968,6 +1079,52 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _buildSettingsLink({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.neutral,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.textGrey.withOpacity(0.5),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: AppColors.textPrimary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              Icon(
+                FontAwesomeIcons.chevronRight,
+                size: 24,
+                color: AppColors.textSecondary,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

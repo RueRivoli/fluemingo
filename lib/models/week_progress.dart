@@ -5,6 +5,8 @@ class WeekProgress {
   final String weekFlashcardsAchievedCount;
   final String weekQuizzesCompletedCount;
   final int weekXP;
+  /// Jours restants dans la semaine glissante personnelle (0–7).
+  final int daysRemainingInWeek;
 
   const WeekProgress({
     required this.weekArticlesReadCount,
@@ -13,6 +15,7 @@ class WeekProgress {
     required this.weekQuizzesCompletedCount,
     required this.weekAudiobooksChaptersReadCount,
     required this.weekXP,
+    this.daysRemainingInWeek = 0,
   });
 
   @override
@@ -23,7 +26,8 @@ class WeekProgress {
         'weekAudiobooksChaptersReadCount: $weekAudiobooksChaptersReadCount, '
         'weekFlashcardsAchievedCount: $weekFlashcardsAchievedCount, '
         'weekQuizzesCompletedCount: $weekQuizzesCompletedCount, '
-        'weekXP: $weekXP'
+        'weekXP: $weekXP, '
+        'daysRemainingInWeek: $daysRemainingInWeek'
         ')';
   }
 }

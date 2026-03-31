@@ -47,7 +47,7 @@ class OfflineContentService {
       if (decoded is! Map<String, dynamic>) return null;
       return _articleFromMap(decoded);
     } catch (e) {
-      print('Error reading cached article: $e');
+      debugPrint('Error reading cached article: $e');
       return null;
     }
   }
@@ -148,7 +148,7 @@ class OfflineContentService {
       await file.writeAsBytes(bytes, flush: true);
       return file.path;
     } catch (e) {
-      print('Error downloading offline file: $e');
+      debugPrint('Error downloading offline file: $e');
       return null;
     }
   }
@@ -243,6 +243,7 @@ class OfflineContentService {
       'word': item.word,
       'translation': item.translation,
       'type': item.type,
+       'properName': item.properName,
       'exampleSentence': item.exampleSentence,
       'exampleTranslation': item.exampleTranslation,
       'audioUrl': item.audioUrl,
@@ -258,6 +259,7 @@ class OfflineContentService {
       id: (map['id'] as num?)?.toInt(),
       word: map['word']?.toString() ?? '',
       translation: map['translation']?.toString() ?? '',
+      properName: map['properName'],
       type: map['type']?.toString() ?? 'expr',
       exampleSentence: map['exampleSentence']?.toString(),
       exampleTranslation: map['exampleTranslation']?.toString(),

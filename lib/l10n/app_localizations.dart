@@ -227,7 +227,7 @@ abstract class AppLocalizations {
   /// No description provided for @buildA.
   ///
   /// In en, this message translates to:
-  /// **'build a'**
+  /// **'Build a'**
   String get buildA;
 
   /// No description provided for @cancel.
@@ -269,13 +269,13 @@ abstract class AppLocalizations {
   /// No description provided for @clickOnPlusToAddThisExpressionToYourVocabularyList.
   ///
   /// In en, this message translates to:
-  /// **'Click on + to add this expression to your vocabulary'**
+  /// **'Click on + to add this expression to your vocabulary list'**
   String get clickOnPlusToAddThisExpressionToYourVocabularyList;
 
   /// No description provided for @clickOnXToRemoveThisExpressionFromYourVocabularyList.
   ///
   /// In en, this message translates to:
-  /// **'Click on x to remove this expression from your vocabulary'**
+  /// **'Tap the trash icon to remove this expression from your vocabulary'**
   String get clickOnXToRemoveThisExpressionFromYourVocabularyList;
 
   /// No description provided for @completedQuizzes.
@@ -548,6 +548,12 @@ abstract class AppLocalizations {
   /// **'Content matching your favorite themes'**
   String get interestingContent;
 
+  /// No description provided for @forYou.
+  ///
+  /// In en, this message translates to:
+  /// **'For You'**
+  String get forYou;
+
   /// No description provided for @items.
   ///
   /// In en, this message translates to:
@@ -671,7 +677,7 @@ abstract class AppLocalizations {
   /// No description provided for @navFlashcards.
   ///
   /// In en, this message translates to:
-  /// **'Flashcards'**
+  /// **'Vocabulary'**
   String get navFlashcards;
 
   /// No description provided for @navLibrary.
@@ -739,6 +745,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'People'**
   String get people;
+
+  /// No description provided for @philosophy.
+  ///
+  /// In en, this message translates to:
+  /// **'Philosophy'**
+  String get philosophy;
+
+  /// No description provided for @psychology.
+  ///
+  /// In en, this message translates to:
+  /// **'Psychology'**
+  String get psychology;
 
   /// No description provided for @poetry.
   ///
@@ -1010,6 +1028,12 @@ abstract class AppLocalizations {
   /// **'Weekly goal: {goal} XP'**
   String weeklyGoal(Object goal);
 
+  /// No description provided for @daysRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} {days, plural, =1{day} other{days}} left'**
+  String daysRemaining(int days);
+
   /// No description provided for @weekGoal.
   ///
   /// In en, this message translates to:
@@ -1019,7 +1043,7 @@ abstract class AppLocalizations {
   /// No description provided for @whichLanguageDoYouWantToLearn.
   ///
   /// In en, this message translates to:
-  /// **'Which language do you want to learn ?'**
+  /// **'Which language do you want to learn?'**
   String get whichLanguageDoYouWantToLearn;
 
   /// No description provided for @selectOne.
@@ -1031,7 +1055,7 @@ abstract class AppLocalizations {
   /// No description provided for @whichLanguageDoYouSpeakTheBest.
   ///
   /// In en, this message translates to:
-  /// **'Which language do you speak the best ?'**
+  /// **'Which language would you like to use as a reference?'**
   String get whichLanguageDoYouSpeakTheBest;
 
   /// No description provided for @withYour.
@@ -1099,6 +1123,348 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Store unavailable (try on a real device or set App Store ID in code).'**
   String get rateTheAppStoreUnavailable;
+
+  /// No description provided for @flashcardCategoryUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Flashcard category updated'**
+  String get flashcardCategoryUpdated;
+
+  /// No description provided for @flashcardMastered.
+  ///
+  /// In en, this message translates to:
+  /// **'Congratulations, you achieved a new expression! +1 XP'**
+  String get flashcardMastered;
+
+  /// No description provided for @noFlashcardsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No flashcards available'**
+  String get noFlashcardsAvailable;
+
+  /// No description provided for @noFlashcardsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No flashcards found'**
+  String get noFlashcardsFound;
+
+  /// No description provided for @deleteFlashcard.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete flashcard'**
+  String get deleteFlashcard;
+
+  /// No description provided for @noContentInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'No content in progress'**
+  String get noContentInProgress;
+
+  /// No description provided for @noLikedContentYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No liked content yet'**
+  String get noLikedContentYet;
+
+  /// No description provided for @noSuggestionsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No suggestions yet'**
+  String get noSuggestionsYet;
+
+  /// No description provided for @yourContentInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Your content in progress'**
+  String get yourContentInProgress;
+
+  /// No description provided for @yourFavoriteContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Your favorite content'**
+  String get yourFavoriteContent;
+
+  /// No description provided for @yourContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Your content'**
+  String get yourContent;
+
+  /// No description provided for @finishContentToEarnXP.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish this content to earn XP'**
+  String get finishContentToEarnXP;
+
+  /// No description provided for @basedOnYourLikes.
+  ///
+  /// In en, this message translates to:
+  /// **'Based on your likes'**
+  String get basedOnYourLikes;
+
+  /// No description provided for @basedOnYourFavoriteThemes.
+  ///
+  /// In en, this message translates to:
+  /// **'Based on your favorite themes'**
+  String get basedOnYourFavoriteThemes;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @pleaseSelectAtLeastOneTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select at least one theme'**
+  String get pleaseSelectAtLeastOneTheme;
+
+  /// No description provided for @logout.
+  ///
+  /// In en, this message translates to:
+  /// **'Log out'**
+  String get logout;
+
+  /// No description provided for @downloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading...'**
+  String get downloading;
+
+  /// No description provided for @availableOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Available offline'**
+  String get availableOffline;
+
+  /// No description provided for @downloadedForOfflineAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded for offline access'**
+  String get downloadedForOfflineAccess;
+
+  /// No description provided for @goBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back'**
+  String get goBack;
+
+  /// No description provided for @noAudioAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No audio available'**
+  String get noAudioAvailable;
+
+  /// No description provided for @pleaseEnterValidNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid positive number'**
+  String get pleaseEnterValidNumber;
+
+  /// No description provided for @yourTargetLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your target language'**
+  String get yourTargetLanguage;
+
+  /// No description provided for @yourReferenceLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your reference language'**
+  String get yourReferenceLanguage;
+
+  /// No description provided for @oops.
+  ///
+  /// In en, this message translates to:
+  /// **'Oops'**
+  String get oops;
+
+  /// No description provided for @weeklyGoalReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly goal reached!'**
+  String get weeklyGoalReached;
+
+  /// No description provided for @wellDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Well done!'**
+  String get wellDone;
+
+  /// No description provided for @youEarnedXp.
+  ///
+  /// In en, this message translates to:
+  /// **'You earned {xp} XP!'**
+  String youEarnedXp(Object xp);
+
+  /// No description provided for @quizFinishedMarkArticleAsFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'You finished the quiz! Do you want to mark the article as finished as well?'**
+  String get quizFinishedMarkArticleAsFinished;
+
+  /// No description provided for @quizFinishedMarkChapterAsFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'You finished the quiz! Do you want to mark the chapter as finished as well?'**
+  String get quizFinishedMarkChapterAsFinished;
+
+  /// No description provided for @congratsQuizAndArticle.
+  ///
+  /// In en, this message translates to:
+  /// **'You finished the quiz and the article!'**
+  String get congratsQuizAndArticle;
+
+  /// No description provided for @congratsQuizAndChapter.
+  ///
+  /// In en, this message translates to:
+  /// **'You finished the quiz and the chapter!'**
+  String get congratsQuizAndChapter;
+
+  /// No description provided for @congratsQuiz.
+  ///
+  /// In en, this message translates to:
+  /// **'You finished the quiz!'**
+  String get congratsQuiz;
+
+  /// No description provided for @yes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get yes;
+
+  /// No description provided for @no.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get no;
+
+  /// No description provided for @vocabularyAddedToList.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to the Vocabulary List'**
+  String get vocabularyAddedToList;
+
+  /// No description provided for @retranslate.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-translate'**
+  String get retranslate;
+
+  /// No description provided for @withContent.
+  ///
+  /// In en, this message translates to:
+  /// **'With Content'**
+  String get withContent;
+
+  /// No description provided for @fitTasteLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'that fits your taste and level'**
+  String get fitTasteLevel;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete your account? This action is irreversible and all your data will be permanently deleted.'**
+  String get deleteAccountConfirmation;
+
+  /// No description provided for @accountDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account has been deleted.'**
+  String get accountDeleted;
+
+  /// No description provided for @deleteAccountError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete account. Please try again.'**
+  String get deleteAccountError;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicy;
+
+  /// No description provided for @termsOfService.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Service'**
+  String get termsOfService;
+
+  /// No description provided for @termsAndPrivacyNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'By signing in, you agree to our Terms of Service and Privacy Policy.'**
+  String get termsAndPrivacyNotice;
+
+  /// No description provided for @restorePurchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore purchases'**
+  String get restorePurchases;
+
+  /// No description provided for @purchasesRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchases restored successfully.'**
+  String get purchasesRestored;
+
+  /// No description provided for @restorePurchasesFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to restore purchases.'**
+  String get restorePurchasesFailed;
+
+  /// No description provided for @orContinueWith.
+  ///
+  /// In en, this message translates to:
+  /// **'or continue with'**
+  String get orContinueWith;
+
+  /// No description provided for @signInWithEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with email'**
+  String get signInWithEmail;
+
+  /// No description provided for @email.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get email;
+
+  /// No description provided for @password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
+
+  /// No description provided for @enterEmailAndPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email and password to sign in.'**
+  String get enterEmailAndPassword;
+
+  /// No description provided for @signIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get signIn;
+
+  /// No description provided for @start.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get start;
 }
 
 class _AppLocalizationsDelegate

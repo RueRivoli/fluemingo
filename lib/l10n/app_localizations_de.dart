@@ -98,7 +98,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get clickOnXToRemoveThisExpressionFromYourVocabularyList =>
-      'Klicken Sie auf x, um diesen Ausdruck aus Ihrem Vokabular zu entfernen';
+      'Tippen Sie auf das Papierkorb-Symbol, um diesen Ausdruck aus Ihrem Vokabular zu entfernen';
 
   @override
   String get completedQuizzes => 'Abgeschlossene Quizze';
@@ -262,6 +262,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get interestingContent => 'Inhalte passend zu Ihren Lieblingsthemen';
 
   @override
+  String get forYou => 'Für dich';
+
+  @override
   String get items => 'Ausdrücke';
 
   @override
@@ -292,7 +295,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get languageJa => 'Japanisch';
 
   @override
-  String get learn => 'Lernen';
+  String get learn => 'Lerne';
 
   @override
   String get literature => 'Literatur';
@@ -322,7 +325,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get navAudiobooks => 'Hörbücher';
 
   @override
-  String get navFlashcards => 'Lernkarten';
+  String get navFlashcards => 'Vokabeln';
 
   @override
   String get navLibrary => 'Artikel';
@@ -358,6 +361,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get people => 'Leute';
+
+  @override
+  String get philosophy => 'Philosophie';
+
+  @override
+  String get psychology => 'Psychologie';
 
   @override
   String get poetry => 'Lyrik';
@@ -500,6 +509,17 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String daysRemaining(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Tage verbleibend',
+      one: 'Tag verbleibend',
+    );
+    return '$days $_temp0';
+  }
+
+  @override
   String get weekGoal => 'Wochenziel';
 
   @override
@@ -511,7 +531,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get whichLanguageDoYouSpeakTheBest =>
-      'Welche Sprache sprichst du am besten?';
+      'Welche Sprache möchtest du als Referenz verwenden?';
 
   @override
   String get withYour => 'mit deinem';
@@ -546,4 +566,191 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get rateTheAppStoreUnavailable =>
       'Store nicht verfügbar (auf echtem Gerät testen oder App-Store-ID setzen).';
+
+  @override
+  String get flashcardCategoryUpdated => 'Flashcard-Kategorie aktualisiert';
+
+  @override
+  String get flashcardMastered =>
+      'Glückwunsch, du hast einen neuen Ausdruck gemeistert! +1 XP';
+
+  @override
+  String get noFlashcardsAvailable => 'Keine Flashcards verfügbar';
+
+  @override
+  String get noFlashcardsFound => 'Keine Flashcards gefunden';
+
+  @override
+  String get deleteFlashcard => 'Flashcard löschen';
+
+  @override
+  String get noContentInProgress => 'Kein Inhalt in Bearbeitung';
+
+  @override
+  String get noLikedContentYet => 'Noch keine gefallenen Inhalte';
+
+  @override
+  String get noSuggestionsYet => 'Noch keine Vorschläge';
+
+  @override
+  String get yourContentInProgress => 'Dein Inhalt in Bearbeitung';
+
+  @override
+  String get yourFavoriteContent => 'Deine Lieblingsinhalte';
+
+  @override
+  String get yourContent => 'Dein Inhalt';
+
+  @override
+  String get finishContentToEarnXP =>
+      'Schließe diesen Inhalt ab, um XP zu verdienen';
+
+  @override
+  String get basedOnYourLikes => 'Basierend auf deinen Likes';
+
+  @override
+  String get basedOnYourFavoriteThemes =>
+      'Basierend auf deinen Lieblingsthemen';
+
+  @override
+  String get save => 'Speichern';
+
+  @override
+  String get pleaseSelectAtLeastOneTheme => 'Bitte wähle mindestens ein Thema';
+
+  @override
+  String get logout => 'Abmelden';
+
+  @override
+  String get downloading => 'Herunterladen...';
+
+  @override
+  String get availableOffline => 'Offline verfügbar';
+
+  @override
+  String get downloadedForOfflineAccess =>
+      'Für Offline-Zugriff heruntergeladen';
+
+  @override
+  String get goBack => 'Zurück';
+
+  @override
+  String get noAudioAvailable => 'Kein Audio verfügbar';
+
+  @override
+  String get pleaseEnterValidNumber =>
+      'Bitte gib eine gültige positive Zahl ein';
+
+  @override
+  String get yourTargetLanguage => 'Deine Zielsprache';
+
+  @override
+  String get yourReferenceLanguage => 'Deine Referenzsprache';
+
+  @override
+  String get oops => 'Huch';
+
+  @override
+  String get weeklyGoalReached => 'Wochenziel erreicht!';
+
+  @override
+  String get wellDone => 'Gut gemacht!';
+
+  @override
+  String youEarnedXp(Object xp) {
+    return 'Du hast $xp XP verdient!';
+  }
+
+  @override
+  String get quizFinishedMarkArticleAsFinished =>
+      'Du hast das Quiz abgeschlossen! Möchtest du den Artikel auch als abgeschlossen markieren?';
+
+  @override
+  String get quizFinishedMarkChapterAsFinished =>
+      'Du hast das Quiz abgeschlossen! Möchtest du das Kapitel auch als abgeschlossen markieren?';
+
+  @override
+  String get congratsQuizAndArticle =>
+      'Du hast das Quiz und den Artikel abgeschlossen!';
+
+  @override
+  String get congratsQuizAndChapter =>
+      'Du hast das Quiz und das Kapitel abgeschlossen!';
+
+  @override
+  String get congratsQuiz => 'Du hast das Quiz abgeschlossen!';
+
+  @override
+  String get yes => 'Ja';
+
+  @override
+  String get no => 'Nein';
+
+  @override
+  String get vocabularyAddedToList => 'Vokabular zur Liste hinzugefügt';
+
+  @override
+  String get retranslate => 'Neu übersetzen';
+
+  @override
+  String get withContent => 'mit Inhalten,';
+
+  @override
+  String get fitTasteLevel => 'die zu deinem Geschmack und Niveau passen';
+
+  @override
+  String get deleteAccount => 'Konto löschen';
+
+  @override
+  String get deleteAccountConfirmation =>
+      'Bist du sicher, dass du dein Konto löschen möchtest? Diese Aktion ist unwiderruflich und alle deine Daten werden dauerhaft gelöscht.';
+
+  @override
+  String get accountDeleted => 'Dein Konto wurde gelöscht.';
+
+  @override
+  String get deleteAccountError =>
+      'Konto konnte nicht gelöscht werden. Bitte versuche es erneut.';
+
+  @override
+  String get privacyPolicy => 'Datenschutzrichtlinie';
+
+  @override
+  String get termsOfService => 'Nutzungsbedingungen';
+
+  @override
+  String get termsAndPrivacyNotice =>
+      'Mit der Anmeldung akzeptierst du unsere Nutzungsbedingungen und Datenschutzrichtlinie.';
+
+  @override
+  String get restorePurchases => 'Käufe wiederherstellen';
+
+  @override
+  String get purchasesRestored => 'Käufe erfolgreich wiederhergestellt.';
+
+  @override
+  String get restorePurchasesFailed =>
+      'Käufe konnten nicht wiederhergestellt werden.';
+
+  @override
+  String get orContinueWith => 'oder fortfahren mit';
+
+  @override
+  String get signInWithEmail => 'Mit E-Mail anmelden';
+
+  @override
+  String get email => 'E-Mail';
+
+  @override
+  String get password => 'Passwort';
+
+  @override
+  String get enterEmailAndPassword =>
+      'Gib deine E-Mail und dein Passwort ein, um dich anzumelden.';
+
+  @override
+  String get signIn => 'Anmelden';
+
+  @override
+  String get start => 'Starten';
 }

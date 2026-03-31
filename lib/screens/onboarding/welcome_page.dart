@@ -7,7 +7,7 @@ import '../../l10n/app_localizations.dart';
 
 class WelcomePage extends StatelessWidget {
   final VoidCallback? onComplete;
-  
+
   const WelcomePage({super.key, this.onComplete});
 
   @override
@@ -19,7 +19,7 @@ class WelcomePage extends StatelessWidget {
           children: [
             // Spacer at top
             const SizedBox(height: 60),
-            
+
             // App Logo & Title
             Image.asset('assets/logo/app-logo.png', height: 48),
             const SizedBox(height: 12),
@@ -32,9 +32,9 @@ class WelcomePage extends StatelessWidget {
                 letterSpacing: -1,
               ),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Tagline
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -48,34 +48,38 @@ class WelcomePage extends StatelessWidget {
                   ),
                   children: [
                     TextSpan(text: AppLocalizations.of(context)!.learn),
-                                        const WidgetSpan(
+                    const WidgetSpan(
                       alignment: PlaceholderAlignment.middle,
                       child: SizedBox(width: 10),
                     ),
+                    // WidgetSpan(
+                    //   alignment: PlaceholderAlignment.middle,
+                    //   child: SvgPicture.asset('assets/images/languages/english.svg', height: 24),
+                    // ),
+                    // const WidgetSpan(
+                    //   alignment: PlaceholderAlignment.middle,
+                    //   child: SizedBox(width: 4),
+                    // ),
                     WidgetSpan(
                       alignment: PlaceholderAlignment.middle,
-                      child: SvgPicture.asset('assets/images/languages/english.svg', height: 24),
+                      child: SvgPicture.asset(
+                          'assets/images/languages/french.svg',
+                          height: 24),
                     ),
                     const WidgetSpan(
                       alignment: PlaceholderAlignment.middle,
-                      child: SizedBox(width: 4),
-                    ),
-                    WidgetSpan(
-                      alignment: PlaceholderAlignment.middle,
-                      child: SvgPicture.asset('assets/images/languages/french.svg', height: 24),
-                    ),
-                                        const WidgetSpan(
-                      alignment: PlaceholderAlignment.middle,
                       child: SizedBox(width: 10),
                     ),
-                    TextSpan(text: AppLocalizations.of(context)!.withYour),
-                      const WidgetSpan(
+                    TextSpan(text: AppLocalizations.of(context)!.withContent),
+                    const WidgetSpan(
                       alignment: PlaceholderAlignment.middle,
                       child: SizedBox(width: 5),
                     ),
                     TextSpan(
-                      text: AppLocalizations.of(context)!.favoriteContent,
-                      style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.secondary),
+                      text: AppLocalizations.of(context)!.fitTasteLevel,
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.secondary),
                     ),
                     const TextSpan(text: '.'),
                   ],
@@ -83,35 +87,7 @@ class WelcomePage extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
             ),
-             const SizedBox(height: 20),
-             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: Text.rich(
-                TextSpan(
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white,
-                    height: 1.5,
-                  ),
-                  children: [
-                    TextSpan(text: AppLocalizations.of(context)!.buildA),
-                    const WidgetSpan(
-                      alignment: PlaceholderAlignment.middle,
-                      child: SizedBox(width: 5),
-                    ),
-                    TextSpan(
-                      text: AppLocalizations.of(context)!.strongLastingVocabulary,
-                      style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.secondary),
-                    ),
-                    const TextSpan(text: '.'),
-                  ],
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 50),
-            
+
             // Book covers showcase
             Expanded(
               child: Column(
@@ -120,68 +96,72 @@ class WelcomePage extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 40),
                     child: Column(
-                      children: [
-                      ],
+                      children: [],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 30),
-                  
+
                   // Book covers collage
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: _buildBookCoversCollage(),
+                      child: _buildFrenchContentRow(),
                     ),
                   ),
                 ],
               ),
             ),
-            
+
             // Start button
             Padding(
               padding: const EdgeInsets.fromLTRB(40, 20, 40, 40),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => TargetLanguagePage(
-                        onComplete: onComplete,
-                      ),
-                    ),
-                  );
-                },
-                child: Container(
-                  width: double.infinity,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFf6d75a),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.black,
-                      width: 1,
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        FontAwesomeIcons.lightArrowRight,
-                        size: 24,
-                        color: AppColors.textPrimary,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Start',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => TargetLanguagePage(
+                            onComplete: onComplete,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFf6d75a),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.black,
+                          width: 1,
                         ),
                       ),
-                    ],
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            FontAwesomeIcons.lightArrowRight,
+                            size: 24,
+                            color: AppColors.textPrimary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            AppLocalizations.of(context)!.start,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ],
@@ -190,93 +170,45 @@ class WelcomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildBookCoversCollage() {
-    return Stack(
-      alignment: Alignment.center,
+  Widget _buildFrenchContentRow() {
+    const imagePaths = [
+      'assets/img/french/leroisoleil.jpg',
+      'assets/img/french/lesmiserables.jpg',
+      'assets/img/french/tour-du-monde.jpg',
+    ];
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Background books (left side)
-        Positioned(
-          left: 0,
-          child: _buildBookCover(
-            imagePath: 'assets/images/petitprince.jpg',
-            offset: 0,
-          ),
-        ),
-        
-        Positioned(
-          left: 20,
-          top: 20,
-          child: _buildBookCover(
-            imagePath: 'assets/images/leroisoleil.jpg',
-            offset: 1,
-          ),
-        ),
-        
-        // Center book (most prominent)
-        Positioned(
-          child: _buildBookCover(
-            imagePath: 'assets/images/olivertwist.jpg',
-            offset: 2,
-            isMain: true,
-          ),
-        ),
-        
-        // Right side books
-        Positioned(
-          right: 20,
-          top: 10,
-          child: _buildBookCover(
-            imagePath: 'assets/images/lospazosdeulloa.jpg',
-            offset: 3,
-          ),
-        ),
-        
-        Positioned(
-          right: 0,
-          top: 30,
-          child: _buildBookCover(
-            imagePath: 'assets/images/canasbarro.jpeg',
-            offset: 4,
-          ),
-        ),
+        for (int i = 0; i < imagePaths.length; i++) ...[
+          Expanded(child: _buildContentCard(imagePaths[i])),
+          if (i < imagePaths.length - 1) const SizedBox(width: 10),
+        ],
       ],
     );
   }
 
-  Widget _buildBookCover({
-    required String imagePath,
-    required int offset,
-    bool isMain = false,
-  }) {
-    final size = isMain ? 120.0 : 90.0;
-    
-    return Transform.rotate(
-      angle: offset * 0.05, // Slight rotation for collage effect
+  Widget _buildContentCard(String imagePath) {
+    return AspectRatio(
+      aspectRatio: 2 / 3,
       child: Container(
-        width: size,
-        height: size * 1.5,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 8,
               offset: const Offset(2, 4),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(8),
           child: Image.asset(
             imagePath,
-            width: size,
-            height: size * 1.5,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
-              // Fallback to a colored container if image fails to load
               return Container(
-                width: size,
-                height: size * 1.5,
                 color: Colors.grey[300],
                 child: const Icon(
                   Icons.image_not_supported,

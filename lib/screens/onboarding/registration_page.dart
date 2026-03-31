@@ -6,6 +6,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:flutter/gestures.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../constants/app_colors.dart';
 import '../../config/supabase_config.dart';
 import '../home_page.dart';
@@ -16,23 +18,38 @@ import '../../services/notification_token_sync_service.dart';
 import '../../services/onesignal_notification_service.dart';
 import '../../utils/avatar.dart';
 
+enum RegistrationFlowMode { onboarding, loginOnly }
+
 class RegistrationPage extends StatefulWidget {
-  final String targetLanguage;
-  final String nativeLanguage;
+  final RegistrationFlowMode flowMode;
+  final String? targetLanguage;
+  final String? nativeLanguage;
   final String? avatar;
   final List<String>? favoriteThemes;
   final int? weeklyGoalXP;
   final VoidCallback? onComplete;
 
-  const RegistrationPage({
+  const RegistrationPage.onboarding({
     super.key,
-    required this.targetLanguage,
-    required this.nativeLanguage,
+    required String this.targetLanguage,
+    required String this.nativeLanguage,
     this.avatar,
     this.favoriteThemes,
     this.weeklyGoalXP,
     this.onComplete,
-  });
+  }) : flowMode = RegistrationFlowMode.onboarding;
+
+  const RegistrationPage.loginOnly({
+    super.key,
+    this.onComplete,
+  })  : flowMode = RegistrationFlowMode.loginOnly,
+        targetLanguage = null,
+        nativeLanguage = null,
+        avatar = null,
+        favoriteThemes = null,
+        weeklyGoalXP = null;
+
+  bool get isLoginOnly => flowMode == RegistrationFlowMode.loginOnly;
 
   @override
   State<RegistrationPage> createState() => _RegistrationPageState();
@@ -41,7 +58,6 @@ class RegistrationPage extends StatefulWidget {
 class _RegistrationPageState extends State<RegistrationPage> {
   bool _isLoadingApple = false;
   bool _isLoadingGoogle = false;
-  bool _isLoadingFacebook = false;
   bool _isLoadingEmail = false;
   bool _obscurePassword = true;
   StreamSubscription<AuthState>? _authSubscription;
@@ -79,9 +95,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
           // User successfully signed in
           if (mounted) {
             // First, ensure profile exists (in case trigger failed)
-            _ensureProfileExists(session.user).then((_) {
-              // Then update profile with language preferences
-              return _updateProfileWithLanguages(session.user);
+            _ensureProfileExists(session.user).then((_) async {
+              if (widget.isLoginOnly) return;
+              // In onboarding flow, update profile with onboarding preferences.
+              await _updateProfileWithLanguages(session.user);
             }).then((_) async {
               await _oneSignalNotificationService.initialize();
               await _oneSignalNotificationService
@@ -104,7 +121,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
               }
             }).catchError((error) {
               // Log error but don't block navigation
-              debugPrint('Error ensuring/updating profile: $error');
+              debugPrint('Error ensuring profile/login flow: $error');
               if (mounted) {
                 setState(() {
                   _resetLoadingStates();
@@ -145,7 +162,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
   }
 
   void _resetLoadingStates() {
-    _isLoadingFacebook = false;
     _isLoadingApple = false;
     _isLoadingGoogle = false;
     _isLoadingEmail = false;
@@ -154,26 +170,26 @@ class _RegistrationPageState extends State<RegistrationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 24),
-          child: Column(
+      body: Container(
+        constraints: BoxConstraints(
+          minHeight: MediaQuery.of(context).size.height,
+        ),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primary,
+              AppColors.secondary,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: Column(
             children: [
-              // Top bar: back button
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 12, 24, 24),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(FontAwesomeIcons.arrowLeft),
-                      color: AppColors.textPrimary,
-                      iconSize: 22,
-                    )
-                  ],
-                ),
-              ),
+              const SizedBox(height: 36),
 
               // Title
               Padding(
@@ -208,7 +224,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Temporary App Review login',
+                            AppLocalizations.of(context)!.signIn,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -217,7 +233,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Sign in with an existing account only.',
+                            AppLocalizations.of(context)!.enterEmailAndPassword,
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.textSecondary,
@@ -230,7 +246,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                             textInputAction: TextInputAction.next,
                             autofillHints: const [AutofillHints.email],
                             decoration: InputDecoration(
-                              labelText: 'Email',
+                              labelText: AppLocalizations.of(context)!.email,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -250,7 +266,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                               }
                             },
                             decoration: InputDecoration(
-                              labelText: 'Password',
+                              labelText: AppLocalizations.of(context)!.password,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -298,9 +314,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
                                         ),
                                       ),
                                     )
-                                  : const Text(
-                                      'Sign in with email',
-                                      style: TextStyle(color: Colors.white),
+                                  : Text(
+                                      AppLocalizations.of(context)!.signInWithEmail,
+                                      style: const TextStyle(color: Colors.white),
                                     ),
                             ),
                           ),
@@ -325,13 +341,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           : () => _handleAppleLogin(context),
                       isLoading: _isLoadingApple,
                     ),
-                    const SizedBox(height: 16),
-                    _buildFacebookButton(
-                      onTap: _isLoadingFacebook
-                          ? null
-                          : () => _handleFacebookLogin(context),
-                      isLoading: _isLoadingFacebook,
-                    ),
+                    const SizedBox(height: 24),
+                    _buildTermsAndPrivacy(),
                   ],
                 ),
               ),
@@ -339,11 +350,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
           ),
         ),
       ),
+      ),
     );
   }
 
-  /// Official Facebook blue for "Continue with Facebook" button (brand guidelines).
-  static const Color _facebookBlue = Color(0xFF1877F2);
   static const Color _googleBorder = Color(0xFFDADCE0);
   static const Color _googleText = Color(0xFF3C4043);
   static const double _socialButtonHeight = 56;
@@ -463,67 +473,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
     );
   }
 
-  /// Facebook button following official guidelines: blue background, white icon + text.
-  Widget _buildFacebookButton({
-    required VoidCallback? onTap,
-    bool isLoading = false,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Opacity(
-          opacity: onTap == null ? 0.5 : 1.0,
-          child: Container(
-            width: double.infinity,
-            height: _socialButtonHeight,
-            decoration: BoxDecoration(
-              color: _facebookBlue,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (isLoading)
-                    const SizedBox(
-                      width: 28,
-                      height: 28,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  else
-                    const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: Icon(
-                        FontAwesomeIcons.facebook,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                    ),
-                  const SizedBox(width: 12),
-                  Text(
-                    AppLocalizations.of(context)!.continueWithFacebook,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildDividerLabel() {
     return Row(
       children: [
@@ -531,7 +480,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
-            'or continue with',
+            AppLocalizations.of(context)!.orContinueWith,
             style: TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary,
@@ -543,14 +492,74 @@ class _RegistrationPageState extends State<RegistrationPage> {
     );
   }
 
+  Widget _buildTermsAndPrivacy() {
+    final l10n = AppLocalizations.of(context)!;
+    final fullText = l10n.termsAndPrivacyNotice;
+    final termsLabel = l10n.termsOfService;
+    final privacyLabel = l10n.privacyPolicy;
+
+    final baseStyle = TextStyle(fontSize: 12, color: AppColors.textSecondary);
+    final linkStyle = TextStyle(
+      fontSize: 12,
+      color: AppColors.textSecondary,
+      decoration: TextDecoration.underline,
+    );
+
+    final termsIndex = fullText.indexOf(termsLabel);
+    final privacyIndex = fullText.indexOf(privacyLabel);
+
+    // Fallback to plain text if localized substrings aren't found
+    if (termsIndex < 0 || privacyIndex < 0) {
+      return Text(fullText, textAlign: TextAlign.center, style: baseStyle);
+    }
+
+    // Build spans in text order
+    final first = termsIndex < privacyIndex
+        ? (label: termsLabel, url: 'https://fluemingo-app.com/terms')
+        : (label: privacyLabel, url: 'https://fluemingo-app.com/privacy-policy');
+    final second = termsIndex < privacyIndex
+        ? (label: privacyLabel, url: 'https://fluemingo-app.com/privacy-policy')
+        : (label: termsLabel, url: 'https://fluemingo-app.com/terms');
+
+    final firstIndex = termsIndex < privacyIndex ? termsIndex : privacyIndex;
+    final secondIndex = termsIndex < privacyIndex ? privacyIndex : termsIndex;
+
+    return RichText(
+      textAlign: TextAlign.center,
+      text: TextSpan(
+        style: baseStyle,
+        children: [
+          TextSpan(text: fullText.substring(0, firstIndex)),
+          TextSpan(
+            text: first.label,
+            style: linkStyle,
+            recognizer: TapGestureRecognizer()
+              ..onTap = () => launchUrl(Uri.parse(first.url)),
+          ),
+          TextSpan(
+              text: fullText.substring(
+                  firstIndex + first.label.length, secondIndex)),
+          TextSpan(
+            text: second.label,
+            style: linkStyle,
+            recognizer: TapGestureRecognizer()
+              ..onTap = () => launchUrl(Uri.parse(second.url)),
+          ),
+          TextSpan(
+              text: fullText.substring(secondIndex + second.label.length)),
+        ],
+      ),
+    );
+  }
+
   Future<void> _handleEmailLogin(BuildContext context) async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter your email and password to sign in.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.enterEmailAndPassword),
           backgroundColor: Colors.red,
         ),
       );
@@ -607,9 +616,16 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
       // Mobile (iOS/Android): native Google Sign-In. iOS clientId in Info.plist (GIDClientID).
       final googleSignIn = GoogleSignIn.instance;
+      final serverClientId = SupabaseConfig.googleWebClientId.trim().isEmpty
+          ? null
+          : SupabaseConfig.googleWebClientId.trim();
+      final iosClientId = SupabaseConfig.iosClientId.trim().isEmpty
+          ? null
+          : SupabaseConfig.iosClientId.trim();
       await googleSignIn.initialize(
-          serverClientId: SupabaseConfig.googleWebClientId,
-          clientId: SupabaseConfig.iosClientId);
+        serverClientId: serverClientId,
+        clientId: iosClientId,
+      );
 
       // Sign in with Google using the new authenticate() method
       final GoogleSignInAccount googleUser;
@@ -652,10 +668,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
           _isLoadingGoogle = false;
         });
 
+        final message = e.toString().contains('No host specified in URI')
+            ? 'Configuration Supabase manquante. Lancez l’app avec --dart-define-from-file=.env'
+            : 'Erreur lors de la connexion Google: ${e.toString()}';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text('Erreur lors de la connexion Google: ${e.toString()}'),
+            content: Text(message),
             backgroundColor: Colors.red,
           ),
         );
@@ -758,36 +776,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
     }
   }
 
-  Future<void> _handleFacebookLogin(BuildContext context) async {
-    setState(() {
-      _isLoadingFacebook = true;
-    });
-
-    try {
-      final supabase = Supabase.instance.client;
-      const redirectUrl = 'com.fluemingo.app://login-callback';
-      await supabase.auth.signInWithOAuth(
-        OAuthProvider.facebook,
-        redirectTo: redirectUrl,
-        authScreenLaunchMode: LaunchMode.inAppBrowserView,
-      );
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingFacebook = false;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('Erreur lors de la connexion Facebook: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
   /// Ensures the user profile exists in the database
   /// This handles cases where the database trigger might have failed
   Future<void> _ensureProfileExists(User user) async {
@@ -801,12 +789,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
       // If profile doesn't exist, create it
       if (response == null) {
-        debugPrint('Profile does not exist, creating it...');
-
         // Extract user data from metadata (handles different OAuth providers)
         final metadata = user.userMetadata ?? {};
 
-        // Facebook uses different field names
+        // Extract name from different OAuth provider metadata formats
         final nameFromMetadata =
             metadata['full_name'] ?? metadata['name'] ?? metadata['user_name'];
         final firstName = metadata['first_name'] ?? '';
@@ -831,8 +817,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
           'updated_at': DateTime.now().toIso8601String(),
         };
         await _profileService.insertProfile(profileData);
-
-        debugPrint('Profile created successfully');
       }
     } catch (e) {
       debugPrint('Error ensuring profile exists: $e');
@@ -843,12 +827,17 @@ class _RegistrationPageState extends State<RegistrationPage> {
   /// Updates the user profile with language preferences from onboarding
   /// This is called after successful OAuth authentication
   Future<void> _updateProfileWithLanguages(User user) async {
+    if (widget.isLoginOnly) return;
+    final targetLanguage = widget.targetLanguage;
+    final nativeLanguage = widget.nativeLanguage;
+    if (targetLanguage == null || nativeLanguage == null) return;
+
     try {
       // Update profile with language preferences
       // The profile should already exist (either from trigger or _ensureProfileExists)
       final updateData = <String, dynamic>{
-        'target_language': widget.targetLanguage,
-        'native_language': widget.nativeLanguage,
+        'target_language': targetLanguage,
+        'native_language': nativeLanguage,
         'updated_at': DateTime.now().toIso8601String(),
       };
       if (_selectedAvatar != null) {
@@ -891,8 +880,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
           'full_name': fullName.isEmpty ? 'User' : fullName,
           'avatar': _selectedAvatar,
           'avatar_url': _selectedAvatarUrl ?? avatarUrl,
-          'target_language': widget.targetLanguage,
-          'native_language': widget.nativeLanguage,
+          'target_language': targetLanguage,
+          'native_language': nativeLanguage,
           'created_at': DateTime.now().toIso8601String(),
           'updated_at': DateTime.now().toIso8601String(),
         };

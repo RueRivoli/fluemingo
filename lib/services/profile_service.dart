@@ -1,59 +1,18 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/quiz_question.dart';
 import '../models/article.dart';
 import '../models/audiobook.dart';
-import '../models/profile.dart';
+import '../utils/storage_url_helper.dart';
 import 'language_table_resolver.dart';
 
 class ProfileService {
   final SupabaseClient _supabase;
   ProfileService(this._supabase);
 
-  static const String _storageBucket = 'content'; // Main storage bucket
-
   String _table(String name) => LanguageTableResolver.table(name);
 
-  /// Get full public URL for a file stored in Supabase Storage
-  String _getStorageUrl(String? path) {
-    if (path == null || path.isEmpty) {
-      return '';
-    }
-
-    // If the path already contains the full URL, return it as is
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      return path;
-    }
-
-    // Remove leading slash if present
-    String cleanPath = path.startsWith('/') ? path.substring(1) : path;
-
-    // If path starts with "content/", remove it since bucket is already "content"
-    if (cleanPath.startsWith('content/')) {
-      cleanPath = cleanPath.substring('content/'.length);
-    }
-
-    try {
-      final url =
-          _supabase.storage.from(_storageBucket).getPublicUrl(cleanPath);
-      return url;
-    } catch (e) {
-      print('Error constructing storage URL: $e');
-      return '';
-    }
-  }
-
-  /// Get full public URL for an image stored in Supabase Storage
-  String _getImageUrl(String? imgPath) {
-    return _getStorageUrl(imgPath);
-  }
-
-  /// Get full public URL for an audio file stored in Supabase Storage
-  String? _getAudioUrl(String? audioPath) {
-    if (audioPath == null || audioPath.isEmpty) {
-      return null;
-    }
-    return _getStorageUrl(audioPath);
-  }
+  String _getImageUrl(String? imgPath) =>
+      StorageUrlHelper.getImageUrl(_supabase, imgPath);
 
   DateTime _parseDateTime(dynamic value) {
     if (value == null) return DateTime.now();
@@ -70,6 +29,45 @@ class ProfileService {
         .toList(growable: false);
   }
 
+  List<String> _cleanThemeList(Iterable<dynamic> values) {
+    return values
+        .whereType<String>()
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+  }
+
+  String _normalizeThemeValue(dynamic value) {
+    return value?.toString().trim().toLowerCase() ?? '';
+  }
+
+  bool _rowMatchesAnyTheme(
+      Map<String, dynamic> row, Set<String> normalizedThemes) {
+    if (normalizedThemes.isEmpty) return false;
+    final categories = [
+      _normalizeThemeValue(row['category_1']),
+      _normalizeThemeValue(row['category_2']),
+      _normalizeThemeValue(row['category_3']),
+    ];
+    return categories.any((category) =>
+        category.isNotEmpty && normalizedThemes.contains(category));
+  }
+
+  String _buildCategoryOrInFilter(List<String> themeList) {
+    final themeInFilter =
+        themeList.map((t) => '"${t.replaceAll('"', r'\"')}"').join(',');
+    return 'category_1.in.($themeInFilter),category_2.in.($themeInFilter),category_3.in.($themeInFilter)';
+  }
+
+  /// Deletes the current user's account via the delete-account edge function.
+  Future<void> deleteAccount() async {
+    final response = await _supabase.functions.invoke('delete-account');
+    if (response.status != 200) {
+      throw Exception('Failed to delete account');
+    }
+  }
+
   Future<Map<String, dynamic>> getProfileData() async {
     try {
       final user = _supabase.auth.currentUser;
@@ -77,7 +75,6 @@ class ProfileService {
           await _supabase.from('profiles').select().eq('id', user!.id).single();
       return response;
     } catch (e) {
-      print('Error fetching profile data: $e');
       rethrow;
     }
   }
@@ -89,26 +86,65 @@ class ProfileService {
           .from('profiles')
           .update({'full_name': fullName}).eq('id', user!.id);
     } catch (e) {
-      print('Error updating full name: $e');
       rethrow;
     }
   }
+
+  static const _allowedProfileFields = <String>{
+    'target_language',
+    'native_language',
+    'avatar',
+    'avatar_url',
+    'weekly_goal',
+    'full_name',
+    'has_seen_welcome',
+    'theme_interest_1',
+    'theme_interest_2',
+    'theme_interest_3',
+    'theme_interest_4',
+    'theme_interest_5',
+    'updated_at',
+  };
 
   Future<void> updateProfileData(Map<String, dynamic> profileData) async {
     try {
       final user = _supabase.auth.currentUser;
-      await _supabase.from('profiles').update(profileData).eq('id', user!.id);
+      final sanitized = Map<String, dynamic>.fromEntries(
+        profileData.entries.where((e) => _allowedProfileFields.contains(e.key)),
+      );
+      if (sanitized.isEmpty) return;
+      await _supabase.from('profiles').update(sanitized).eq('id', user!.id);
     } catch (e) {
-      print('Error updating profile data: $e');
       rethrow;
     }
   }
 
+  static const _allowedInsertFields = <String>{
+    'id',
+    'full_name',
+    'email',
+    'avatar',
+    'avatar_url',
+    'target_language',
+    'native_language',
+    'weekly_goal',
+    'has_seen_welcome',
+    'theme_interest_1',
+    'theme_interest_2',
+    'theme_interest_3',
+    'theme_interest_4',
+    'theme_interest_5',
+    'updated_at',
+  };
+
   Future<void> insertProfile(Map<String, dynamic> profileData) async {
     try {
-      await _supabase.from('profiles').insert(profileData);
+      final sanitized = Map<String, dynamic>.fromEntries(
+        profileData.entries.where((e) => _allowedInsertFields.contains(e.key)),
+      );
+      if (sanitized.isEmpty) return;
+      await _supabase.from('profiles').insert(sanitized);
     } catch (e) {
-      print('Error inserting profile: $e');
       rethrow;
     }
   }
@@ -122,7 +158,6 @@ class ProfileService {
         'avatar_url': avatarUrl,
       }).eq('id', user!.id);
     } catch (e) {
-      print('Error updating profile: $e');
       rethrow;
     }
   }
@@ -135,7 +170,6 @@ class ProfileService {
           .from('profiles')
           .update({'weekly_goal': weeklyGoalXP}).eq('id', user!.id);
     } catch (e) {
-      print('Error updating weekly goal: $e');
       rethrow;
     }
   }
@@ -148,7 +182,6 @@ class ProfileService {
           .from('profiles')
           .update({'target_language': targetLanguage}).eq('id', user!.id);
     } catch (e) {
-      print('Error updating target language: $e');
       rethrow;
     }
   }
@@ -162,7 +195,6 @@ class ProfileService {
       }
       await _supabase.from('profiles').update(data).eq('id', user!.id);
     } catch (e) {
-      print('Error updating theme interests: $e');
       rethrow;
     }
   }
@@ -175,7 +207,6 @@ class ProfileService {
           .from('profiles')
           .update({'native_language': nativeLanguage}).eq('id', user!.id);
     } catch (e) {
-      print('Error updating native language: $e');
       rethrow;
     }
   }
@@ -193,7 +224,6 @@ class ProfileService {
       if (response == null) return const [];
       return _parseStringList(response['notification_tokens']);
     } catch (e) {
-      print('Error fetching notification tokens: $e');
       rethrow;
     }
   }
@@ -220,6 +250,11 @@ class ProfileService {
         currentTokens.add(normalizedToken);
       }
 
+      // Keep only the 10 most recent tokens to avoid unbounded growth
+      if (currentTokens.length > 10) {
+        currentTokens.removeRange(0, currentTokens.length - 10);
+      }
+
       final nowIso = DateTime.now().toUtc().toIso8601String();
       await _supabase.from('profiles').update({
         'notification_tokens': currentTokens,
@@ -228,7 +263,6 @@ class ProfileService {
         'updated_at': nowIso,
       }).eq('id', user.id);
     } catch (e) {
-      print('Error registering notification token: $e');
       rethrow;
     }
   }
@@ -260,7 +294,6 @@ class ProfileService {
         'updated_at': nowIso,
       }).eq('id', user.id);
     } catch (e) {
-      print('Error unregistering notification token: $e');
       rethrow;
     }
   }
@@ -279,7 +312,7 @@ class ProfileService {
           .map((json) {
             final contentFr = json[_table('content')];
             if (contentFr is! Map<String, dynamic>) return null;
-            final article = contentFr as Map<String, dynamic>;
+            final article = contentFr;
             return Article(
               id: article['id']?.toString() ?? '',
               title: article['title'] ?? '',
@@ -305,7 +338,6 @@ class ProfileService {
           .whereType<Article>()
           .toList();
     } catch (e) {
-      print('Error fetching unfinished articles: $e');
       rethrow;
     }
   }
@@ -325,7 +357,7 @@ class ProfileService {
           .map((json) {
             final contentFr = json[_table('content')];
             if (contentFr is! Map<String, dynamic>) return null;
-            final audiobook = contentFr as Map<String, dynamic>;
+            final audiobook = contentFr;
             return Audiobook(
               id: audiobook['id'] as int,
               title: audiobook['title'] ?? '',
@@ -348,7 +380,6 @@ class ProfileService {
           .whereType<Audiobook>()
           .toList();
     } catch (e) {
-      print('Error fetching unfinished articles: $e');
       rethrow;
     }
   }
@@ -371,7 +402,7 @@ class ProfileService {
         profileRow?['theme_interest_5'],
       ].whereType<String>().where((s) => s.isNotEmpty).toList();
     } catch (e) {
-      print('Error fetching theme interests: $e');
+      debugPrint('Error fetching theme interests: $e');
       return [];
     }
   }
@@ -395,24 +426,37 @@ class ProfileService {
       ].whereType<String>().where((s) => s.isNotEmpty).toList();
       if (themeList.isEmpty) return [];
 
-      // Match rows where any of category1, category2, or category3 is in themeList
-      final themeInFilter =
-          themeList.map((t) => '"${t.replaceAll('"', '\\"')}"').join(',');
-      final orFilter =
-          'category_1.in.($themeInFilter),category_2.in.($themeInFilter),category_3.in.($themeInFilter)';
+      final cleanedThemes = _cleanThemeList(themeList);
+      if (cleanedThemes.isEmpty) return [];
+      final normalizedThemes =
+          cleanedThemes.map((theme) => theme.toLowerCase()).toSet();
+      final orFilter = _buildCategoryOrInFilter(cleanedThemes);
 
-      final articlesOfInterest = await _supabase
+      final articlesResponse = await _supabase
           .from(_table('content'))
           .select(
               '*, ${_table('progress')}!content_id(reading_status, user_id, is_liked)')
           .eq('content_type', 1)
           .or(orFilter);
-      final list = articlesOfInterest as List;
-      return list
+
+      var rows = (articlesResponse as List).whereType<Map<String, dynamic>>();
+      if (rows.isEmpty) {
+        // Fallback to local theme matching
+        final fallbackResponse = await _supabase
+            .from(_table('content'))
+            .select(
+                '*, ${_table('progress')}!content_id(reading_status, user_id, is_liked)')
+            .eq('content_type', 1);
+        rows = (fallbackResponse as List)
+            .whereType<Map<String, dynamic>>()
+            .where((row) => _rowMatchesAnyTheme(row, normalizedThemes));
+      }
+
+      return rows
           .where((json) {
             final progressFr = json[_table('progress')];
             if (progressFr == null) return true;
-            final list = progressFr is List ? progressFr as List : [progressFr];
+            final list = progressFr is List ? progressFr : [progressFr];
             final userProgress = list
                 .cast<Map<String, dynamic>?>()
                 .whereType<Map<String, dynamic>>()
@@ -426,7 +470,7 @@ class ProfileService {
             return true;
           })
           .map((json) {
-            final article = json as Map<String, dynamic>;
+            final article = json;
             return Article(
               id: article['id']?.toString() ?? '',
               title: article['title'] ?? '',
@@ -450,7 +494,6 @@ class ProfileService {
           .whereType<Article>()
           .toList();
     } catch (e) {
-      print('Error fetching articles of interests: $e');
       rethrow;
     }
   }
@@ -475,6 +518,11 @@ class ProfileService {
 
       if (themeList.isEmpty) return [];
 
+      final cleanedThemes = _cleanThemeList(themeList);
+      if (cleanedThemes.isEmpty) return [];
+      final normalizedThemes =
+          cleanedThemes.map((theme) => theme.toLowerCase()).toSet();
+
       // Exclude audiobooks the user has started or finished (fr_progress: content_type 2, chapter_id null)
       final excludedProgress = await _supabase
           .from(_table('progress'))
@@ -488,28 +536,35 @@ class ProfileService {
           .whereType<int>()
           .toSet();
 
-      // Match rows where any of category1, category2, or category3 is in themeList
-      final themeInFilter =
-          themeList.map((t) => '"${t.replaceAll('"', '\\"')}"').join(',');
-      final orFilter =
-          'category_1.in.($themeInFilter),category_2.in.($themeInFilter),category_3.in.($themeInFilter)';
+      final orFilter = _buildCategoryOrInFilter(cleanedThemes);
 
-      final audiobooksOfInterest = await _supabase
+      final audiobooksResponse = await _supabase
           .from(_table('content'))
           .select()
           .eq('content_type', 2)
           .or(orFilter);
 
-      return (audiobooksOfInterest as List)
+      var rows = (audiobooksResponse as List).whereType<Map<String, dynamic>>();
+      if (rows.isEmpty) {
+        // Fallback to local theme matching
+        final fallbackResponse = await _supabase
+            .from(_table('content'))
+            .select()
+            .eq('content_type', 2);
+        rows = (fallbackResponse as List)
+            .whereType<Map<String, dynamic>>()
+            .where((row) => _rowMatchesAnyTheme(row, normalizedThemes));
+      }
+
+      return rows
           .where((json) {
-            final row = json as Map<String, dynamic>;
-            final id = row['id'];
+            final id = json['id'];
             if (id == null) return true;
             return !excludedContentIds
                 .contains(id is int ? id : int.tryParse(id.toString()));
           })
           .map((json) {
-            final audiobook = json as Map<String, dynamic>;
+            final audiobook = json;
             return Audiobook(
               id: audiobook['id'],
               title: audiobook['title'] ?? '',
@@ -532,7 +587,6 @@ class ProfileService {
           .whereType<Audiobook>()
           .toList();
     } catch (e) {
-      print('Error fetching audiobooks of interests: $e');
       rethrow;
     }
   }
@@ -560,7 +614,7 @@ class ProfileService {
           .map((json) {
             final contentFr = json[_table('content')];
             if (contentFr is! Map<String, dynamic>) return null;
-            final article = contentFr as Map<String, dynamic>;
+            final article = contentFr;
             return Article(
               id: article['id']?.toString() ?? '',
               title: article['title'] ?? '',
@@ -584,7 +638,6 @@ class ProfileService {
           .whereType<Article>()
           .toList();
     } catch (e) {
-      print('Error fetching favorite articles: $e');
       rethrow;
     }
   }
@@ -612,7 +665,7 @@ class ProfileService {
           .map((json) {
             final contentFr = json[_table('content')];
             if (contentFr is! Map<String, dynamic>) return null;
-            final audiobook = contentFr as Map<String, dynamic>;
+            final audiobook = contentFr;
             return Audiobook(
               id: audiobook['id'],
               title: audiobook['title'] ?? '',
@@ -638,7 +691,6 @@ class ProfileService {
           .whereType<Audiobook>()
           .toList();
     } catch (e) {
-      print('Error fetching favorite audiobooks: $e');
       rethrow;
     }
   }

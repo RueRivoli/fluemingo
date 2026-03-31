@@ -14,8 +14,9 @@ const List<String> REFERENCE_LANGUAGE_CODES = [
 ];
 
 const List<String> TARGET_LANGUAGE_CODES = [
-  'en',
+  // 'en',
   'fr',
+  // 'sp
 ];
 
 /// Returns the localized display name for a language code.

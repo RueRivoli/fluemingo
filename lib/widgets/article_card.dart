@@ -4,6 +4,7 @@ import '../screens/article_overview_page.dart';
 import '../constants/app_colors.dart';
 import 'content_status_badge.dart';
 import 'content_category_chip.dart';
+import 'favorite_toggle_button.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ArticleCard extends StatelessWidget {
@@ -76,6 +77,14 @@ class ArticleCard extends StatelessWidget {
             maxWidth: chipMaxWidth ?? MediaQuery.of(context).size.width - 120,
           ),
       ],
+    );
+  }
+
+  Widget _buildNewBadge() {
+    return const Icon(
+      FontAwesomeIcons.burstNew,
+      size: 34,
+      color: AppColors.secondary,
     );
   }
 
@@ -157,40 +166,21 @@ class ArticleCard extends StatelessWidget {
                   Positioned(
                     top: 6,
                     right: 6,
-                    child: GestureDetector(
-                      onTap: () {
-                        onFavoriteToggle();
-                      },
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Icon(
-                          showLocker
-                              ? FontAwesomeIcons.lock
-                              : (article.isFavorite
-                                  ? FontAwesomeIcons.solidHeart
-                                  : FontAwesomeIcons.lightHeart),
-                          size: 16,
-                          color: showLocker
-                              ? Colors.white
-                              : (article.isFavorite
-                                  ? AppColors.secondary
-                                  : Colors.white),
-                        ),
+                    child: FavoriteToggleButton(
+                      isFavorite: article.isFavorite,
+                      showLocker: showLocker,
+                      onTap: onFavoriteToggle,
+                      iconSize: 16,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 3,
                       ),
                     ),
                   ),
                   Positioned(
                     bottom: 6,
                     left: 6,
-                    right: 6,
+                    right: article.isNew ? 40 : 6,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -238,6 +228,12 @@ class ArticleCard extends StatelessWidget {
                       ],
                     ),
                   ),
+                  if (article.isNew)
+                    Positioned(
+                      bottom: 6,
+                      right: 6,
+                      child: _buildNewBadge(),
+                    ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -334,31 +330,10 @@ class ArticleCard extends StatelessWidget {
                 Positioned(
                   top: 14,
                   right: 14,
-                  child: GestureDetector(
-                    onTap: () {
-                      onFavoriteToggle();
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Icon(
-                        showLocker
-                            ? FontAwesomeIcons.lock
-                            : (article.isFavorite
-                                ? FontAwesomeIcons.solidHeart
-                                : FontAwesomeIcons.lightHeart),
-                        size: 20,
-                        color: showLocker
-                            ? Colors.white
-                            : (article.isFavorite
-                                ? AppColors.secondary
-                                : Colors.white),
-                      ),
-                    ),
+                  child: FavoriteToggleButton(
+                    isFavorite: article.isFavorite,
+                    showLocker: showLocker,
+                    onTap: onFavoriteToggle,
                   ),
                 ),
                 if (showStatusBadge)
@@ -369,6 +344,12 @@ class ArticleCard extends StatelessWidget {
                       status: article.readingStatus,
                       compact: true,
                     ),
+                  ),
+                if (article.isNew)
+                  Positioned(
+                    bottom: 12,
+                    right: 12,
+                    child: _buildNewBadge(),
                   ),
               ],
             ),
