@@ -117,6 +117,7 @@
   "readFlashcards": "フラッシュカードを読む",
   "regular": "レギュラー",
   "retry": "再試行",
+  "dailyLimitReached": "1日の上限に達しました。明日もう一度お試しください。",
   "saved": "保存済み",
   "savedVocabulary": "保存した単語",
   "science": "科学",

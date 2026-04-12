@@ -49,6 +49,8 @@
 	<string>***GOOGLE_IOS_CLIENT_ID_REMOVED***</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Fluemingo requests microphone access only if an audio feature requires voice input during language-learning activities.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Fluemingo does not actively use your location. This permission is required by a third-party notification library.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

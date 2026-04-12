@@ -392,6 +392,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get retry => 'Riprova';
 
   @override
+  String get dailyLimitReached =>
+      'Limite giornaliero raggiunto. Riprova domani.';
+
+  @override
   String get saved => 'Salvato';
 
   @override

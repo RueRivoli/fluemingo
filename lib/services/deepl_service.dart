@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'edge_function_auth_exception.dart';
+import 'rate_limit_exception.dart';
 
 class DeeplService {
   const DeeplService();
@@ -33,6 +34,9 @@ class DeeplService {
           functionName: functionName,
           reason: 'unauthorized',
         );
+      }
+      if (response.status == 429) {
+        throw RateLimitExceededException(functionName: functionName);
       }
       return response;
     } on FunctionException catch (e) {
@@ -76,6 +80,7 @@ class DeeplService {
       return null;
     } catch (e) {
       if (e is EdgeFunctionReauthRequiredException) rethrow;
+      if (e is RateLimitExceededException) rethrow;
       debugPrint('Translation request failed: $e');
       return null;
     }

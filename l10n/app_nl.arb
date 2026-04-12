@@ -117,6 +117,7 @@
   "regular": "Regelmatig",
   "repeat": "Oefenen",
   "retry": "Opnieuw proberen",
+  "dailyLimitReached": "Dagelijkse limiet bereikt. Probeer het morgen opnieuw.",
   "saved": "Opgeslagen",
   "science": "Wetenschap",
   "selectGoal": "Kies een doel om gemotiveerd te blijven",

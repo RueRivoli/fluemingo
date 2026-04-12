@@ -389,6 +389,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get retry => '再試行';
 
   @override
+  String get dailyLimitReached => '1日の上限に達しました。明日もう一度お試しください。';
+
+  @override
   String get saved => '保存済み';
 
   @override

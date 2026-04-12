@@ -100,7 +100,7 @@ class _AppInitializerState extends State<AppInitializer> {
   late final ProfileStore _profileStore;
 
   // Mode debug : mettre à true pour forcer l'affichage de l'onboarding
-  static const bool _forceOnboarding = true;
+  static const bool _forceOnboarding = false;
 
   @override
   void didChangeDependencies() {

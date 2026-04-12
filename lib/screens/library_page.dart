@@ -68,6 +68,7 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   Future<void> _loadArticles() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -75,11 +76,13 @@ class _LibraryPageState extends State<LibraryPage> {
 
     try {
       final articles = await _articleService.getArticles(level: selectedLevel);
+      if (!mounted) return;
       setState(() {
         _articles = articles;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Error loading articles: $e';
         _isLoading = false;

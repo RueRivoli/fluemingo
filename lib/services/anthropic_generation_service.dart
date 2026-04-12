@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../constants/languages.dart';
 import 'edge_function_auth_exception.dart';
+import 'rate_limit_exception.dart';
 
 class AnthropicGenerationService {
   Map<String, String> _authHeaders(SupabaseClient client) {
@@ -33,6 +34,9 @@ class AnthropicGenerationService {
           reason: 'unauthorized',
         );
       }
+      if (response.status == 429) {
+        throw RateLimitExceededException(functionName: functionName);
+      }
       return response;
     } on FunctionException catch (e) {
       if (e.status == 401) {
@@ -45,14 +49,16 @@ class AnthropicGenerationService {
     }
   }
 
-  Future<String?> generateExampleSentenceWithAnthropic({
+  Future<Map<String, String>?> generateExampleSentenceWithAnthropic({
     required String word,
     required String translatedWord,
     required String targetLanguageCode,
+    required String sourceLanguageCode,
   }) async {
     if (word.trim().isEmpty) return null;
 
     final targetLanguageName = languageNameFromCode(targetLanguageCode);
+    final sourceLanguageName = languageNameFromCode(sourceLanguageCode);
     try {
       final response = await _invoke(
         functionName: 'generate-sentence',
@@ -60,6 +66,7 @@ class AnthropicGenerationService {
           'word': word,
           'translated_word': translatedWord,
           'target_language_name': targetLanguageName,
+          'source_language_name': sourceLanguageName,
         },
       );
 
@@ -72,11 +79,18 @@ class AnthropicGenerationService {
       final data = response.data;
       if (data is Map<String, dynamic>) {
         final sentence = data['sentence']?.toString().trim();
-        return (sentence != null && sentence.isNotEmpty) ? sentence : null;
+        if (sentence == null || sentence.isEmpty) return null;
+        final translation = data['translation']?.toString().trim();
+        return {
+          'sentence': sentence,
+          if (translation != null && translation.isNotEmpty)
+            'translation': translation,
+        };
       }
       return null;
     } catch (e) {
       if (e is EdgeFunctionReauthRequiredException) rethrow;
+      if (e is RateLimitExceededException) rethrow;
       debugPrint('Sentence generation request failed: $e');
       return null;
     }

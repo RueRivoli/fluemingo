@@ -806,6 +806,12 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get retry;
 
+  /// No description provided for @dailyLimitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily limit reached. Try again tomorrow.'**
+  String get dailyLimitReached;
+
   /// No description provided for @saved.
   ///
   /// In en, this message translates to:

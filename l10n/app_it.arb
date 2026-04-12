@@ -117,6 +117,7 @@
   "regular": "Regolare",
   "repeat": "Esercitarsi",
   "retry": "Riprova",
+  "dailyLimitReached": "Limite giornaliero raggiunto. Riprova domani.",
   "saved": "Salvato",
   "savedVocabulary": "Vocabolario salvato",
   "science": "Scienza",

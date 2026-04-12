@@ -56,9 +56,13 @@ class _ProfilePageState extends State<ProfilePage> {
     super.didUpdateWidget(oldWidget);
     // Reload profile and progress every time the user switches to this tab
     if (widget.isVisible && !oldWidget.isVisible) {
-      ProfileStoreScope.of(context).load();
-      _loadWeekProgress();
-      _loadOverallProgress();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ProfileStoreScope.of(context).load();
+          _loadWeekProgress();
+          _loadOverallProgress();
+        }
+      });
     }
   }
 

@@ -117,6 +117,7 @@
   "regular": "Regelmäßig",
   "repeat": "Üben",
   "retry": "Erneut versuchen",
+  "dailyLimitReached": "Tageslimit erreicht. Versuche es morgen erneut.",
   "saved": "Gespeichert",
   "science": "Wissenschaft",
   "selectGoal": "Wähle ein Ziel, um motiviert zu bleiben",

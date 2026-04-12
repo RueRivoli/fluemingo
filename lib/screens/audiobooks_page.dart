@@ -66,6 +66,7 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
   }
 
   Future<void> _loadAudiobooks() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -73,11 +74,13 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
 
     try {
       final audiobooks = await _audiobookService.getAudiobooks(level: selectedLevel);
+      if (!mounted) return;
       setState(() {
         _audiobooks = audiobooks;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Error loading audiobooks: $e';
         _isLoading = false;

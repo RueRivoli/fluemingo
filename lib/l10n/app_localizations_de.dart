@@ -393,6 +393,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get retry => 'Erneut versuchen';
 
   @override
+  String get dailyLimitReached =>
+      'Tageslimit erreicht. Versuche es morgen erneut.';
+
+  @override
   String get saved => 'Gespeichert';
 
   @override

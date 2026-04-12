@@ -28,6 +28,7 @@ import '../stores/profile_store.dart';
 import '../services/anthropic_generation_service.dart';
 import '../services/audio_service.dart';
 import '../services/edge_function_auth_exception.dart';
+import '../services/rate_limit_exception.dart';
 import '../widgets/xp_reward_bottom_sheet.dart';
 import '../services/week_progress_service.dart';
 import '../services/article_service.dart';
@@ -729,6 +730,12 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
                                                 ? contextSentence
                                                 : null,
                                           );
+                                        } on RateLimitExceededException {
+                                          if (!mounted) return;
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text(AppLocalizations.of(context)!.dailyLimitReached)),
+                                          );
+                                          return;
                                         } on EdgeFunctionReauthRequiredException {
                                           await _handleEdgeFunctionReauthRequired();
                                         }
@@ -929,25 +936,18 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
         targetLanguage: sourceLanguage,
         context: contextSentence,
       );
-      final generatedExampleSentence = await _anthropicGenerationService
+      final generatedResult = await _anthropicGenerationService
           .generateExampleSentenceWithAnthropic(
         word: item.word,
         translatedWord: (translatedWord != null && translatedWord.isNotEmpty)
             ? translatedWord
             : item.translation,
         targetLanguageCode: targetLanguage,
+        sourceLanguageCode: sourceLanguage,
       );
-      final exampleSentence = (generatedExampleSentence != null &&
-              generatedExampleSentence.isNotEmpty)
-          ? generatedExampleSentence
-          : (contextSentence.isNotEmpty ? contextSentence : item.word);
-
-      final exampleTranslation = await _deeplService.translateWithDeepL(
-        text: exampleSentence,
-        sourceLanguage: targetLanguage,
-        targetLanguage: sourceLanguage,
-        context: contextSentence,
-      );
+      final exampleSentence = generatedResult?['sentence'] ??
+          (contextSentence.isNotEmpty ? contextSentence : item.word);
+      final exampleTranslation = generatedResult?['translation'];
 
       final lang = LanguageTableResolver.language;
       final contentTitle = widget.article.contentType == 2
@@ -994,6 +994,13 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
         });
       }
       return true;
+    } on RateLimitExceededException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.dailyLimitReached)),
+        );
+      }
+      return false;
     } on EdgeFunctionReauthRequiredException {
       await _handleEdgeFunctionReauthRequired();
       return false;
