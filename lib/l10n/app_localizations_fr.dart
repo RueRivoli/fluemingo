@@ -113,6 +113,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get continueReadingToEarnXP => 'Continue à lire pour gagner des XP';
 
   @override
+  String get continueButton => 'Continuer';
+
+  @override
+  String get contentFittingYou =>
+      'Du contenu qui vous correspond parfaitement :';
+
+  @override
   String get connexion => 'Connexion';
 
   @override
@@ -539,6 +546,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Quelle langue souhaitez-vous utiliser comme référence ?';
 
   @override
+  String get withWord => 'Avec';
+
+  @override
   String get withYour => 'avec votre';
 
   @override
@@ -698,6 +708,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get withContent => 'avec du contenu';
 
   @override
+  String get yourTaste => 'vos goûts, votre niveau, votre rythme';
+
+  @override
   String get fitTasteLevel => 'qui correspond à vos goûts et à votre niveau';
 
   @override
@@ -754,4 +767,46 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get start => 'Commencer';
+
+  @override
+  String get downloadFailed => 'Échec du téléchargement';
+
+  @override
+  String get errorPlayingAudio => 'Erreur de lecture audio';
+
+  @override
+  String get errorSeekingAudio => 'Erreur de positionnement audio';
+
+  @override
+  String get errorSavingThemes => 'Erreur lors de la sauvegarde des thèmes';
+
+  @override
+  String get errorUpdatingStatus => 'Impossible de mettre à jour le statut';
+
+  @override
+  String get errorUpdatingGoal => 'Impossible de mettre à jour l\'objectif';
+
+  @override
+  String get errorUpdatingTargetLanguage =>
+      'Impossible de mettre à jour la langue cible';
+
+  @override
+  String get errorUpdatingReferenceLanguage =>
+      'Impossible de mettre à jour la langue de référence';
+
+  @override
+  String get errorLoggingOut => 'Échec de la déconnexion';
+
+  @override
+  String get authenticationError => 'Erreur d\'authentification';
+
+  @override
+  String get signInFailed => 'Échec de la connexion';
+
+  @override
+  String get noParagraphsAvailable => 'Aucun paragraphe disponible';
+
+  @override
+  String get supabaseConfigMissing =>
+      'Configuration Supabase manquante. Lancez l\'app avec --dart-define-from-file=.env';
 }

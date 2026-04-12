@@ -302,6 +302,18 @@ abstract class AppLocalizations {
   /// **'Keep reading to earn XP'**
   String get continueReadingToEarnXP;
 
+  /// No description provided for @continueButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueButton;
+
+  /// No description provided for @contentFittingYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Content that fits you perfectly:'**
+  String get contentFittingYou;
+
   /// No description provided for @connexion.
   ///
   /// In en, this message translates to:
@@ -1064,6 +1076,12 @@ abstract class AppLocalizations {
   /// **'Which language would you like to use as a reference?'**
   String get whichLanguageDoYouSpeakTheBest;
 
+  /// No description provided for @withWord.
+  ///
+  /// In en, this message translates to:
+  /// **'With'**
+  String get withWord;
+
   /// No description provided for @withYour.
   ///
   /// In en, this message translates to:
@@ -1364,6 +1382,12 @@ abstract class AppLocalizations {
   /// **'With Content'**
   String get withContent;
 
+  /// No description provided for @yourTaste.
+  ///
+  /// In en, this message translates to:
+  /// **'your taste, your level, your pace'**
+  String get yourTaste;
+
   /// No description provided for @fitTasteLevel.
   ///
   /// In en, this message translates to:
@@ -1471,6 +1495,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Start'**
   String get start;
+
+  /// No description provided for @downloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed'**
+  String get downloadFailed;
+
+  /// No description provided for @errorPlayingAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Error playing audio'**
+  String get errorPlayingAudio;
+
+  /// No description provided for @errorSeekingAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Error seeking audio'**
+  String get errorSeekingAudio;
+
+  /// No description provided for @errorSavingThemes.
+  ///
+  /// In en, this message translates to:
+  /// **'Error saving themes'**
+  String get errorSavingThemes;
+
+  /// No description provided for @errorUpdatingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update status'**
+  String get errorUpdatingStatus;
+
+  /// No description provided for @errorUpdatingGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update goal'**
+  String get errorUpdatingGoal;
+
+  /// No description provided for @errorUpdatingTargetLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update target language'**
+  String get errorUpdatingTargetLanguage;
+
+  /// No description provided for @errorUpdatingReferenceLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update reference language'**
+  String get errorUpdatingReferenceLanguage;
+
+  /// No description provided for @errorLoggingOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to log out'**
+  String get errorLoggingOut;
+
+  /// No description provided for @authenticationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication error'**
+  String get authenticationError;
+
+  /// No description provided for @signInFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in failed'**
+  String get signInFailed;
+
+  /// No description provided for @noParagraphsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No paragraphs available'**
+  String get noParagraphsAvailable;
+
+  /// No description provided for @supabaseConfigMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Supabase configuration missing. Launch the app with --dart-define-from-file=.env'**
+  String get supabaseConfigMissing;
 }
 
 class _AppLocalizationsDelegate

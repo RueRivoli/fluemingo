@@ -113,6 +113,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueReadingToEarnXP => 'Keep reading to earn XP';
 
   @override
+  String get continueButton => 'Continue';
+
+  @override
+  String get contentFittingYou => 'Content that fits you perfectly:';
+
+  @override
   String get connexion => 'Connexion';
 
   @override
@@ -535,6 +541,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Which language would you like to use as a reference?';
 
   @override
+  String get withWord => 'With';
+
+  @override
   String get withYour => 'with your';
 
   @override
@@ -691,6 +700,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get withContent => 'With Content';
 
   @override
+  String get yourTaste => 'your taste, your level, your pace';
+
+  @override
   String get fitTasteLevel => 'that fits your taste and level';
 
   @override
@@ -747,4 +759,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get start => 'Start';
+
+  @override
+  String get downloadFailed => 'Download failed';
+
+  @override
+  String get errorPlayingAudio => 'Error playing audio';
+
+  @override
+  String get errorSeekingAudio => 'Error seeking audio';
+
+  @override
+  String get errorSavingThemes => 'Error saving themes';
+
+  @override
+  String get errorUpdatingStatus => 'Could not update status';
+
+  @override
+  String get errorUpdatingGoal => 'Failed to update goal';
+
+  @override
+  String get errorUpdatingTargetLanguage => 'Failed to update target language';
+
+  @override
+  String get errorUpdatingReferenceLanguage =>
+      'Failed to update reference language';
+
+  @override
+  String get errorLoggingOut => 'Failed to log out';
+
+  @override
+  String get authenticationError => 'Authentication error';
+
+  @override
+  String get signInFailed => 'Sign-in failed';
+
+  @override
+  String get noParagraphsAvailable => 'No paragraphs available';
+
+  @override
+  String get supabaseConfigMissing =>
+      'Supabase configuration missing. Launch the app with --dart-define-from-file=.env';
 }

@@ -113,6 +113,12 @@ class AppLocalizationsNl extends AppLocalizations {
   String get continueReadingToEarnXP => 'Blijf lezen om XP te verdienen';
 
   @override
+  String get continueButton => 'Doorgaan';
+
+  @override
+  String get contentFittingYou => 'Content die perfect bij jou past:';
+
+  @override
   String get connexion => 'Inloggen';
 
   @override
@@ -537,6 +543,9 @@ class AppLocalizationsNl extends AppLocalizations {
       'Welke taal wil je gebruiken als referentie?';
 
   @override
+  String get withWord => 'Met';
+
+  @override
   String get withYour => 'met je';
 
   @override
@@ -696,6 +705,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get withContent => 'met content';
 
   @override
+  String get yourTaste => 'jouw smaak, jouw niveau, jouw tempo';
+
+  @override
   String get fitTasteLevel => 'die past bij jouw smaak en niveau';
 
   @override
@@ -752,4 +764,46 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get start => 'Beginnen';
+
+  @override
+  String get downloadFailed => 'Download mislukt';
+
+  @override
+  String get errorPlayingAudio => 'Fout bij het afspelen van audio';
+
+  @override
+  String get errorSeekingAudio => 'Fout bij het positioneren van audio';
+
+  @override
+  String get errorSavingThemes => 'Fout bij het opslaan van thema\'s';
+
+  @override
+  String get errorUpdatingStatus => 'Status kon niet worden bijgewerkt';
+
+  @override
+  String get errorUpdatingGoal => 'Doel kon niet worden bijgewerkt';
+
+  @override
+  String get errorUpdatingTargetLanguage =>
+      'Doeltaal kon niet worden bijgewerkt';
+
+  @override
+  String get errorUpdatingReferenceLanguage =>
+      'Referentietaal kon niet worden bijgewerkt';
+
+  @override
+  String get errorLoggingOut => 'Uitloggen mislukt';
+
+  @override
+  String get authenticationError => 'Authenticatiefout';
+
+  @override
+  String get signInFailed => 'Inloggen mislukt';
+
+  @override
+  String get noParagraphsAvailable => 'Geen paragrafen beschikbaar';
+
+  @override
+  String get supabaseConfigMissing =>
+      'Supabase-configuratie ontbreekt. Start de app met --dart-define-from-file=.env';
 }

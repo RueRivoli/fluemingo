@@ -113,6 +113,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get continueReadingToEarnXP => '読み続けてXPを獲得しよう';
 
   @override
+  String get continueButton => '続ける';
+
+  @override
+  String get contentFittingYou => 'あなたにぴったりのコンテンツ：';
+
+  @override
   String get connexion => '接続';
 
   @override
@@ -524,6 +530,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get whichLanguageDoYouSpeakTheBest => '参照言語として使用したい言語はどれですか？';
 
   @override
+  String get withWord => 'と';
+
+  @override
   String get withYour => 'あなたの〜で';
 
   @override
@@ -676,6 +685,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get withContent => 'あなた向けのコンテンツで';
 
   @override
+  String get yourTaste => 'あなたの好み、あなたのレベル、あなたのペース';
+
+  @override
   String get fitTasteLevel => 'あなたの好みとレベルに合った';
 
   @override
@@ -729,4 +741,44 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get start => '始める';
+
+  @override
+  String get downloadFailed => 'ダウンロードに失敗しました';
+
+  @override
+  String get errorPlayingAudio => 'オーディオの再生エラー';
+
+  @override
+  String get errorSeekingAudio => 'オーディオのシークエラー';
+
+  @override
+  String get errorSavingThemes => 'テーマの保存エラー';
+
+  @override
+  String get errorUpdatingStatus => 'ステータスを更新できませんでした';
+
+  @override
+  String get errorUpdatingGoal => '目標を更新できませんでした';
+
+  @override
+  String get errorUpdatingTargetLanguage => '学習言語を更新できませんでした';
+
+  @override
+  String get errorUpdatingReferenceLanguage => '参照言語を更新できませんでした';
+
+  @override
+  String get errorLoggingOut => 'ログアウトに失敗しました';
+
+  @override
+  String get authenticationError => '認証エラー';
+
+  @override
+  String get signInFailed => 'ログインに失敗しました';
+
+  @override
+  String get noParagraphsAvailable => '段落がありません';
+
+  @override
+  String get supabaseConfigMissing =>
+      'Supabaseの設定がありません。--dart-define-from-file=.envでアプリを起動してください';
 }
