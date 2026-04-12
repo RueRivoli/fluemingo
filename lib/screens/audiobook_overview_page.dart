@@ -12,6 +12,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../l10n/app_localizations.dart';
 import '../constants/number_icons.dart';
 import '../stores/profile_store.dart';
+import '../widgets/chapter_list_skeleton.dart';
 
 class AudiobookOverviewPage extends StatefulWidget {
   final Audiobook audiobook;
@@ -73,8 +74,8 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
                 children: [
                   // Header Image
                   ContentHeaderImage(
-                    imageUrl: _audiobook?.imageUrl ?? '',
-                    status: _audiobook?.readingStatus,
+                    imageUrl: _audiobook?.imageUrl ?? widget.audiobook.imageUrl,
+                    status: _audiobook?.readingStatus ?? widget.audiobook.readingStatus,
                     showStatusMenu: true,
                     onStatusChange: (newStatus) async {
                       final audiobook = _audiobook ?? widget.audiobook;
@@ -204,17 +205,18 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
                         const SizedBox(height: 28),
 
                         // Chapters section
-                        if (_audiobook != null &&
-                            _audiobook!.chapters.isNotEmpty) ...[
-                          Text(
-                            AppLocalizations.of(context)!.chapters,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                            ),
+                        Text(
+                          AppLocalizations.of(context)!.chapters,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
                           ),
-                          const SizedBox(height: 12),
+                        ),
+                        const SizedBox(height: 12),
+                        if (_audiobook == null)
+                          const ChapterListSkeleton()
+                        else if (_audiobook!.chapters.isNotEmpty) ...[
                           ...(_audiobook!.chapters.asMap().entries.map((entry) {
                             final chapterIndex = entry.key;
                             final chapter = entry.value;

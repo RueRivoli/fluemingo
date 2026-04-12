@@ -125,16 +125,10 @@ class AudiobookService {
 
       final response = await query;
       final referenceLanguageCode = await _getReferenceLanguageCode();
-      final list = <Audiobook>[];
-      for (final json in response as List) {
-        final rawPath =
-            (json['image_url'] ?? json['img_url'])?.toString() ?? '';
-        final imageUrl = await _getImageUrlResolved(rawPath);
-        list.add(_audiobookFromJson(json,
-            imageUrlOverride: imageUrl,
-            referenceLanguageCode: referenceLanguageCode));
-      }
-      return list;
+      return (response as List)
+          .map((json) => _audiobookFromJson(json,
+              referenceLanguageCode: referenceLanguageCode))
+          .toList();
     } catch (e) {
       rethrow;
     }
@@ -144,16 +138,48 @@ class AudiobookService {
   Future<Audiobook?> getAudiobookById(int id) async {
     try {
       final user = _supabase.auth.currentUser;
-      final referenceLanguageCode = await _getReferenceLanguageCode();
-      // Fetch audiobook from fr_content table
-      final audiobookResponse = await _supabase
-          .from(_table('content'))
-          .select('*, ${_table('chapters')}!long_format_id(*)')
-          .eq('id', id)
-          .eq('content_type', 2)
-          .maybeSingle();
+
+      final futures = <Future<dynamic>>[
+        _getReferenceLanguageCode(),
+        _supabase
+            .from(_table('content'))
+            .select('*, ${_table('chapters')}!long_format_id(*)')
+            .eq('id', id)
+            .eq('content_type', 2)
+            .maybeSingle(),
+      ];
+      if (user != null) {
+        futures.add(_supabase
+            .from(_table('progress'))
+            .select('reading_status, is_liked, chapter_id')
+            .eq('content_id', id)
+            .eq('content_type', 2)
+            .eq('user_id', user.id));
+      }
+      final results = await Future.wait(futures);
+
+      final referenceLanguageCode = results[0] as String;
+      final audiobookResponse = results[1] as Map<String, dynamic>?;
       if (audiobookResponse == null) return null;
-      // Convert fr_chapters to ChapterOverview objects and sort by order_id (ascending)
+
+      // Split progress rows into overall (chapter_id=null) and per-chapter
+      Map<String, dynamic>? progressResponse;
+      final chapterStatusById = <int, String>{};
+      if (user != null && results.length > 2) {
+        final allProgressRows = results[2] as List<dynamic>;
+        for (final row in allProgressRows) {
+          if (row['chapter_id'] == null) {
+            progressResponse = row as Map<String, dynamic>;
+          } else {
+            final chapterId = row['chapter_id'];
+            final readingStatus = row['reading_status'];
+            if (chapterId is num && readingStatus is String) {
+              chapterStatusById[chapterId.toInt()] = readingStatus;
+            }
+          }
+        }
+      }
+
       final chaptersData =
           audiobookResponse[_table('chapters')] as List<dynamic>? ?? [];
       final sortedChapters = List<Map<String, dynamic>>.from(chaptersData)
@@ -162,38 +188,12 @@ class AudiobookService {
           final orderIdB = b['order_id'] as int? ?? 0;
           return orderIdA.compareTo(orderIdB);
         });
-      final progressResponse = user != null
-          ? await _supabase
-              .from(_table('progress'))
-              .select('reading_status, is_liked')
-              .eq('content_id', id)
-              .eq('content_type', 2)
-              .eq('user_id', user.id)
-              .filter('chapter_id', 'is', 'null')
-              .maybeSingle()
-          : null;
-      final chapterProgressRows = user != null
-          ? await _supabase
-              .from(_table('progress'))
-              .select('chapter_id, reading_status')
-              .eq('content_id', id)
-              .eq('content_type', 2)
-              .eq('user_id', user.id)
-              .not('chapter_id', 'is', null)
-          : <dynamic>[];
-      final chapterStatusById = <int, String>{};
-      for (final row in chapterProgressRows) {
-        final chapterId = row['chapter_id'];
-        final readingStatus = row['reading_status'];
-        if (chapterId is num && readingStatus is String) {
-          chapterStatusById[chapterId.toInt()] = readingStatus;
-        }
-      }
-      final rawImgPath =
+
+      final imageUrl = _getImageUrl(
           (audiobookResponse['image_url'] ?? audiobookResponse['img_url'])
                   ?.toString() ??
-              '';
-      final resolvedImageUrl = await _getImageUrlResolved(rawImgPath);
+              '');
+
       final chapters = sortedChapters.map((chapterJson) {
         final chapterIdValue = chapterJson['id'];
         final chapterId = chapterIdValue is num ? chapterIdValue.toInt() : null;
@@ -205,17 +205,14 @@ class AudiobookService {
           description: ArticleService.localizedDescription(
               chapterJson, referenceLanguageCode),
           author: audiobookResponse['author'] ?? '',
-          imageUrl: resolvedImageUrl,
+          imageUrl: imageUrl,
           level: audiobookResponse['level']?.toString() ?? 'A1',
           category1: audiobookResponse['category_1'] ?? '',
           category2: audiobookResponse['category_2'] ?? '',
           category3: audiobookResponse['category_3'] ?? '',
           vocabulary: [],
           grammarPoints: [],
-          paragraphs: ArticleService.parseContentToArticleParagraphs(
-            chapterJson['content_multi'],
-            referenceLanguageCode: referenceLanguageCode,
-          ),
+          paragraphs: [],
           audioUrl: '',
           readingStatus:
               chapterId != null ? chapterStatusById[chapterId] : null,
@@ -225,14 +222,14 @@ class AudiobookService {
           contentType: 2,
         );
       }).toList();
-      // Create audiobook with all related data
+
       return Audiobook(
         id: audiobookResponse['id'],
         title: audiobookResponse['title'] ?? '',
         author: audiobookResponse['author'] ?? '',
         description: ArticleService.localizedDescription(
             audiobookResponse, referenceLanguageCode),
-        imageUrl: resolvedImageUrl,
+        imageUrl: imageUrl,
         level: audiobookResponse['level'] ?? 'A1',
         category1: audiobookResponse['category_1'] ?? '',
         category2: audiobookResponse['category_2'] ?? '',
