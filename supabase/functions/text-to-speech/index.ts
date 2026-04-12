@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
+import { checkRateLimit } from "../_shared/rate-limit.ts";
 
 const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
 const ELEVENLABS_TTS_URL = "https://api.elevenlabs.io/v1/text-to-speech/";
@@ -85,6 +86,9 @@ Deno.serve(async (req: Request) => {
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  const rateCheck = await checkRateLimit(supabase, user.id, "text-to-speech");
+  if (!rateCheck.allowed) return rateCheck.response;
 
   if (!ELEVENLABS_API_KEY) {
     return new Response(JSON.stringify({ error: "ElevenLabs API key not configured" }), {

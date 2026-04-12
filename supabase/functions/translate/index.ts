@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
+import { checkRateLimit } from "../_shared/rate-limit.ts";
 
 const DEEPL_API_KEY = Deno.env.get("DEEPL_API_KEY") ?? "";
 
@@ -63,6 +64,9 @@ Deno.serve(async (req: Request) => {
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  const rateCheck = await checkRateLimit(supabase, user.id, "translate");
+  if (!rateCheck.allowed) return rateCheck.response;
 
   if (!DEEPL_API_KEY) {
     return new Response(JSON.stringify({ error: "DeepL API key not configured" }), {

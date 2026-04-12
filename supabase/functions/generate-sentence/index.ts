@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
+import { checkRateLimit } from "../_shared/rate-limit.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
@@ -45,6 +46,9 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  const rateCheck = await checkRateLimit(supabase, user.id, "generate-sentence");
+  if (!rateCheck.allowed) return rateCheck.response;
+
   if (!ANTHROPIC_API_KEY) {
     return new Response(JSON.stringify({ error: "Anthropic API key not configured" }), {
       status: 500,
@@ -53,10 +57,10 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { word, translated_word, target_language_name } = await req.json();
+    const { word, translated_word, target_language_name, source_language_name } = await req.json();
 
-    if (!word || !translated_word || !target_language_name) {
-      return new Response(JSON.stringify({ error: "Missing required fields: word, translated_word, target_language_name" }), {
+    if (!word || !translated_word || !target_language_name || !source_language_name) {
+      return new Response(JSON.stringify({ error: "Missing required fields: word, translated_word, target_language_name, source_language_name" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
@@ -69,8 +73,8 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    if (!ALLOWED_LANGUAGES.has(target_language_name)) {
-      return new Response(JSON.stringify({ error: "Invalid target language" }), {
+    if (!ALLOWED_LANGUAGES.has(target_language_name) || !ALLOWED_LANGUAGES.has(source_language_name)) {
+      return new Response(JSON.stringify({ error: "Invalid language" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
@@ -79,7 +83,7 @@ Deno.serve(async (req: Request) => {
     const safeWord = sanitizeForPrompt(word);
     const safeTranslation = sanitizeForPrompt(translated_word);
 
-    const prompt = `Create exactly one short natural sentence in ${target_language_name} with less than 20 words using the word "${safeWord}" with the meaning "${safeTranslation}". Return only the sentence without quotes.`;
+    const prompt = `Create exactly one short natural sentence in ${target_language_name} with less than 20 words using the word "${safeWord}" with the meaning "${safeTranslation}". Then translate this sentence into ${source_language_name}, making sure the word "${safeWord}" is translated as "${safeTranslation}". Return ONLY valid JSON: {"sentence": "...", "translation": "..."}`;
 
     for (const model of MODELS) {
       const response = await fetch(ANTHROPIC_URL, {
@@ -91,7 +95,7 @@ Deno.serve(async (req: Request) => {
         },
         body: JSON.stringify({
           model,
-          max_tokens: 120,
+          max_tokens: 200,
           temperature: 0.3,
           messages: [{ role: "user", content: prompt }],
         }),
@@ -117,16 +121,25 @@ Deno.serve(async (req: Request) => {
       }
 
       const data = JSON.parse(body);
-      const sentence = data?.content?.[0]?.text?.trim() ?? null;
+      const text = data?.content?.[0]?.text?.trim() ?? null;
 
-      if (sentence) {
-        return new Response(JSON.stringify({ sentence }), {
-          headers: { "Content-Type": "application/json" },
-        });
+      if (text) {
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed.sentence) {
+            return new Response(JSON.stringify({ sentence: parsed.sentence, translation: parsed.translation ?? null }), {
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+        } catch {
+          return new Response(JSON.stringify({ sentence: text, translation: null }), {
+            headers: { "Content-Type": "application/json" },
+          });
+        }
       }
     }
 
-    return new Response(JSON.stringify({ sentence: null }), {
+    return new Response(JSON.stringify({ sentence: null, translation: null }), {
       headers: { "Content-Type": "application/json" },
     });
   } catch (e) {
