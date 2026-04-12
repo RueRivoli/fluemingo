@@ -31,7 +31,7 @@
   "completedQuizzes": "Voltooide quizzen",
   "confirm": "Bevestigen",
   "contentInProgress": "Lopende inhoud",
-  "continue": "Doorgaan",
+  "continueButton": "Doorgaan",
   "connexion": "Inloggen",
   "continueWithApple": "Doorgaan met Apple",
   "continueWithFacebook": "Doorgaan met Facebook",
@@ -235,5 +235,18 @@
   "password": "Wachtwoord",
   "enterEmailAndPassword": "Voer je e-mail en wachtwoord in om in te loggen.",
   "signIn": "Inloggen",
-  "start": "Beginnen"
+  "start": "Beginnen",
+  "downloadFailed": "Download mislukt",
+  "errorPlayingAudio": "Fout bij het afspelen van audio",
+  "errorSeekingAudio": "Fout bij het positioneren van audio",
+  "errorSavingThemes": "Fout bij het opslaan van thema's",
+  "errorUpdatingStatus": "Status kon niet worden bijgewerkt",
+  "errorUpdatingGoal": "Doel kon niet worden bijgewerkt",
+  "errorUpdatingTargetLanguage": "Doeltaal kon niet worden bijgewerkt",
+  "errorUpdatingReferenceLanguage": "Referentietaal kon niet worden bijgewerkt",
+  "errorLoggingOut": "Uitloggen mislukt",
+  "authenticationError": "Authenticatiefout",
+  "signInFailed": "Inloggen mislukt",
+  "noParagraphsAvailable": "Geen paragrafen beschikbaar",
+  "supabaseConfigMissing": "Supabase-configuratie ontbreekt. Start de app met --dart-define-from-file=.env"
 }

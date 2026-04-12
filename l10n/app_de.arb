@@ -31,7 +31,7 @@
   "completedQuizzes": "Abgeschlossene Quizze",
   "confirm": "Bestätigen",
   "contentInProgress": "Laufende Inhalte",
-  "continue": "Weiter",
+  "continueButton": "Weiter",
   "connexion": "Anmeldung",
   "continueWithApple": "Mit Apple fortfahren",
   "continueWithFacebook": "Mit Facebook fortfahren",
@@ -235,5 +235,18 @@
   "password": "Passwort",
   "enterEmailAndPassword": "Gib deine E-Mail und dein Passwort ein, um dich anzumelden.",
   "signIn": "Anmelden",
-  "start": "Starten"
+  "start": "Starten",
+  "downloadFailed": "Download fehlgeschlagen",
+  "errorPlayingAudio": "Fehler beim Abspielen des Audios",
+  "errorSeekingAudio": "Fehler beim Positionieren des Audios",
+  "errorSavingThemes": "Fehler beim Speichern der Themen",
+  "errorUpdatingStatus": "Status konnte nicht aktualisiert werden",
+  "errorUpdatingGoal": "Ziel konnte nicht aktualisiert werden",
+  "errorUpdatingTargetLanguage": "Zielsprache konnte nicht aktualisiert werden",
+  "errorUpdatingReferenceLanguage": "Referenzsprache konnte nicht aktualisiert werden",
+  "errorLoggingOut": "Abmeldung fehlgeschlagen",
+  "authenticationError": "Authentifizierungsfehler",
+  "signInFailed": "Anmeldung fehlgeschlagen",
+  "noParagraphsAvailable": "Keine Absätze verfügbar",
+  "supabaseConfigMissing": "Supabase-Konfiguration fehlt. Starten Sie die App mit --dart-define-from-file=.env"
 }

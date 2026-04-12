@@ -31,7 +31,7 @@
   "completedQuizzes": "Cuestionarios completados",
   "confirm": "Confirmar",
   "contentInProgress": "Contenido en curso",
-  "continue": "Continuar",
+  "continueButton": "Continuar",
   "connexion": "Conexión",
   "continueWithApple": "Continuar con Apple",
   "continueWithFacebook": "Continuar con Facebook",
@@ -235,5 +235,18 @@
   "password": "Contraseña",
   "enterEmailAndPassword": "Introduce tu email y contraseña para iniciar sesión.",
   "signIn": "Iniciar sesión",
-  "start": "Empezar"
+  "start": "Empezar",
+  "downloadFailed": "Error en la descarga",
+  "errorPlayingAudio": "Error al reproducir el audio",
+  "errorSeekingAudio": "Error al posicionar el audio",
+  "errorSavingThemes": "Error al guardar los temas",
+  "errorUpdatingStatus": "No se pudo actualizar el estado",
+  "errorUpdatingGoal": "No se pudo actualizar el objetivo",
+  "errorUpdatingTargetLanguage": "No se pudo actualizar el idioma objetivo",
+  "errorUpdatingReferenceLanguage": "No se pudo actualizar el idioma de referencia",
+  "errorLoggingOut": "Error al cerrar sesión",
+  "authenticationError": "Error de autenticación",
+  "signInFailed": "Error al iniciar sesión",
+  "noParagraphsAvailable": "No hay párrafos disponibles",
+  "supabaseConfigMissing": "Configuración de Supabase faltante. Ejecute la app con --dart-define-from-file=.env"
 }

@@ -31,7 +31,7 @@
   "completedQuizzes": "完了したクイズ",
   "confirm": "確認",
   "contentInProgress": "進行中のコンテンツ",
-  "continue": "続ける",
+  "continueButton": "続ける",
   "connexion": "接続",
   "continueWithApple": "Appleで続ける",
   "continueWithFacebook": "Facebookで続ける",
@@ -235,5 +235,18 @@
   "password": "パスワード",
   "enterEmailAndPassword": "メールアドレスとパスワードを入力してログインしてください。",
   "signIn": "ログイン",
-  "start": "始める"
+  "start": "始める",
+  "downloadFailed": "ダウンロードに失敗しました",
+  "errorPlayingAudio": "オーディオの再生エラー",
+  "errorSeekingAudio": "オーディオのシークエラー",
+  "errorSavingThemes": "テーマの保存エラー",
+  "errorUpdatingStatus": "ステータスを更新できませんでした",
+  "errorUpdatingGoal": "目標を更新できませんでした",
+  "errorUpdatingTargetLanguage": "学習言語を更新できませんでした",
+  "errorUpdatingReferenceLanguage": "参照言語を更新できませんでした",
+  "errorLoggingOut": "ログアウトに失敗しました",
+  "authenticationError": "認証エラー",
+  "signInFailed": "ログインに失敗しました",
+  "noParagraphsAvailable": "段落がありません",
+  "supabaseConfigMissing": "Supabaseの設定がありません。--dart-define-from-file=.envでアプリを起動してください"
 }
