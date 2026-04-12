@@ -34,21 +34,19 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    _loadWeekProgress();
-    _loadOverallProgress();
+    _loadProgress();
   }
 
-  Future<void> _loadWeekProgress() async {
-    final weekProgress = await weekProgressService.getWeekProgress();
-    if (mounted)
-      setState(() {
-        _weekProgress = weekProgress;
-      });
-  }
-
-  Future<void> _loadOverallProgress() async {
-    final overall = await weekProgressService.getOverallProgress();
-    if (mounted) setState(() => _overallProgress = overall);
+  Future<void> _loadProgress() async {
+    final results = await Future.wait([
+      weekProgressService.getWeekProgress(),
+      weekProgressService.getOverallProgress(),
+    ]);
+    if (!mounted) return;
+    setState(() {
+      _weekProgress = results[0];
+      _overallProgress = results[1];
+    });
   }
 
   @override
@@ -59,8 +57,7 @@ class _ProfilePageState extends State<ProfilePage> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ProfileStoreScope.of(context).load();
-          _loadWeekProgress();
-          _loadOverallProgress();
+          _loadProgress();
         }
       });
     }
@@ -252,6 +249,7 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               _buildProgressSegment(
                 label: l10n.yourWeekProgress,
+                icon: FontAwesomeIcons.solidCalendar,
                 isSelected: !_showOverallProgress,
                 onTap: () {
                   if (mounted) setState(() => _showOverallProgress = false);
@@ -261,6 +259,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               _buildProgressSegment(
                 label: l10n.yourProgress,
+                icon: FontAwesomeIcons.solidInfinity,
                 isSelected: _showOverallProgress,
                 onTap: () {
                   if (mounted) setState(() => _showOverallProgress = true);
@@ -281,11 +280,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildProgressSegment({
     required String label,
+    required IconData icon,
     required bool isSelected,
     required VoidCallback onTap,
     required Color bgColor,
     required Color textColor,
   }) {
+    final color = isSelected ? textColor : AppColors.textPrimary;
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -300,14 +301,20 @@ class _ProfilePageState extends State<ProfilePage> {
                 ? Border.all(color: AppColors.borderBlack, width: 1)
                 : null,
           ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              color: isSelected ? textColor : AppColors.textPrimary,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FaIcon(icon, size: 14, color: color),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: color,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -639,26 +646,40 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                child: Text.rich(
-                  TextSpan(
-                    style: const TextStyle(
-                      fontSize: 22,
-                      color: AppColors.textPrimary,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: AppLocalizations.of(context)!.greetings + ', ',
-                        style: TextStyle(fontWeight: FontWeight.normal),
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text.rich(
+                        TextSpan(
+                          style: const TextStyle(
+                            fontSize: 22,
+                            color: AppColors.textPrimary,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: '${AppLocalizations.of(context)!.greetings}, ',
+                              style: const TextStyle(fontWeight: FontWeight.normal),
+                            ),
+                            TextSpan(
+                              text: profile?.fullName ??
+                                  Supabase.instance.client.auth.currentUser
+                                      ?.userMetadata?['full_name'] ??
+                                  '',
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
                       ),
-                      TextSpan(
-                        text: profile?.fullName ??
-                            Supabase.instance.client.auth.currentUser
-                                ?.userMetadata?['full_name'] ??
-                            '',
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    if (profile?.isPremium == true) ...[
+                      const SizedBox(width: 8),
+                      FaIcon(
+                        FontAwesomeIcons.solidCrown,
+                        size: 22,
+                        color: AppColors.secondary,
                       ),
                     ],
-                  ),
+                  ],
                 ),
               ),
               // Your weekly Progress

@@ -689,6 +689,35 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                             ),
                           ),
                           const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: profile?.isPremium == true
+                                  ? AppColors.primary
+                                  : AppColors.neutral,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: profile?.isPremium == true
+                                    ? AppColors.primary
+                                    : AppColors.borderBlack,
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              profile?.isPremium == true
+                                  ? 'Premium'
+                                  : 'Free',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: profile?.isPremium == true
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
                           Material(
                             color: Colors.transparent,
                             child: InkWell(

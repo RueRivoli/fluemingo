@@ -77,51 +77,58 @@ class WeekProgressService {
     final startOfWeek = weekStart.toIso8601String();
     final daysLeft = _daysRemaining(weekStart);
     try {
-      final articlesRes = await _supabase
-          .from(_table('progress'))
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('content_type', 1)
-          .eq('reading_status', 'finished')
-          .gte('finished_datetime', startOfWeek);
-      final audiobooksRes = await _supabase
-          .from(_table('progress'))
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('content_type', 2)
-          .isFilter('chapter_id', null)
-          .eq('reading_status', 'finished')
-          .gte('finished_datetime', startOfWeek);
-      final audiobooksChaptersRes = await _supabase
-          .from(_table('progress'))
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('content_type', 2)
-          .not('chapter_id', 'is', null)
-          .eq('reading_status', 'finished')
-          .gte('finished_datetime', startOfWeek);
-      final flashcardsRes = await _supabase
-          .from(_table('flashcards'))
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('status', 'mastered')
-          .gte('finished_datetime', startOfWeek);
-      final quizzesRes = await _supabase
-          .from(_table('quiz_results'))
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('filled_out', true)
-          .gte('finished_datetime', startOfWeek);
+      final results = await Future.wait([
+        _supabase
+            .from(_table('progress'))
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('content_type', 1)
+            .eq('reading_status', 'finished')
+            .gte('finished_datetime', startOfWeek),
+        _supabase
+            .from(_table('progress'))
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('content_type', 2)
+            .isFilter('chapter_id', null)
+            .eq('reading_status', 'finished')
+            .gte('finished_datetime', startOfWeek),
+        _supabase
+            .from(_table('progress'))
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('content_type', 2)
+            .not('chapter_id', 'is', null)
+            .eq('reading_status', 'finished')
+            .gte('finished_datetime', startOfWeek),
+        _supabase
+            .from(_table('flashcards'))
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('status', 'mastered')
+            .gte('finished_datetime', startOfWeek),
+        _supabase
+            .from(_table('quiz_results'))
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('filled_out', true)
+            .gte('finished_datetime', startOfWeek),
+      ]);
+      final articlesRes = results[0] as List;
+      final audiobooksRes = results[1] as List;
+      final audiobooksChaptersRes = results[2] as List;
+      final flashcardsRes = results[3] as List;
+      final quizzesRes = results[4] as List;
       final weekXP = _calculateWeekXP(articlesRes.length,
           audiobooksChaptersRes.length, flashcardsRes.length, quizzesRes.length);
 
       return WeekProgress(
-        weekArticlesReadCount: (articlesRes as List).length.toString(),
-        weekAudiobooksReadCount: (audiobooksRes as List).length.toString(),
+        weekArticlesReadCount: articlesRes.length.toString(),
+        weekAudiobooksReadCount: audiobooksRes.length.toString(),
         weekAudiobooksChaptersReadCount:
-            (audiobooksChaptersRes as List).length.toString(),
-        weekFlashcardsAchievedCount: (flashcardsRes as List).length.toString(),
-        weekQuizzesCompletedCount: (quizzesRes as List).length.toString(),
+            audiobooksChaptersRes.length.toString(),
+        weekFlashcardsAchievedCount: flashcardsRes.length.toString(),
+        weekQuizzesCompletedCount: quizzesRes.length.toString(),
         weekXP: weekXP,
         daysRemainingInWeek: daysLeft,
       );
@@ -145,42 +152,44 @@ class WeekProgressService {
     if (user == null) return empty;
 
     try {
-      final articlesRes = await _supabase
-          .from(_table('progress'))
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('content_type', 1)
-          .eq('reading_status', 'finished');
-      final audiobooksRes = await _supabase
-          .from(_table('progress'))
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('content_type', 2)
-          .isFilter('chapter_id', null)
-          .eq('reading_status', 'finished');
-      final audiobooksChaptersRes = await _supabase
-          .from(_table('progress'))
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('content_type', 2)
-          .not('chapter_id', 'is', null)
-          .eq('reading_status', 'finished');
-      final flashcardsRes = await _supabase
-          .from(_table('flashcards'))
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('status', 'mastered');
-      final quizzesRes = await _supabase
-          .from(_table('quiz_results'))
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('filled_out', true);
+      final results = await Future.wait([
+        _supabase
+            .from(_table('progress'))
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('content_type', 1)
+            .eq('reading_status', 'finished'),
+        _supabase
+            .from(_table('progress'))
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('content_type', 2)
+            .isFilter('chapter_id', null)
+            .eq('reading_status', 'finished'),
+        _supabase
+            .from(_table('progress'))
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('content_type', 2)
+            .not('chapter_id', 'is', null)
+            .eq('reading_status', 'finished'),
+        _supabase
+            .from(_table('flashcards'))
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('status', 'mastered'),
+        _supabase
+            .from(_table('quiz_results'))
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('filled_out', true),
+      ]);
 
-      final articlesCount = (articlesRes as List).length;
-      final audiobooksCount = (audiobooksRes as List).length;
-      final audiobooksChaptersCount = (audiobooksChaptersRes as List).length;
-      final flashcardsCount = (flashcardsRes as List).length;
-      final quizzesCount = (quizzesRes as List).length;
+      final articlesCount = (results[0] as List).length;
+      final audiobooksCount = (results[1] as List).length;
+      final audiobooksChaptersCount = (results[2] as List).length;
+      final flashcardsCount = (results[3] as List).length;
+      final quizzesCount = (results[4] as List).length;
       final totalXP = _calculateWeekXP(
           articlesCount, audiobooksCount, flashcardsCount, quizzesCount);
 
