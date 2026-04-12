@@ -9,9 +9,9 @@ import '../services/flashcard_service.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../constants/word_types.dart';
 import '../l10n/app_localizations.dart';
-import '../constants/number_icons.dart';
 import '../utils/flashcard_snackbar.dart';
 import '../services/feedback_service.dart';
+import '../constants/number_icons.dart';
 
 class FlashcardsDeckPage extends StatefulWidget {
   final List<VocabularyItem> flashcards;
@@ -450,64 +450,69 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
       body: SafeArea(
         child: Column(
           children: [
-            // Top bar with back button, title, and progress
+            // Top bar with back button and progress
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-              child: Stack(
-                alignment: Alignment.centerLeft,
+              child: Row(
                 children: [
-                  // Centered title
-                  Center(
-                    child: Text(
-                      '${widget.categoryName.isNotEmpty ? "${widget.categoryName[0].toUpperCase()}${widget.categoryName.substring(1)}" : widget.categoryName} Flashcards',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ),
-                  // Back button
                   GestureDetector(
                     onTap: () => Navigator.of(context).pop(),
-                    child: Container(
+                    child: const SizedBox(
                       width: 40,
                       height: 40,
-                      child: const Icon(
+                      child: Icon(
                         FontAwesomeIcons.arrowLeft,
                         color: Colors.white,
                         size: 24,
                       ),
                     ),
                   ),
-                  // Progress indicator on the right
-                  Positioned(
-                    right: 0,
-                    child: Row(
-                      children: [
-                        Icon(
-                            figureToFontAwesomeIcon(_currentIndex + 1) ??
-                                FontAwesomeIcons.hashtag,
-                            size: 20,
-                            color: Colors.white),
-                        Text(
-                          '/ ',
-                          style: const TextStyle(
+                  const Spacer(),
+                  ...numberToFontAwesomeIcons(_currentIndex + 1)
+                      .map((icon) => Padding(
+                            padding: const EdgeInsets.only(right: 2),
+                            child: Icon(icon, size: 20, color: Colors.white),
+                          )),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Text('/',
+                        style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Icon(
-                            figureToFontAwesomeIcon(_flashcards.length) ??
-                                FontAwesomeIcons.hashtag,
-                            size: 20,
-                            color: Colors.white),
-                      ],
-                    ),
+                            color: Colors.white)),
                   ),
+                  ...numberToFontAwesomeIcons(_flashcards.length)
+                      .map((icon) => Padding(
+                            padding: const EdgeInsets.only(right: 2),
+                            child: Icon(icon, size: 20, color: Colors.white),
+                          )),
                 ],
+              ),
+            ),
+
+            // Dot indicators
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(_flashcards.length, (i) {
+                    final isActive = i == _currentIndex;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: isActive ? 10 : 6,
+                      height: isActive ? 10 : 6,
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isActive
+                            ? Colors.white
+                            : Colors.white.withValues(alpha: 0.35),
+                      ),
+                    );
+                  }),
+                ),
               ),
             ),
 
