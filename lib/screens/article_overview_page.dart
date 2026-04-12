@@ -407,8 +407,8 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                                 maxWidth:
                                     MediaQuery.of(context).size.width - 80,
                                 maxLines: 2,
-                                horizontalPadding: 14,
-                                verticalPadding: 8,
+                                horizontalPadding: 10,
+                                verticalPadding: 6,
                                 borderRadius: 6,
                               ),
                           ],
