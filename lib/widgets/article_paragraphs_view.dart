@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/article_paragraph.dart';
 import '../models/article_sentence.dart';
 import '../models/unit.dart';
@@ -34,7 +35,7 @@ class ArticleParagraphsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (paragraphs.isEmpty) {
-      return const Center(child: Text('No paragraphs available'));
+      return Center(child: Text(AppLocalizations.of(context)!.noParagraphsAvailable));
     }
 
     return SingleChildScrollView(

@@ -86,7 +86,7 @@ class _EditThemesBottomSheetState extends State<EditThemesBottomSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving themes: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.errorSavingThemes)),
         );
       }
     }
