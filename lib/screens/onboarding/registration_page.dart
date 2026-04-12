@@ -144,7 +144,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Erreur d\'authentification: ${error.toString()}'),
+              content: Text(AppLocalizations.of(context)!.authenticationError),
               backgroundColor: Colors.red,
             ),
           );
@@ -593,7 +593,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Email sign-in failed: $e'),
+          content: Text(AppLocalizations.of(context)!.signInFailed),
           backgroundColor: Colors.red,
         ),
       );
@@ -668,9 +668,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
           _isLoadingGoogle = false;
         });
 
+        final l10n = AppLocalizations.of(context)!;
         final message = e.toString().contains('No host specified in URI')
-            ? 'Configuration Supabase manquante. Lancez l’app avec --dart-define-from-file=.env'
-            : 'Erreur lors de la connexion Google: ${e.toString()}';
+            ? l10n.supabaseConfigMissing
+            : l10n.signInFailed;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
@@ -768,7 +769,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur lors de la connexion Apple: ${e.toString()}'),
+            content: Text(AppLocalizations.of(context)!.signInFailed),
             backgroundColor: Colors.red,
           ),
         );

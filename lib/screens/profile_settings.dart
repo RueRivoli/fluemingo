@@ -113,7 +113,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update goal: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.errorUpdatingGoal)),
         );
       }
     }
@@ -131,7 +131,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update target language: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.errorUpdatingTargetLanguage)),
         );
       }
     }
@@ -150,7 +150,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update reference language: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.errorUpdatingReferenceLanguage)),
         );
       }
     }
@@ -548,7 +548,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to log out: $e')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.errorLoggingOut)),
       );
     }
   }

@@ -131,7 +131,7 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
         _isPlaying = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error playing audio: $e')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.errorPlayingAudio)),
       );
     }
   }

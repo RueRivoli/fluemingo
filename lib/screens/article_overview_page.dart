@@ -147,7 +147,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Download failed: $e')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.downloadFailed)),
       );
     } finally {
       if (mounted) {

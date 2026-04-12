@@ -92,7 +92,7 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Could not update status: $e')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.errorUpdatingStatus)),
           );
         }
       }

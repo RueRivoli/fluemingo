@@ -258,7 +258,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     } catch (e) {
       debugPrint('Error seeking audio: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error seeking audio: $e')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.errorSeekingAudio)),
       );
     }
   }
@@ -291,7 +291,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     } catch (e) {
       debugPrint('Error toggling playback: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error playing audio: $e')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.errorPlayingAudio)),
       );
     }
   }
