@@ -44,8 +44,8 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
 
   void _syncDisplayFlags() {
     final hasBasis = _normalizedBasisText().isNotEmpty;
-    _showBasisTop = hasBasis && widget.item.word.length < 10;
-    _showBasisBottom = hasBasis && widget.item.word.length >= 10;
+    _showBasisTop = hasBasis && widget.item.word.length < 7;
+    _showBasisBottom = hasBasis && widget.item.word.length >= 7;
     _showType = widget.item.word.isNotEmpty && widget.item.word.length < 20;
   }
 
