@@ -135,7 +135,7 @@ class _ProfileContentState extends State<ProfileContent> {
             ),
             const SizedBox(height: 8),
             SizedBox(
-              height: 220,
+              height: 210,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.only(right: 8),
@@ -144,7 +144,7 @@ class _ProfileContentState extends State<ProfileContent> {
                   final audiobook = _inProgressAudiobooks[index];
                   final profileStore = ProfileStoreScope.of(context);
                   final isSubscribed = profileStore.isSubscribed;
-                  return AudiobookCard(audiobook: audiobook, showIsFavorite: audiobook.isFavorite, showLocker: !isSubscribed && !audiobook.isFree, onFavoriteToggled: () {
+                  return AudiobookCard(audiobook: audiobook, minified: true, showIsFavorite: audiobook.isFavorite, showLocker: !isSubscribed && !audiobook.isFree, onFavoriteToggled: () {
                     if (!isSubscribed && !audiobook.isFree) return;
                     _audiobookService.toggleFavorite(audiobook.id);
                     setState(() {
@@ -217,7 +217,7 @@ class _ProfileContentState extends State<ProfileContent> {
             ),
             const SizedBox(height: 8),
             SizedBox(
-              height: 220,
+              height: 210,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.only(right: 8),
@@ -226,7 +226,7 @@ class _ProfileContentState extends State<ProfileContent> {
                   final audiobook = _favoriteAudiobooks[index];
                   final profileStore = ProfileStoreScope.of(context);
                   final isSubscribed = profileStore.isSubscribed;
-                  return AudiobookCard(audiobook: audiobook, showIsFavorite: audiobook.isFavorite, showLocker: !isSubscribed && !audiobook.isFree, onFavoriteToggled: () {
+                  return AudiobookCard(audiobook: audiobook, minified: true, showIsFavorite: audiobook.isFavorite, showLocker: !isSubscribed && !audiobook.isFree, onFavoriteToggled: () {
                     if (!isSubscribed && !audiobook.isFree) return;
                     _audiobookService.toggleFavorite(audiobook.id);
                     setState(() {
@@ -299,7 +299,7 @@ class _ProfileContentState extends State<ProfileContent> {
             ),
             const SizedBox(height: 8),
             SizedBox(
-              height: 220,
+              height: 210,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.only(right: 8),
@@ -308,7 +308,7 @@ class _ProfileContentState extends State<ProfileContent> {
                   final audiobook = _interestingAudiobooks[index];
                   final profileStore = ProfileStoreScope.of(context);
                   final isSubscribed = profileStore.isSubscribed;
-                  return AudiobookCard(audiobook: audiobook, showIsFavorite: audiobook.isFavorite, showLocker: !isSubscribed && !audiobook.isFree, onFavoriteToggled: () {
+                  return AudiobookCard(audiobook: audiobook, minified: true, showIsFavorite: audiobook.isFavorite, showLocker: !isSubscribed && !audiobook.isFree, onFavoriteToggled: () {
                     if (!isSubscribed && !audiobook.isFree) return;
                     _audiobookService.toggleFavorite(audiobook.id);
                     setState(() {
@@ -350,6 +350,32 @@ class _ProfileContentState extends State<ProfileContent> {
     }
   }
 
+  IconData _categoryIcon() {
+    switch (widget.category) {
+      case 'inProgress':
+        return FontAwesomeIcons.barProgressHalf;
+      case 'favorite':
+        return FontAwesomeIcons.solidHeart;
+      case 'interesting':
+        return FontAwesomeIcons.solidBolt;
+      default:
+        return FontAwesomeIcons.solidEllipsis;
+    }
+  }
+
+  Color _categoryIconColor() {
+    switch (widget.category) {
+      case 'inProgress':
+        return AppColors.textSecondary;
+      case 'favorite':
+        return AppColors.primary;
+      case 'interesting':
+        return AppColors.secondary;
+      default:
+        return AppColors.neutral;
+    }
+  }
+
   double get _topBarHeight {
     // Measure approximate height: back button (40) + bottom padding (12)
     // For titles that wrap to 2 lines, add extra space
@@ -362,7 +388,7 @@ class _ProfileContentState extends State<ProfileContent> {
       width: double.infinity,
       padding: EdgeInsets.only(
         top: widget.embedded ? 0 : MediaQuery.of(context).padding.top + 8,
-        bottom: 12,
+        bottom: 6,
         left: 16,
         right: 20,
       ),
@@ -387,15 +413,27 @@ class _ProfileContentState extends State<ProfileContent> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              _categoryTitle(AppLocalizations.of(context)!),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    _categoryTitle(AppLocalizations.of(context)!),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FaIcon(
+                  _categoryIcon(),
+                  size: 18,
+                  color: _categoryIconColor(),
+                ),
+              ],
             ),
           ),
         ],
@@ -433,7 +471,7 @@ class _ProfileContentState extends State<ProfileContent> {
             child: Text(
               l10n.finishContentToEarnXP,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textSecondary,
               ),
@@ -445,7 +483,7 @@ class _ProfileContentState extends State<ProfileContent> {
             child: Text(
               l10n.basedOnYourLikes,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textSecondary,
               ),
@@ -457,13 +495,12 @@ class _ProfileContentState extends State<ProfileContent> {
             child: Text(
               l10n.basedOnYourFavoriteThemes,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textSecondary,
               ),
             ),
           ),
-          const SizedBox(height: 4),
           IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -512,7 +549,7 @@ class _ProfileContentState extends State<ProfileContent> {
             ),
           ),
         ],
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         ..._buildMenuContent(),
       ],
     );

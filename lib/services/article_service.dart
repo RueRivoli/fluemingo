@@ -99,36 +99,41 @@ class ArticleService {
       );
     }
     try {
-      final referenceLanguageCode = await _getReferenceLanguageCode();
-      final articleResponse = await _supabase
-          .from(_table('content'))
-          .select(
-              '*, ${_table('progress')}!content_id(is_liked, reading_status)')
-          .eq('id', int.parse(id))
-          .eq('content_type', 1)
-          .single();
+      final parsedId = int.parse(id);
+      final futures = <Future<dynamic>>[
+        _getReferenceLanguageCode(),
+        _supabase
+            .from(_table('content'))
+            .select(
+                '*, ${_table('progress')}!content_id(is_liked, reading_status)')
+            .eq('id', parsedId)
+            .eq('content_type', 1)
+            .single(),
+        _supabase
+            .from(_table('vocabulary'))
+            .select('*, ${_table('flashcards')}!vocabulary_id(*)')
+            .eq('reference_id', parsedId)
+            .eq('content_type', 1),
+        _supabase
+            .from(_table('flashcards'))
+            .select('*')
+            .eq('content_id', parsedId)
+            .eq('user_id', user.id)
+            .filter('vocabulary_id', 'is', 'null')
+            .order('status', ascending: true, nullsFirst: false),
+      ];
+      final results = await Future.wait(futures);
 
-      // Fetch proposed vocabulary saved in flashcards
-      final mainVocabularyResponse = await _supabase
-          .from(_table('vocabulary'))
-          .select('*, ${_table('flashcards')}!vocabulary_id(*)')
-          .eq('reference_id', int.parse(id))
-          .eq('content_type', 1);
-
-      // Fetch vocabulary added by user to flashcards
-      final vocabularyAddedByUser = await _supabase
-          .from(_table('flashcards'))
-          .select('*')
-          .eq('content_id', int.parse(id))
-          .eq('user_id', user.id)
-          .filter('vocabulary_id', 'is', 'null')
-          .order('status', ascending: true, nullsFirst: false);
+      final referenceLanguageCode = results[0] as String;
+      final articleResponse = results[1] as Map<String, dynamic>;
+      final mainVocabularyResponse = results[2] as List;
+      final vocabularyAddedByUser = results[3] as List;
 
       final vocabulary = _parseVocabulary(
-        mainVocabularyResponse: mainVocabularyResponse as List,
-        vocabularyAddedByUser: vocabularyAddedByUser as List,
+        mainVocabularyResponse: mainVocabularyResponse,
+        vocabularyAddedByUser: vocabularyAddedByUser,
         referenceLanguageCode: referenceLanguageCode,
-        fallbackId: int.parse(id),
+        fallbackId: parsedId,
       );
       final progressFr = articleResponse[_table('progress')];
       final progressList =
@@ -393,44 +398,49 @@ class ArticleService {
       );
     }
     try {
-      final referenceLanguageCode = await _getReferenceLanguageCode();
-      // Fetch article from fr_content table
-      final chapterResponse = await _supabase
-          .from(_table('chapters'))
-          .select()
-          .eq('id', int.parse(chapterId))
-          .single();
+      final parsedContentId = int.parse(contentId);
+      final parsedChapterId = int.parse(chapterId);
+      final futures = <Future<dynamic>>[
+        _getReferenceLanguageCode(),
+        _supabase
+            .from(_table('chapters'))
+            .select()
+            .eq('id', parsedChapterId)
+            .single(),
+        _supabase
+            .from(_table('progress'))
+            .select('reading_status')
+            .eq('content_id', parsedContentId)
+            .eq('chapter_id', parsedChapterId)
+            .eq('content_type', 2)
+            .eq('user_id', user.id)
+            .maybeSingle(),
+        _supabase
+            .from(_table('vocabulary'))
+            .select('*, ${_table('flashcards')}!vocabulary_id(*)')
+            .eq('content_type', 2)
+            .eq('chapter_id', parsedChapterId),
+        _supabase
+            .from(_table('flashcards'))
+            .select('*')
+            .eq('chapter_id', parsedChapterId)
+            .eq('user_id', user.id)
+            .filter('vocabulary_id', 'is', 'null')
+            .order('status', ascending: true, nullsFirst: false),
+      ];
+      final results = await Future.wait(futures);
 
-      final chapterProgress = await _supabase
-          .from(_table('progress'))
-          .select('reading_status')
-          .eq('content_id', int.parse(contentId))
-          .eq('chapter_id', int.parse(chapterId))
-          .eq('content_type', 2)
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-      // Fetch proposed vocabulary saved in flashcards
-      final mainVocabularyResponse = await _supabase
-          .from(_table('vocabulary'))
-          .select('*, ${_table('flashcards')}!vocabulary_id(*)')
-          .eq('content_type', 2)
-          .eq('chapter_id', int.parse(chapterId));
-
-      // Fetch vocabulary added by user to flashcards
-      final vocabularyAddedByUser = await _supabase
-          .from(_table('flashcards'))
-          .select('*')
-          .eq('chapter_id', int.parse(chapterId))
-          .eq('user_id', user.id)
-          .filter('vocabulary_id', 'is', 'null')
-          .order('status', ascending: true, nullsFirst: false);
+      final referenceLanguageCode = results[0] as String;
+      final chapterResponse = results[1] as Map<String, dynamic>;
+      final chapterProgress = results[2] as Map<String, dynamic>?;
+      final mainVocabularyResponse = results[3] as List;
+      final vocabularyAddedByUser = results[4] as List;
 
       final vocabulary = _parseVocabulary(
-        mainVocabularyResponse: mainVocabularyResponse as List,
-        vocabularyAddedByUser: vocabularyAddedByUser as List,
+        mainVocabularyResponse: mainVocabularyResponse,
+        vocabularyAddedByUser: vocabularyAddedByUser,
         referenceLanguageCode: referenceLanguageCode,
-        fallbackId: int.parse(contentId),
+        fallbackId: parsedContentId,
       );
 
       final contentMulti = chapterResponse['content_multi'] ?? '';

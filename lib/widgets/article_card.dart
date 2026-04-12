@@ -241,6 +241,7 @@ class ArticleCard extends StatelessWidget {
                 height: 40,
                 child: Text(
                   article.title,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,

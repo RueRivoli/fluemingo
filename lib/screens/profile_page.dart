@@ -710,7 +710,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     _buildVerticalMenuButton(
                       AppLocalizations.of(context)!.contentInProgress,
                       ContentMenu.inProgress,
-                      icon: FontAwesomeIcons.ellipsis,
+                      icon: FontAwesomeIcons.barProgressHalf,
                       iconColor: AppColors.textPrimary,
                     ),
                     const SizedBox(height: 12),

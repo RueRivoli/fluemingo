@@ -257,7 +257,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get includeFinishedAudiobooks => 'Include finished audiobooks';
 
   @override
-  String get interestingContent => 'Content matching your favorite themes';
+  String get interestingContent => 'Interesting Content';
 
   @override
   String get forYou => 'For You';
@@ -594,10 +594,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noSuggestionsYet => 'No suggestions yet';
 
   @override
-  String get yourContentInProgress => 'Your content in progress';
+  String get yourContentInProgress => 'Content In Progress';
 
   @override
-  String get yourFavoriteContent => 'Your favorite content';
+  String get yourFavoriteContent => 'Favorite content';
 
   @override
   String get yourContent => 'Your content';

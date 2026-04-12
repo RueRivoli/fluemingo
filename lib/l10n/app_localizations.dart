@@ -545,7 +545,7 @@ abstract class AppLocalizations {
   /// No description provided for @interestingContent.
   ///
   /// In en, this message translates to:
-  /// **'Content matching your favorite themes'**
+  /// **'Interesting Content'**
   String get interestingContent;
 
   /// No description provided for @forYou.
@@ -1181,13 +1181,13 @@ abstract class AppLocalizations {
   /// No description provided for @yourContentInProgress.
   ///
   /// In en, this message translates to:
-  /// **'Your content in progress'**
+  /// **'Content In Progress'**
   String get yourContentInProgress;
 
   /// No description provided for @yourFavoriteContent.
   ///
   /// In en, this message translates to:
-  /// **'Your favorite content'**
+  /// **'Favorite content'**
   String get yourFavoriteContent;
 
   /// No description provided for @yourContent.

@@ -22,6 +22,7 @@ import '../services/feedback_service.dart';
 import '../widgets/xp_reward_bottom_sheet.dart';
 import '../services/week_progress_service.dart';
 import '../utils/flashcard_snackbar.dart';
+import '../widgets/vocabulary_item_skeleton.dart';
 
 class ArticleOverviewPage extends StatefulWidget {
   final Article article;
@@ -500,12 +501,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
 
                         // Vocabulary items
                         _isLoadingVocabulary
-                            ? const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(20.0),
-                                  child: CircularProgressIndicator(),
-                                ),
-                              )
+                            ? const VocabularyListSkeleton()
                             : (_showPersonalVocabularyOnly
                                         ? addedByUserVocabulary
                                         : vocabularyList)
