@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/revenue_cat_config.dart';
@@ -54,6 +56,9 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
   late final OfflineContentService _offlineContentService;
   bool _isDownloadingOffline = false;
   bool _isOfflineAvailable = false;
+  Timer? _audioPollTimer;
+  int _audioPollAttempts = 0;
+  static const int _audioPollMaxAttempts = 10; // 10 * 3s = 30s
 
   @override
   void initState() {
@@ -86,6 +91,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
         vocabularyList = fullArticle?.mainVocabularyItems ?? [];
         addedByUserVocabulary = fullArticle?.addedByUserVocabularyItems ?? [];
       });
+      _maybeStartAudioPoll();
       await _refreshOfflineAvailability();
     } catch (e) {
       debugPrint('Error loading full article: $e');
@@ -94,6 +100,49 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
       });
       await _refreshOfflineAvailability();
     }
+  }
+
+  bool _hasMissingAudio() {
+    return vocabulary.any((v) =>
+        (v.isAddedByUser ?? false) == true && v.audioUrl.isEmpty);
+  }
+
+  void _maybeStartAudioPoll() {
+    if (_audioPollTimer != null) return;
+    if (!_hasMissingAudio()) return;
+    _audioPollAttempts = 0;
+    _audioPollTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
+      if (!mounted) return;
+      _audioPollAttempts++;
+      try {
+        final refreshed = widget.article.contentType == 1
+            ? await _articleService.getArticleById(widget.article.id)
+            : await _articleService.getChapterById(
+                widget.article.id, widget.article.chapterId ?? '',
+                parentTitle: widget.article.parentTitle);
+        if (!mounted) return;
+        if (refreshed != null) {
+          setState(() {
+            _fullArticle = refreshed;
+            vocabulary = refreshed.vocabulary;
+            vocabularyList = refreshed.mainVocabularyItems;
+            addedByUserVocabulary = refreshed.addedByUserVocabularyItems;
+          });
+        }
+      } catch (e) {
+        debugPrint('Audio poll refresh failed: $e');
+      }
+      if (!_hasMissingAudio() || _audioPollAttempts >= _audioPollMaxAttempts) {
+        _audioPollTimer?.cancel();
+        _audioPollTimer = null;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _audioPollTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _refreshOfflineAvailability() async {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -27,6 +29,9 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
   List<VocabularyItem> _flashcards = [];
   bool _isLoading = true;
   String? _errorMessage;
+  Timer? _audioPollTimer;
+  int _audioPollAttempts = 0;
+  static const int _audioPollMaxAttempts = 10; // 10 * 3s = 30s
 
   String _toTitleCase(String value) {
     return value
@@ -56,6 +61,42 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
       _flashcards = flashcards;
       _isLoading = false;
     });
+    _maybeStartAudioPoll();
+  }
+
+  bool _hasMissingAudio() {
+    return _flashcards.any((v) =>
+        (v.isAddedByUser ?? false) == true && v.audioUrl.isEmpty);
+  }
+
+  void _maybeStartAudioPoll() {
+    if (_audioPollTimer != null) return;
+    if (!_hasMissingAudio()) return;
+    _audioPollAttempts = 0;
+    _audioPollTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
+      if (!mounted) return;
+      _audioPollAttempts++;
+      try {
+        final refreshed = await flashcardService.getFlashcardsWithStatus(
+            status: widget.categoryName);
+        if (!mounted) return;
+        setState(() {
+          _flashcards = refreshed;
+        });
+      } catch (e) {
+        debugPrint('Audio poll refresh failed: $e');
+      }
+      if (!_hasMissingAudio() || _audioPollAttempts >= _audioPollMaxAttempts) {
+        _audioPollTimer?.cancel();
+        _audioPollTimer = null;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _audioPollTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _deleteFlashcard(int flashcardId) async {

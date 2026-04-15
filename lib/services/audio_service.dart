@@ -19,33 +19,48 @@ class AudioService {
     required String functionName,
     required Map<String, dynamic> body,
   }) async {
-    final session = _supabase.auth.currentSession;
+    var session = _supabase.auth.currentSession;
     if (session == null || session.accessToken.trim().isEmpty) {
-      throw EdgeFunctionReauthRequiredException(
-        functionName: functionName,
-        reason: 'missing_session',
-      );
+      try {
+        final refreshed = await _supabase.auth.refreshSession();
+        session = refreshed.session;
+      } catch (_) {}
+      if (session == null || session.accessToken.trim().isEmpty) {
+        throw EdgeFunctionReauthRequiredException(
+          functionName: functionName,
+          reason: 'missing_session',
+        );
+      }
     }
 
     try {
       final response = await _supabase.functions
           .invoke(functionName, body: body, headers: _authHeaders(_supabase));
-      if (response.status == 401) {
-        throw EdgeFunctionReauthRequiredException(
-          functionName: functionName,
-          reason: 'unauthorized',
-        );
-      }
-      if (response.status == 429) {
-        throw RateLimitExceededException(functionName: functionName);
-      }
       return response;
     } on FunctionException catch (e) {
       if (e.status == 401) {
-        throw EdgeFunctionReauthRequiredException(
-          functionName: functionName,
-          reason: 'unauthorized',
-        );
+        try {
+          await _supabase.auth.refreshSession();
+          final retryResponse = await _supabase.functions
+              .invoke(functionName, body: body, headers: _authHeaders(_supabase));
+          return retryResponse;
+        } on FunctionException catch (retryError) {
+          if (retryError.status == 401) {
+            throw EdgeFunctionReauthRequiredException(
+              functionName: functionName,
+              reason: 'unauthorized',
+            );
+          }
+          rethrow;
+        } catch (_) {
+          throw EdgeFunctionReauthRequiredException(
+            functionName: functionName,
+            reason: 'unauthorized',
+          );
+        }
+      }
+      if (e.status == 429) {
+        throw RateLimitExceededException(functionName: functionName);
       }
       rethrow;
     }

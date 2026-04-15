@@ -30,7 +30,7 @@ void main() async {
   // Initialize Supabase
   await Supabase.initialize(
     url: SupabaseConfig.supabaseUrl,
-    anonKey: SupabaseConfig.supabaseAnonKey,
+    anonKey: SupabaseConfig.supabasePublishableKey,
   );
 
   final profileService = ProfileService(Supabase.instance.client);
@@ -207,7 +207,7 @@ class _ConfigurationErrorApp extends StatelessWidget {
                 ),
                 SizedBox(height: 12),
                 Text(
-                  'SUPABASE_URL ou SUPABASE_ANON_KEY est vide. '
+                  'SUPABASE_URL ou SB_PUBLISHABLE_KEY est vide. '
                   'Relancez l’app avec vos dart-defines.',
                   style: TextStyle(fontSize: 16, height: 1.4),
                 ),

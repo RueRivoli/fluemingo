@@ -737,7 +737,12 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
                                           );
                                           return;
                                         } on EdgeFunctionReauthRequiredException {
+                                          if (!mounted) return;
+                                          setSheetState(() {
+                                            isRetranslating = false;
+                                          });
                                           await _handleEdgeFunctionReauthRequired();
+                                          return;
                                         }
                                         if (!mounted) return;
                                         setSheetState(() {

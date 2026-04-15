@@ -289,7 +289,7 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
             if (widget.displayType != 'text')
               Center(
                 child: GestureDetector(
-                  onTap: _toggleAudio,
+                  onTap: widget.item.audioUrl.isEmpty ? null : _toggleAudio,
                   child: Container(
                     width: 40,
                     height: 40,
@@ -301,11 +301,21 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
                       ),
                     ),
                     child: Center(
-                      child: FaIcon(
-                        getPlayIconIconData(_isPlaying, _status),
-                        color: getColorPlayIcon(),
-                        size: 30,
-                      ),
+                      child: widget.item.audioUrl.isEmpty
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    getColorPlayIcon()),
+                              ),
+                            )
+                          : FaIcon(
+                              getPlayIconIconData(_isPlaying, _status),
+                              color: getColorPlayIcon(),
+                              size: 30,
+                            ),
                     ),
                   ),
                 ),

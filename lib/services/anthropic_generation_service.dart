@@ -17,33 +17,48 @@ class AnthropicGenerationService {
     required Map<String, dynamic> body,
   }) async {
     final client = Supabase.instance.client;
-    final session = client.auth.currentSession;
+    var session = client.auth.currentSession;
     if (session == null || session.accessToken.trim().isEmpty) {
-      throw EdgeFunctionReauthRequiredException(
-        functionName: functionName,
-        reason: 'missing_session',
-      );
+      try {
+        final refreshed = await client.auth.refreshSession();
+        session = refreshed.session;
+      } catch (_) {}
+      if (session == null || session.accessToken.trim().isEmpty) {
+        throw EdgeFunctionReauthRequiredException(
+          functionName: functionName,
+          reason: 'missing_session',
+        );
+      }
     }
 
     try {
       final response = await client.functions
           .invoke(functionName, body: body, headers: _authHeaders(client));
-      if (response.status == 401) {
-        throw EdgeFunctionReauthRequiredException(
-          functionName: functionName,
-          reason: 'unauthorized',
-        );
-      }
-      if (response.status == 429) {
-        throw RateLimitExceededException(functionName: functionName);
-      }
       return response;
     } on FunctionException catch (e) {
       if (e.status == 401) {
-        throw EdgeFunctionReauthRequiredException(
-          functionName: functionName,
-          reason: 'unauthorized',
-        );
+        try {
+          await client.auth.refreshSession();
+          final retryResponse = await client.functions
+              .invoke(functionName, body: body, headers: _authHeaders(client));
+          return retryResponse;
+        } on FunctionException catch (retryError) {
+          if (retryError.status == 401) {
+            throw EdgeFunctionReauthRequiredException(
+              functionName: functionName,
+              reason: 'unauthorized',
+            );
+          }
+          rethrow;
+        } catch (_) {
+          throw EdgeFunctionReauthRequiredException(
+            functionName: functionName,
+            reason: 'unauthorized',
+          );
+        }
+      }
+      if (e.status == 429) {
+        throw RateLimitExceededException(functionName: functionName);
       }
       rethrow;
     }

@@ -1,10 +1,10 @@
 /// Supabase and OAuth configuration.
 /// Keys are loaded from --dart-define environment variables at build time.
-/// Example: flutter run --dart-define=SUPABASE_URL=your_url --dart-define=SUPABASE_ANON_KEY=your_key ...
+/// Example: flutter run --dart-define=SUPABASE_URL=your_url --dart-define=SB_PUBLISHABLE_KEY=your_key ...
 class SupabaseConfig {
   static const String supabaseUrl = String.fromEnvironment('SUPABASE_URL');
-  static const String supabaseAnonKey =
-      String.fromEnvironment('SUPABASE_ANON_KEY');
+  static const String supabasePublishableKey =
+      String.fromEnvironment('SB_PUBLISHABLE_KEY');
 
   // Google OAuth Client IDs
   static const String googleWebClientId =
@@ -16,5 +16,5 @@ class SupabaseConfig {
       String.fromEnvironment('APP_SPECIFIC_SHARED_SECRET');
 
   static bool get hasSupabaseConfig =>
-      supabaseUrl.trim().isNotEmpty && supabaseAnonKey.trim().isNotEmpty;
+      supabaseUrl.trim().isNotEmpty && supabasePublishableKey.trim().isNotEmpty;
 }

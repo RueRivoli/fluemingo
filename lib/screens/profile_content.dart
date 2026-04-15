@@ -549,7 +549,7 @@ class _ProfileContentState extends State<ProfileContent> {
             ),
           ),
         ],
-        const SizedBox(height: 4),
+        const SizedBox(height: 24),
         ..._buildMenuContent(),
       ],
     );
