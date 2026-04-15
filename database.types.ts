@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_usage: {
+        Row: {
+          function_name: string
+          id: number
+          request_count: number
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          function_name: string
+          id?: never
+          request_count?: number
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          function_name?: string
+          id?: never
+          request_count?: number
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       en_chapters: {
         Row: {
           audio_url: string | null
@@ -1564,6 +1588,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: { p_daily_limit: number; p_function_name: string }
+        Returns: boolean
+      }
       count_new_content_for_language: {
         Args: {
           p_content_type: number
