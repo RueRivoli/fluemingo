@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
 import { checkRateLimit } from "../_shared/rate-limit.ts";
+import { AuthError, authErrorResponse, requireUser } from "../_shared/auth.ts";
 
 const DEEPL_API_KEY = Deno.env.get("DEEPL_API_KEY") ?? "";
 
@@ -42,28 +43,19 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 204 });
   }
 
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader) {
-    return new Response(JSON.stringify({ error: "Missing authorization" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+  let user;
+  try {
+    user = await requireUser(req);
+  } catch (e) {
+    if (e instanceof AuthError) return authErrorResponse(e);
+    throw e;
   }
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: authHeader } },
-  });
-
-  const token = authHeader.replace(/^Bearer\s+/i, "");
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SB_PUBLISHABLE_KEY") ?? "",
+    { global: { headers: { Authorization: req.headers.get("authorization")! } } },
+  );
 
   const rateCheck = await checkRateLimit(supabase, user.id, "translate");
   if (!rateCheck.allowed) return rateCheck.response;

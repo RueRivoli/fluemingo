@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
 import { checkRateLimit } from "../_shared/rate-limit.ts";
+import { AuthError, authErrorResponse, requireUser } from "../_shared/auth.ts";
 
 const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
 const ELEVENLABS_TTS_URL = "https://api.elevenlabs.io/v1/text-to-speech/";
@@ -63,29 +64,21 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 204 });
   }
 
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader) {
-    return new Response(JSON.stringify({ error: "Missing authorization" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+  let user;
+  try {
+    user = await requireUser(req);
+  } catch (e) {
+    if (e instanceof AuthError) return authErrorResponse(e);
+    throw e;
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-  const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: authHeader } },
-  });
-
-  const token = authHeader.replace("Bearer ", "");
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+  const supabaseServiceRoleKey = Deno.env.get("SB_SECRET_KEY") ?? "";
+  const supabase = createClient(
+    supabaseUrl,
+    Deno.env.get("SB_PUBLISHABLE_KEY") ?? "",
+    { global: { headers: { Authorization: req.headers.get("authorization")! } } },
+  );
 
   const rateCheck = await checkRateLimit(supabase, user.id, "text-to-speech");
   if (!rateCheck.allowed) return rateCheck.response;

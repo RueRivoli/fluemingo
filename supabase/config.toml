@@ -1,0 +1,20 @@
+  [functions.translate]                                     
+  verify_jwt = false
+
+  [functions.generate-sentence]
+  verify_jwt = false
+
+  [functions.text-to-speech]                                                                                                                  
+  verify_jwt = false
+                                                                                                                                              
+  [functions.delete-account]                                
+  verify_jwt = false
+
+  [functions.revenuecat-webhook]
+  verify_jwt = false
+
+  [functions.daily-new-content-notifications]
+  verify_jwt = false
+
+  [functions.swift-worker]
+  verify_jwt = false

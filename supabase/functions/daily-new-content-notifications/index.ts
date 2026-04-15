@@ -56,13 +56,13 @@ Deno.serve(async (request) => {
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const serviceRoleKey = Deno.env.get("SB_SECRET_KEY");
   const oneSignalAppId = Deno.env.get("ONESIGNAL_APP_ID");
   const oneSignalRestApiKey = Deno.env.get("ONESIGNAL_REST_API_KEY");
 
   if (!supabaseUrl || !serviceRoleKey) {
     return json(
-      { error: "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY" },
+      { error: "Missing SUPABASE_URL or SB_SECRET_KEY" },
       500,
     );
   }
