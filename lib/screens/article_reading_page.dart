@@ -75,6 +75,8 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
   late AnthropicGenerationService _anthropicGenerationService;
   late AudioService _audioService;
   bool _isHandlingReauthRequired = false;
+  /// Flashcard IDs whose audio generation is currently in flight.
+  final Set<int> _pendingAudioFlashcardIds = {};
 
   @override
   void initState() {
@@ -543,6 +545,8 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
         ...widget.article.orderedListOfVocabularyItems.map((item) {
           return VocabularyItemCard(
             item: item,
+            isAudioPending: item.flashcardId != null &&
+                _pendingAudioFlashcardIds.contains(item.flashcardId),
             onIconToggle: () async {
               await _updateMainVocabularyItemInFlashcards(item);
             },
@@ -918,6 +922,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
       final newVocabularyItem =
           flashcardRowToVocabularyItem(newFlashcardFromTextExpression);
       if (!mounted) return true;
+      final pendingId = newVocabularyItem.flashcardId;
       setState(() {
         final existingIndex = widget.article.vocabulary.indexWhere(
           (v) =>
@@ -934,7 +939,9 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
           widget.article.vocabulary.add(newVocabularyItem);
         }
         _listOfVocabularyItems = widget.article.listOfVocabularyItems;
+        if (pendingId != null) _pendingAudioFlashcardIds.add(pendingId);
       });
+      try {
       final translatedWord = await _deeplService.translateWithDeepL(
         text: item.word,
         sourceLanguage: targetLanguage,
@@ -999,6 +1006,11 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
         });
       }
       return true;
+      } finally {
+        if (pendingId != null && mounted) {
+          setState(() => _pendingAudioFlashcardIds.remove(pendingId));
+        }
+      }
     } on RateLimitExceededException {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

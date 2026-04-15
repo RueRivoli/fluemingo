@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../constants/app_colors.dart';
-import '../constants/content.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/level_chip_row.dart';
 import '../widgets/theme_chip.dart';
@@ -144,13 +143,9 @@ class _ContentFilterSheetState extends State<ContentFilterSheet> {
                 final isSelected = isAll
                     ? _selectedThemes.isEmpty
                     : _selectedThemes.contains(theme);
-                final leadingIcon = theme == 'All'
-                    ? null
-                    : THEMES.where((e) => e.id == theme).firstOrNull?.icon;
                 return ThemeChip(
                   label: theme,
                   isSelected: isSelected,
-                  leadingIcon: leadingIcon,
                   onTap: () {
                     if (isAll) {
                       setState(() => _selectedThemes = {});

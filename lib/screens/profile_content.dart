@@ -13,8 +13,40 @@ import '../services/article_service.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../widgets/edit_themes_bottom_sheet.dart';
 import '../widgets/theme_chip.dart';
+import '../widgets/profile_content_skeleton.dart';
+import '../widgets/shimmer.dart';
 
 enum ContentMenu { inProgress, favorite, interesting }
+
+/// In-memory cache for profile content data, keyed by category.
+/// Persists across route pushes so reopening a category is instantaneous.
+/// Stale-while-revalidate: cached data is shown immediately, a background
+/// refetch updates it.
+class _ProfileContentCache {
+  List<Article>? inProgressArticles;
+  List<Audiobook>? inProgressAudiobooks;
+  List<Article>? favoriteArticles;
+  List<Audiobook>? favoriteAudiobooks;
+  List<Article>? interestingArticles;
+  List<Audiobook>? interestingAudiobooks;
+  List<String>? interestThemes;
+
+  bool hasCategory(String category) {
+    switch (category) {
+      case 'inProgress':
+        return inProgressArticles != null && inProgressAudiobooks != null;
+      case 'favorite':
+        return favoriteArticles != null && favoriteAudiobooks != null;
+      case 'interesting':
+        return interestingArticles != null &&
+            interestingAudiobooks != null &&
+            interestThemes != null;
+    }
+    return false;
+  }
+}
+
+final _profileContentCache = _ProfileContentCache();
 
 class ProfileContent extends StatefulWidget {
   final bool isVisible;
@@ -46,36 +78,71 @@ class _ProfileContentState extends State<ProfileContent> {
   @override
   void initState() {
     super.initState();
-     _articleService = ArticleService(Supabase.instance.client);
-     _audiobookService = AudiobookService(Supabase.instance.client);
+    _articleService = ArticleService(Supabase.instance.client);
+    _audiobookService = AudiobookService(Supabase.instance.client);
+    _hydrateFromCache();
     _loadProfileContentData();
   }
 
-    @override
+  @override
   void didUpdateWidget(covariant ProfileContent oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Reload when switching tabs or changing category
     if ((widget.isVisible && !oldWidget.isVisible) || widget.category != oldWidget.category) {
+      _hydrateFromCache();
       _loadProfileContentData();
     }
   }
 
-  Future<void> _loadProfileContentData() async {
-    if (mounted) setState(() => isLoading = true);
+  /// Populates state from the cache synchronously. If the category has cached
+  /// data, skips the loading state so the UI appears instantly.
+  void _hydrateFromCache() {
+    final hit = _profileContentCache.hasCategory(widget.category);
     if (widget.category == 'inProgress') {
-      _inProgressArticles = await profileService.getArticlesInProgress();
-      _inProgressAudiobooks = await profileService.getAudiobooksInProgress();
+      _inProgressArticles = _profileContentCache.inProgressArticles ?? [];
+      _inProgressAudiobooks = _profileContentCache.inProgressAudiobooks ?? [];
+    } else if (widget.category == 'favorite') {
+      _favoriteArticles = _profileContentCache.favoriteArticles ?? [];
+      _favoriteAudiobooks = _profileContentCache.favoriteAudiobooks ?? [];
+    } else if (widget.category == 'interesting') {
+      _interestingArticles = _profileContentCache.interestingArticles ?? [];
+      _interestingAudiobooks = _profileContentCache.interestingAudiobooks ?? [];
+      _interestThemes = _profileContentCache.interestThemes ?? [];
+    }
+    isLoading = !hit;
+  }
+
+  Future<void> _loadProfileContentData() async {
+    final hadCache = _profileContentCache.hasCategory(widget.category);
+    if (!hadCache && mounted) setState(() => isLoading = true);
+    if (widget.category == 'inProgress') {
+      final articles = await profileService.getArticlesInProgress();
+      final audiobooks = await profileService.getAudiobooksInProgress();
+      _profileContentCache.inProgressArticles = articles;
+      _profileContentCache.inProgressAudiobooks = audiobooks;
+      _inProgressArticles = articles;
+      _inProgressAudiobooks = audiobooks;
     } else if (widget.category == 'favorite') {
       final favoriteArticlesRaw = await profileService.getFavoriteArticles();
-      _favoriteArticles = favoriteArticlesRaw.where((article) => article.readingStatus != 'started' && article.readingStatus != 'finished').toList();
       final favoriteAudiobooksRaw = await profileService.getFavoriteAudiobooks();
-      _favoriteAudiobooks = favoriteAudiobooksRaw.where((audiobook) => audiobook.readingStatus != 'finished').toList();
+      final articles = favoriteArticlesRaw.where((article) => article.readingStatus != 'started' && article.readingStatus != 'finished').toList();
+      final audiobooks = favoriteAudiobooksRaw.where((audiobook) => audiobook.readingStatus != 'finished').toList();
+      _profileContentCache.favoriteArticles = articles;
+      _profileContentCache.favoriteAudiobooks = audiobooks;
+      _favoriteArticles = articles;
+      _favoriteAudiobooks = audiobooks;
     } else if (widget.category == 'interesting') {
-      _interestThemes = await profileService.getThemeInterests();
+      final themes = await profileService.getThemeInterests();
       final interestingArticlesRaw = await profileService.getInterestingArticles();
-      _interestingArticles = interestingArticlesRaw.where((article) => article.readingStatus != 'started' && article.readingStatus != 'finished').toList();
       final interestingAudiobooksRaw = await profileService.getInterestingAudiobooks();
-      _interestingAudiobooks = interestingAudiobooksRaw.where((audiobook) => audiobook.readingStatus != 'started' && audiobook.readingStatus != 'finished').toList();
+      final articles = interestingArticlesRaw.where((article) => article.readingStatus != 'started' && article.readingStatus != 'finished').toList();
+      final audiobooks = interestingAudiobooksRaw.where((audiobook) => audiobook.readingStatus != 'started' && audiobook.readingStatus != 'finished').toList();
+      _profileContentCache.interestThemes = themes;
+      _profileContentCache.interestingArticles = articles;
+      _profileContentCache.interestingAudiobooks = audiobooks;
+      _interestThemes = themes;
+      _interestingArticles = articles;
+      _interestingAudiobooks = audiobooks;
     }
     if (mounted) {
       setState(() => isLoading = false);
@@ -411,29 +478,33 @@ class _ProfileContentState extends State<ProfileContent> {
               ),
             ),
           ),
-          const SizedBox(width: 12),
           Expanded(
-            child: Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    _categoryTitle(AppLocalizations.of(context)!),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  _categoryTitle(AppLocalizations.of(context)!),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 8),
-                FaIcon(
-                  _categoryIcon(),
-                  size: 18,
-                  color: _categoryIconColor(),
-                ),
-              ],
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: Center(
+              child: FaIcon(
+                _categoryIcon(),
+                size: 28,
+                color: _categoryIconColor(),
+              ),
             ),
           ),
         ],
@@ -505,7 +576,22 @@ class _ProfileContentState extends State<ProfileContent> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                if (_interestThemes.isNotEmpty)
+                if (isLoading)
+                  Expanded(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: const [
+                        ShimmerBox(width: 72, height: 34, borderRadius: 8,
+                            baseColor: AppColors.neutral, highlightColor: Colors.white),
+                        ShimmerBox(width: 96, height: 34, borderRadius: 8,
+                            baseColor: AppColors.neutral, highlightColor: Colors.white),
+                        ShimmerBox(width: 64, height: 34, borderRadius: 8,
+                            baseColor: AppColors.neutral, highlightColor: Colors.white),
+                      ],
+                    ),
+                  )
+                else if (_interestThemes.isNotEmpty)
                   Expanded(
                     child: Wrap(
                       spacing: 8,
@@ -550,7 +636,10 @@ class _ProfileContentState extends State<ProfileContent> {
           ),
         ],
         const SizedBox(height: 24),
-        ..._buildMenuContent(),
+        if (isLoading)
+          const ProfileContentSkeleton()
+        else
+          ..._buildMenuContent(),
       ],
     );
   }

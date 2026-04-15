@@ -723,7 +723,8 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                           // Bookmark section in top-left, delete icon in top-right
                           Builder(
                             builder: (context) {
-                              final statusColor = _categoryColor();
+                              // final statusColor = _categoryColor();
+                              final statusColor =AppColors.textSecondary;
                               final statusIcon = card.status == 'saved'
                                   ? FontAwesomeIcons.solidFloppyDisk
                                   : card.status == 'difficult'
@@ -743,11 +744,32 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                                         horizontal: 6, vertical: 4),
                                     child: Row(
                                       children: [
-                                        Icon(
-                                          statusIcon,
-                                          size: 20,
-                                          color: statusColor,
-                                        ),
+                                        // Icon(
+                                        //   statusIcon,
+                                        //   size: 20,
+                                        //   color: statusColor,
+                                        // ),
+                                        if (card.type.isNotEmpty) ...[
+                                          // const SizedBox(width: 16),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black
+                                                  .withOpacity(0.6),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              _getPartOfSpeech(card.type),
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),
@@ -797,80 +819,80 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                               );
                             },
                           ),
-                          const SizedBox(height: 16),
-                          // Part of speech label
-                          if (card.type.isNotEmpty)
-                            Text(
-                              _getPartOfSpeech(card.type),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 50),
                           // French word with yellow highlight, speaker icon, and translation aligned vertically
                           Center(
-                            child: Column(
+                            child: IntrinsicWidth(
+                              child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                GestureDetector(
-                                  onTap: () => _playAudio(card.audioUrl),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: getCardBorderColor(),
-                                        width: 1,
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 28,
+                                      child: Center(
+                                        child: GestureDetector(
+                                          onTap: () => _playAudio(card.audioUrl),
+                                          child: FaIcon(
+                                            _isPlaying
+                                                ? FontAwesomeIcons.circleWaveformLines
+                                                : FontAwesomeIcons.solidCircleWaveformLines,
+                                            size: 28,
+                                            color: getColorPlayIcon(card.status),
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                    child: Icon(
-                                      _isPlaying
-                                          ? FontAwesomeIcons.pause
-                                          : FontAwesomeIcons.solidCirclePlay,
-                                      size: 36,
-                                      color: getColorPlayIcon(card.status),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  padding: const EdgeInsets.only(bottom: 0.5),
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: _categoryColor(),
-                                        width: 2,
+                                    const SizedBox(width: 12),
+                                    Flexible(
+                                      child: Container(
+                                        padding: const EdgeInsets.only(bottom: 0.5),
+                                        decoration: BoxDecoration(
+                                          border: Border(
+                                            bottom: BorderSide(
+                                              color: _categoryColor(),
+                                              width: 2,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          card.word,
+                                          style: TextStyle(
+                                            fontSize: 26,
+                                            fontWeight: FontWeight.w600,
+                                            color: _categoryColor(),
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  child: Text(
-                                    card.word,
-                                    style: TextStyle(
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.w600,
-                                      color: _categoryColor(),
-                                    ),
-                                  ),
+                                  ],
                                 ),
                                 const SizedBox(height: 4),
                                 if (showHiddenValues)
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(FontAwesomeIcons.language,
-                                          size: 18,
-                                          color: AppColors.textSecondary),
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        card.translation,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          fontSize: 22,
-                                          color: AppColors.textSecondary,
+                                      SizedBox(
+                                        width: 28,
+                                        child: Center(
+                                          child: Icon(
+                                            FontAwesomeIcons.language,
+                                            size: 18,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Flexible(
+                                        child: Text(
+                                          card.translation,
+                                          style: const TextStyle(
+                                            fontSize: 22,
+                                            color: AppColors.textSecondary,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -879,28 +901,34 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                                     card.basis!.isNotEmpty) ...[
                                   const SizedBox(height: 8),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const FaIcon(
-                                        FontAwesomeIcons.lightArrowRightLong,
-                                        size: 22,
-                                        color: AppColors.textPrimary,
+                                      SizedBox(
+                                        width: 28,
+                                        child: Center(
+                                          child: FaIcon(
+                                            FontAwesomeIcons.lightArrowRightLong,
+                                            size: 22,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
                                       ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        card.basis!,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.textPrimary,
+                                      const SizedBox(width: 12),
+                                      Flexible(
+                                        child: Text(
+                                          card.basis!,
+                                          style: const TextStyle(
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textPrimary,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ],
                               ],
+                            ),
                             ),
                           ),
                           if (!showHiddenValues &&

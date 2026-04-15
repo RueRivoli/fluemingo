@@ -88,7 +88,7 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
       }
       if (!_hasMissingAudio() || _audioPollAttempts >= _audioPollMaxAttempts) {
         _audioPollTimer?.cancel();
-        _audioPollTimer = null;
+        if (mounted) setState(() => _audioPollTimer = null);
       }
     });
   }
@@ -215,6 +215,9 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
         item: item,
         displayType: 'flashcard',
         onIconToggle: () => _onIconToggle(item),
+        isAudioPending: _audioPollTimer != null &&
+            (item.isAddedByUser ?? false) &&
+            item.audioUrl.isEmpty,
       ),
     );
   }

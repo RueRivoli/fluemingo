@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
+import '../constants/content.dart';
 import '../l10n/label_localization.dart';
 
 /// Reusable theme chip for onboarding (favorite themes), edit themes bottom sheet,
@@ -22,6 +23,7 @@ class ThemeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final translatedLabel = getTranslatedLabel(context, label);
+    final resolvedIcon = leadingIcon ?? themeIconFor(label);
     final child = AnimatedContainer(
       duration: const Duration(milliseconds: 150),
       // padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -36,9 +38,9 @@ class ThemeChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (leadingIcon != null) ...[
+          if (resolvedIcon != null) ...[
             Icon(
-              leadingIcon,
+              resolvedIcon,
               size: 15,
               color: isSelected
                   ? AppColors.textPrimary

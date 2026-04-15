@@ -13,6 +13,12 @@ class ThemeItem {
   final IconData? icon;
 }
 
+/// Returns the icon registered in [THEMES] for the given theme id, or null
+/// if the id is unknown (e.g. pseudo-themes like "All"). Single source of
+/// truth for icon resolution across the app.
+IconData? themeIconFor(String themeId) =>
+    THEMES.where((e) => e.id == themeId).firstOrNull?.icon;
+
 final List<ThemeItem> THEMES = [
   ThemeItem(id: 'art', icon: FontAwesomeIcons.palette),
   ThemeItem(id: 'cinema', icon: FontAwesomeIcons.film),

@@ -134,7 +134,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
       }
       if (!_hasMissingAudio() || _audioPollAttempts >= _audioPollMaxAttempts) {
         _audioPollTimer?.cancel();
-        _audioPollTimer = null;
+        if (mounted) setState(() => _audioPollTimer = null);
       }
     });
   }
@@ -766,6 +766,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
   Widget _buildVocabularyItem(VocabularyItem item) {
     return VocabularyItemCard(
         item: item,
+        isAudioPending: false,
         onIconToggle: () async {
           if (item.status == null) {
             if (item.flashcardId != null) {

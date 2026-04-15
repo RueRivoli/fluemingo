@@ -293,7 +293,7 @@ abstract class AppLocalizations {
   /// No description provided for @contentInProgress.
   ///
   /// In en, this message translates to:
-  /// **'Content in progress'**
+  /// **'Content in Progress'**
   String get contentInProgress;
 
   /// No description provided for @continueReadingToEarnXP.
@@ -431,7 +431,7 @@ abstract class AppLocalizations {
   /// No description provided for @favoriteContent.
   ///
   /// In en, this message translates to:
-  /// **'Favorite content'**
+  /// **'Favorite Content'**
   String get favoriteContent;
 
   /// No description provided for @favoriteThemes.
@@ -1205,7 +1205,7 @@ abstract class AppLocalizations {
   /// No description provided for @yourFavoriteContent.
   ///
   /// In en, this message translates to:
-  /// **'Favorite content'**
+  /// **'Favorite Content'**
   String get yourFavoriteContent;
 
   /// No description provided for @yourContent.

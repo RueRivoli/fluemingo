@@ -107,7 +107,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirm => 'Confirm';
 
   @override
-  String get contentInProgress => 'Content in progress';
+  String get contentInProgress => 'Content in Progress';
 
   @override
   String get continueReadingToEarnXP => 'Keep reading to earn XP';
@@ -176,7 +176,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get favoritesAudiobooksOnly => 'Favorite audiobooks only';
 
   @override
-  String get favoriteContent => 'Favorite content';
+  String get favoriteContent => 'Favorite Content';
 
   @override
   String get favoriteThemes => 'Favorite themes';
@@ -606,7 +606,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get yourContentInProgress => 'Content In Progress';
 
   @override
-  String get yourFavoriteContent => 'Favorite content';
+  String get yourFavoriteContent => 'Favorite Content';
 
   @override
   String get yourContent => 'Your content';

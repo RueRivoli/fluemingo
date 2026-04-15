@@ -20,20 +20,21 @@ class ProfileContentSkeleton extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (showThemeChips) ...[
-          // Theme chip placeholders
+          // Theme chip placeholders — match ThemeChip (padding 8×6, radius 8,
+          // fontSize 16 → roughly 34px tall). Varying widths mimic labels.
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: List.generate(
-              3,
-              (_) => ShimmerBox(
-                width: 80,
-                height: 32,
-                borderRadius: 16,
-                baseColor: _base,
-                highlightColor: _highlight,
-              ),
-            ),
+            children: const [
+              ShimmerBox(width: 72, height: 34, borderRadius: 8,
+                  baseColor: AppColors.neutral, highlightColor: Colors.white),
+              ShimmerBox(width: 96, height: 34, borderRadius: 8,
+                  baseColor: AppColors.neutral, highlightColor: Colors.white),
+              ShimmerBox(width: 64, height: 34, borderRadius: 8,
+                  baseColor: AppColors.neutral, highlightColor: Colors.white),
+              ShimmerBox(width: 88, height: 34, borderRadius: 8,
+                  baseColor: AppColors.neutral, highlightColor: Colors.white),
+            ],
           ),
           const SizedBox(height: 16),
         ],
@@ -46,9 +47,10 @@ class ProfileContentSkeleton extends StatelessWidget {
           highlightColor: _highlight,
         ),
         const SizedBox(height: 8),
-        // Minified article cards row
+        // Minified article cards row (185 matches parent for favorite/interesting,
+        // 180 for inProgress — 5px difference is imperceptible).
         SizedBox(
-          height: 180,
+          height: 185,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const NeverScrollableScrollPhysics(),
@@ -69,7 +71,7 @@ class ProfileContentSkeleton extends StatelessWidget {
         const SizedBox(height: 8),
         // Audiobook cards row
         SizedBox(
-          height: 220,
+          height: 210,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const NeverScrollableScrollPhysics(),
@@ -117,7 +119,7 @@ class ProfileContentSkeleton extends StatelessWidget {
     );
   }
 
-  /// Audiobook card: 120×160 cover + title below.
+  /// Audiobook card: 120×160 cover (radius 8) + title below.
   Widget _buildAudiobookCardSkeleton() {
     return SizedBox(
       width: 120,
@@ -127,7 +129,7 @@ class ProfileContentSkeleton extends StatelessWidget {
           ShimmerBox(
             width: 120,
             height: 160,
-            borderRadius: 10,
+            borderRadius: 8,
             baseColor: _base,
             highlightColor: _highlight,
           ),

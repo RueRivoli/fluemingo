@@ -232,9 +232,6 @@ class _FavoriteThemesSelectionPageState
                                     final isSelected = _isSelected(theme);
                                     return ThemeChip(
                                       label: theme,
-                                      leadingIcon: THEMES
-                                          .firstWhere((e) => e.id == theme)
-                                          .icon,
                                       isSelected: isSelected,
                                       onTap: () => _onThemeTap(theme),
                                     );

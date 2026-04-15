@@ -12,6 +12,9 @@ class VocabularyItemCard extends StatefulWidget {
   final String displayType; // 'standard', 'flashcard','text'
   final bool hideAddAction;
   final VoidCallback? onDelete;
+  /// True when audio generation is known to be in flight for this item.
+  /// When audioUrl is empty: spinner if pending, retry icon otherwise.
+  final bool isAudioPending;
 
   const VocabularyItemCard({
     super.key,
@@ -20,6 +23,7 @@ class VocabularyItemCard extends StatefulWidget {
     this.displayType = 'standard',
     this.hideAddAction = false,
     this.onDelete,
+    this.isAudioPending = false,
   });
 
   @override
@@ -301,21 +305,27 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
                       ),
                     ),
                     child: Center(
-                      child: widget.item.audioUrl.isEmpty
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                    getColorPlayIcon()),
-                              ),
-                            )
-                          : FaIcon(
+                      child: widget.item.audioUrl.isNotEmpty
+                          ? FaIcon(
                               getPlayIconIconData(_isPlaying, _status),
                               color: getColorPlayIcon(),
                               size: 30,
-                            ),
+                            )
+                          : widget.isAudioPending
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        getColorPlayIcon()),
+                                  ),
+                                )
+                              : FaIcon(
+                                  FontAwesomeIcons.arrowRotateRight,
+                                  color: getColorPlayIcon(),
+                                  size: 22,
+                                ),
                     ),
                   ),
                 ),
