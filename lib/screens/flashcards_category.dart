@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/vocabulary_item.dart';
 import '../widgets/vocabulary_item_card.dart';
+import '../widgets/vocabulary_item_skeleton.dart';
 import '../constants/app_colors.dart';
 import '../services/flashcard_service.dart';
 import 'flashcards_deck.dart';
@@ -215,9 +216,7 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
         item: item,
         displayType: 'flashcard',
         onIconToggle: () => _onIconToggle(item),
-        isAudioPending: _audioPollTimer != null &&
-            (item.isAddedByUser ?? false) &&
-            item.audioUrl.isEmpty,
+        isAudioPending: false,
       ),
     );
   }
@@ -308,10 +307,9 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
               // Flashcards list
               Expanded(
                 child: _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                        ),
+                    ? const Padding(
+                        padding: EdgeInsets.fromLTRB(20, 0, 20, 100),
+                        child: VocabularyListSkeleton(itemCount: 6),
                       )
                     : _errorMessage != null
                         ? Center(

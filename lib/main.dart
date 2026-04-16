@@ -15,6 +15,7 @@ import 'services/profile_service.dart';
 import 'services/week_progress_service.dart';
 import 'l10n/app_localizations.dart';
 import 'services/app_review_service.dart';
+import 'widgets/animated_splash.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -164,12 +165,7 @@ class _AppInitializerState extends State<AppInitializer> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Colors.white,
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const AnimatedSplash();
     }
 
     switch (_destination) {

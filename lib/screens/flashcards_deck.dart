@@ -189,7 +189,28 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
       }
     } catch (e) {
       debugPrint('Error updating flashcard status: $e');
-    } finally {
+      _moveToNext();
+      return;
+    }
+    if (status != widget.categoryName) {
+      if (!mounted) return;
+      final removeIndex = _flashcards.indexOf(card);
+      if (removeIndex == -1) {
+        _moveToNext();
+        return;
+      }
+      setState(() {
+        _flashcards.removeAt(removeIndex);
+        _isRevealed = !widget.hideMeanings;
+        _isRevealAnimating = false;
+        _revealTurns = 0.0;
+        _transitionDirection = 0;
+        _dragOffset = 0.0;
+        if (_currentIndex >= _flashcards.length && _currentIndex > 0) {
+          _currentIndex--;
+        }
+      });
+    } else {
       _moveToNext();
     }
   }

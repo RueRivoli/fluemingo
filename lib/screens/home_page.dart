@@ -80,8 +80,14 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         child: SafeArea(
-          child: SizedBox(
-            height: 75,
+          top: false,
+          bottom: false,
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).padding.bottom > 0 ? 12 : 8,
+            ),
+            child: SizedBox(
+            height: 65,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -95,6 +101,7 @@ class _HomePageState extends State<HomePage> {
                     AppLocalizations.of(context)!.navProfile),
               ],
             ),
+          ),
           ),
         ),
       ),

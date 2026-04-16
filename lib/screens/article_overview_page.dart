@@ -59,6 +59,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
   Timer? _audioPollTimer;
   int _audioPollAttempts = 0;
   static const int _audioPollMaxAttempts = 10; // 10 * 3s = 30s
+  bool _isOpeningReader = false;
 
   @override
   void initState() {
@@ -369,6 +370,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                             const SizedBox(width: 8),
                             GestureDetector(
                               onTap: () async {
+                                if (_isOpeningReader) return;
                                 if (widget.showLocker) {
                                   await presentPaywall();
                                   if (mounted) {
@@ -376,14 +378,20 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                                   }
                                   return;
                                 }
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ArticleReadingPage(
-                                      article: _fullArticle ?? widget.article,
+                                _isOpeningReader = true;
+                                try {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ArticleReadingPage(
+                                        article:
+                                            _fullArticle ?? widget.article,
+                                      ),
                                     ),
-                                  ),
-                                );
+                                  );
+                                } finally {
+                                  _isOpeningReader = false;
+                                }
                                 // After returning from reading: refresh vocabulary and maybe ask for review
                                 if (mounted) {
                                   setState(() {
@@ -676,6 +684,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                   // Let's Read It button
                   GestureDetector(
                     onTap: () async {
+                      if (_isOpeningReader) return;
                       if (widget.showLocker &&
                           widget.article.contentType == 1 &&
                           !widget.article.isFree) {
@@ -684,46 +693,57 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                           ProfileStoreScope.of(context).load();
                         }
                         return;
-                      } else if (widget.article.contentType == 1) {
-                        await _articleService.editArticleStatus(
-                            widget.article, 'started');
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ArticleReadingPage(
-                              article: _fullArticle ?? widget.article,
+                      }
+                      _isOpeningReader = true;
+                      try {
+                        if (widget.article.contentType == 1) {
+                          await _articleService.editArticleStatus(
+                              widget.article, 'started');
+                          if (!mounted) return;
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ArticleReadingPage(
+                                article: _fullArticle ?? widget.article,
+                              ),
                             ),
-                          ),
-                        );
-                        // Force rebuild to reflect any vocabulary status changes
-                        setState(() {
-                          final currentArticle = _fullArticle ?? widget.article;
-                          vocabulary = currentArticle.vocabulary;
-                          vocabularyList = currentArticle.mainVocabularyItems;
-                          addedByUserVocabulary =
-                              currentArticle.addedByUserVocabularyItems;
-                        });
-                      } else if (widget.article.contentType == 2) {
-                        final audiobookId =
-                            _fullArticle?.id ?? widget.article.id;
-                        final chapterId =
-                            widget.article.chapterId ?? _fullArticle?.chapterId;
-                        if (chapterId != null && chapterId.isNotEmpty) {
-                          await _articleService.editChapterStatus(
-                            audiobookId: audiobookId,
-                            chapterId: chapterId,
-                            status: 'started',
                           );
-                        }
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ArticleReadingPage(
-                              article: _fullArticle ?? widget.article,
+                          if (!mounted) return;
+                          setState(() {
+                            final currentArticle =
+                                _fullArticle ?? widget.article;
+                            vocabulary = currentArticle.vocabulary;
+                            vocabularyList =
+                                currentArticle.mainVocabularyItems;
+                            addedByUserVocabulary =
+                                currentArticle.addedByUserVocabularyItems;
+                          });
+                        } else if (widget.article.contentType == 2) {
+                          final audiobookId =
+                              _fullArticle?.id ?? widget.article.id;
+                          final chapterId = widget.article.chapterId ??
+                              _fullArticle?.chapterId;
+                          if (chapterId != null && chapterId.isNotEmpty) {
+                            await _articleService.editChapterStatus(
+                              audiobookId: audiobookId,
+                              chapterId: chapterId,
+                              status: 'started',
+                            );
+                          }
+                          if (!mounted) return;
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ArticleReadingPage(
+                                article: _fullArticle ?? widget.article,
+                              ),
                             ),
-                          ),
-                        );
-                        await _loadFullArticle();
+                          );
+                          if (!mounted) return;
+                          await _loadFullArticle();
+                        }
+                      } finally {
+                        _isOpeningReader = false;
                       }
                     },
                     child: Container(
