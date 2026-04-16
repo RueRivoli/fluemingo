@@ -121,16 +121,30 @@ class _AppInitializerState extends State<AppInitializer> {
       await prefs.remove('has_seen_welcome');
     }
 
-    final hasSeenWelcome = prefs.getBool('has_seen_welcome') ?? false;
+    var hasSeenWelcome = prefs.getBool('has_seen_welcome') ?? false;
 
     // Vérifier l'état d'authentification Supabase
     final supabase = Supabase.instance.client;
-    final session = supabase.auth.currentSession;
-    final isAuthenticated = session != null;
+    var session = supabase.auth.currentSession;
+    var isAuthenticated = session != null;
     late final _AppLaunchDestination destination;
 
     if (isAuthenticated) {
       await _profileStore.load();
+
+      // Safety net: if the authenticated user has an incomplete profile (e.g.
+      // crashed mid-onboarding, half-written upsert, legacy broken row), sign
+      // them out and funnel through onboarding instead of into the main app.
+      if (!kDebugMode || !_forceOnboarding) {
+        if (!_isProfileComplete(_profileStore)) {
+          await supabase.auth.signOut();
+          _profileStore.clear();
+          await prefs.setBool('has_seen_welcome', false);
+          session = null;
+          isAuthenticated = false;
+          hasSeenWelcome = false;
+        }
+      }
     }
 
     if (kDebugMode && _forceOnboarding) {
@@ -148,6 +162,17 @@ class _AppInitializerState extends State<AppInitializer> {
       _destination = destination;
       _isLoading = false;
     });
+  }
+
+  bool _isProfileComplete(ProfileStore store) {
+    // If the profile load itself failed (network, etc.), don't interpret that
+    // as "incomplete" — that would sign the user out on transient errors.
+    if (store.loadError != null) return true;
+    final profile = store.profile;
+    if (profile == null) return false;
+    return profile.targetLanguage.trim().isNotEmpty &&
+        profile.nativeLanguage.trim().isNotEmpty &&
+        profile.weeklyGoalXP != null;
   }
 
   Future<void> _onWelcomeComplete() async {

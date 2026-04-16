@@ -448,6 +448,8 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
                   InkWell(
                     onTap: () async {
                       final wasAdded = _isAddedByUser == true;
+                      final previousStatus = _status;
+                      final previousIsAddedByUser = _isAddedByUser;
                       // Toggle local state immediately for UI feedback
                       setState(() {
                         if (widget.displayType == 'standard')
@@ -477,11 +479,17 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
                       try {
                         await widget.onIconToggle();
                       } catch (e) {
-                        // Revert on error
-                        setState(() {
-                          _status = "saved";
-                        });
+                        if (mounted) {
+                          setState(() {
+                            _status = previousStatus;
+                            _isAddedByUser = previousIsAddedByUser;
+                          });
+                        } else {
+                          _status = previousStatus;
+                          _isAddedByUser = previousIsAddedByUser;
+                        }
                         widget.item.status = _status;
+                        widget.item.isAddedByUser = _isAddedByUser;
                         debugPrint('Error in onIconToggle: $e');
                       }
                     },

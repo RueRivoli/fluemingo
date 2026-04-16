@@ -81,8 +81,9 @@ class ProfileStore extends ChangeNotifier {
       }
     } catch (e) {
       _loadError = e;
-      _profile = null;
-      LanguageTableResolver.reset();
+      // Preserve the previously loaded profile (and the language resolver) so a
+      // transient reload failure does not flip isSubscribed to false mid-session
+      // and make premium content appear locked.
     } finally {
       _isLoading = false;
       notifyListeners();

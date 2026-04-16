@@ -1556,6 +1556,12 @@ abstract class AppLocalizations {
   /// **'Authentication error'**
   String get authenticationError;
 
+  /// No description provided for @incompleteAccountSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account setup is incomplete. Please finish onboarding.'**
+  String get incompleteAccountSetup;
+
   /// No description provided for @signInFailed.
   ///
   /// In en, this message translates to:
@@ -1573,6 +1579,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Supabase configuration missing. Launch the app with --dart-define-from-file=.env'**
   String get supabaseConfigMissing;
+
+  /// No description provided for @flashcardsDeckTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} Flashcards'**
+  String flashcardsDeckTitle(Object category);
+
+  /// No description provided for @allDone.
+  ///
+  /// In en, this message translates to:
+  /// **'All done!'**
+  String get allDone;
+
+  /// No description provided for @flashcardsReviewedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve reviewed all {count} flashcards'**
+  String flashcardsReviewedCount(Object count);
+
+  /// No description provided for @reveal.
+  ///
+  /// In en, this message translates to:
+  /// **'Reveal'**
+  String get reveal;
+
+  /// No description provided for @example.
+  ///
+  /// In en, this message translates to:
+  /// **'EXAMPLE'**
+  String get example;
+
+  /// No description provided for @translation.
+  ///
+  /// In en, this message translates to:
+  /// **'TRANSLATION'**
+  String get translation;
+
+  /// No description provided for @errorDeletingFlashcard.
+  ///
+  /// In en, this message translates to:
+  /// **'Error deleting flashcard'**
+  String get errorDeletingFlashcard;
 }
 
 class _AppLocalizationsDelegate

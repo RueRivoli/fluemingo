@@ -10,6 +10,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../constants/word_types.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/flashcard_snackbar.dart';
+import '../utils/flashcard_dialogs.dart';
 import '../services/feedback_service.dart';
 import '../constants/number_icons.dart';
 
@@ -215,27 +216,20 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
     }
   }
 
-  Future<bool> _confirmDeleteFlashcard(VocabularyItem card) async {
+  String _localizedCategoryName(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.deleteFlashcard),
-        content: Text(l10n.areYouSureYouWantToDeleteWord(card.word)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: Text(l10n.delete),
-          ),
-        ],
-      ),
-    );
-    return shouldDelete == true;
+    switch (widget.categoryName) {
+      case 'saved':
+        return l10n.saved;
+      case 'difficult':
+        return l10n.difficult;
+      case 'training':
+        return l10n.training;
+      case 'mastered':
+        return l10n.mastered;
+      default:
+        return widget.categoryName;
+    }
   }
 
   String _getPartOfSpeech(String type) {
@@ -372,7 +366,8 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                     // Centered title
                     Center(
                       child: Text(
-                        '${widget.categoryName.isNotEmpty ? "${widget.categoryName[0].toUpperCase()}${widget.categoryName.substring(1)}" : widget.categoryName} Flashcards',
+                        AppLocalizations.of(context)!.flashcardsDeckTitle(
+                            _localizedCategoryName(context)),
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w600,
@@ -409,9 +404,9 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                         color: Colors.white.withOpacity(0.8),
                       ),
                       const SizedBox(height: 24),
-                      const Text(
-                        'All done!',
-                        style: TextStyle(
+                      Text(
+                        AppLocalizations.of(context)!.allDone,
+                        style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -419,7 +414,8 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'You\'ve reviewed all ${_flashcards.length} flashcards',
+                        AppLocalizations.of(context)!
+                            .flashcardsReviewedCount(_flashcards.length),
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.white.withOpacity(0.8),
@@ -800,7 +796,8 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                                     GestureDetector(
                                       onTap: () async {
                                         final confirmed =
-                                            await _confirmDeleteFlashcard(card);
+                                            await confirmDeleteFlashcard(
+                                                context, card.word);
                                         if (!confirmed || !mounted) return;
                                         try {
                                           await flashcardService
@@ -825,7 +822,9 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                                                 .showSnackBar(
                                               SnackBar(
                                                   content: Text(
-                                                      'Error deleting flashcard: $e')),
+                                                      AppLocalizations.of(
+                                                              context)!
+                                                          .errorDeletingFlashcard)),
                                             );
                                           }
                                         }
@@ -975,9 +974,9 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                                         size: 14,
                                         color: Colors.white,
                                       ),
-                                label: const Text(
-                                  'Reveal',
-                                  style: TextStyle(
+                                label: Text(
+                                  AppLocalizations.of(context)!.reveal,
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -1000,14 +999,14 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                           if (showHiddenValues) ...[
                             const SizedBox(height: 34),
                             _buildExampleBlock(
-                              title: 'EXAMPLE',
+                              title: AppLocalizations.of(context)!.example,
                               text: card.exampleSentence ?? '',
                               textColor: AppColors.textPrimary,
                               emphasized: true,
                             ),
                             const SizedBox(height: 12),
                             _buildExampleBlock(
-                              title: 'TRANSLATION',
+                              title: AppLocalizations.of(context)!.translation,
                               text: card.exampleTranslation ?? '',
                               textColor: AppColors.textSecondary,
                               emphasized: false,
@@ -1031,7 +1030,7 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                     children: [
                       _StatusIconButton(
                         status: 'saved',
-                        label: 'Saved',
+                        label: AppLocalizations.of(context)!.saved,
                         icon: FontAwesomeIcons.floppyDisk,
                         color: AppColors.primary,
                         isCurrent:
@@ -1041,7 +1040,7 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                       const SizedBox(width: 8),
                       _StatusIconButton(
                         status: 'difficult',
-                        label: 'Difficult',
+                        label: AppLocalizations.of(context)!.difficult,
                         icon: FontAwesomeIcons.triangleExclamation,
                         color: AppColors.error,
                         isCurrent:
@@ -1051,7 +1050,7 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                       const SizedBox(width: 8),
                       _StatusIconButton(
                         status: 'training',
-                        label: 'Training',
+                        label: AppLocalizations.of(context)!.training,
                         icon: FontAwesomeIcons.dumbbell,
                         color: AppColors.secondary,
                         isCurrent:
@@ -1061,7 +1060,7 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                       const SizedBox(width: 8),
                       _StatusIconButton(
                         status: 'mastered',
-                        label: 'Mastered',
+                        label: AppLocalizations.of(context)!.mastered,
                         icon: FontAwesomeIcons.badgeCheck,
                         color: AppColors.success,
                         isCurrent:

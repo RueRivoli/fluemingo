@@ -12,6 +12,7 @@ import 'flashcards_deck.dart';
 import '../widgets/flashcard_status_sheet.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/flashcard_snackbar.dart';
+import '../utils/flashcard_dialogs.dart';
 
 class FlashcardsCategoryPage extends StatefulWidget {
   final String categoryName;
@@ -58,6 +59,7 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
     });
     final flashcards = await flashcardService.getFlashcardsWithStatus(
         status: widget.categoryName);
+    if (!mounted) return;
     setState(() {
       _flashcards = flashcards;
       _isLoading = false;
@@ -101,15 +103,12 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
   }
 
   Future<void> _deleteFlashcard(int flashcardId) async {
-    try {
-      await flashcardService.deleteFlashcard(flashcardId);
-      setState(() {
-        _flashcards
-            .removeWhere((flashcard) => flashcard.flashcardId == flashcardId);
-      });
-    } catch (_) {
-      rethrow;
-    }
+    await flashcardService.deleteFlashcard(flashcardId);
+    if (!mounted) return;
+    setState(() {
+      _flashcards
+          .removeWhere((flashcard) => flashcard.flashcardId == flashcardId);
+    });
   }
 
   Future<void> _onIconToggle(VocabularyItem item) async {
@@ -181,32 +180,8 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
           size: 28,
         ),
       ),
-      confirmDismiss: (direction) async {
-        return await showDialog<bool>(
-              context: context,
-              builder: (context) {
-                final l10n = AppLocalizations.of(context)!;
-                return AlertDialog(
-                  title: Text(l10n.deleteFlashcard),
-                  content: Text(l10n.areYouSureYouWantToDeleteWord(item.word)),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: Text(l10n.cancel),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.red,
-                      ),
-                      child: Text(l10n.delete),
-                    ),
-                  ],
-                );
-              },
-            ) ??
-            false;
-      },
+      confirmDismiss: (direction) =>
+          confirmDeleteFlashcard(context, item.word),
       onDismissed: (direction) async {
         if (item.flashcardId != null) {
           await _deleteFlashcard(item.flashcardId!);

@@ -246,7 +246,15 @@
   "errorUpdatingReferenceLanguage": "Referenzsprache konnte nicht aktualisiert werden",
   "errorLoggingOut": "Abmeldung fehlgeschlagen",
   "authenticationError": "Authentifizierungsfehler",
+  "incompleteAccountSetup": "Deine Kontoeinrichtung ist unvollständig. Bitte schließe das Onboarding ab.",
   "signInFailed": "Anmeldung fehlgeschlagen",
   "noParagraphsAvailable": "Keine Absätze verfügbar",
-  "supabaseConfigMissing": "Supabase-Konfiguration fehlt. Starten Sie die App mit --dart-define-from-file=.env"
+  "supabaseConfigMissing": "Supabase-Konfiguration fehlt. Starten Sie die App mit --dart-define-from-file=.env",
+  "flashcardsDeckTitle": "{category}-Karteikarten",
+  "allDone": "Fertig!",
+  "flashcardsReviewedCount": "Du hast alle {count} Karteikarten durchgegangen",
+  "reveal": "Aufdecken",
+  "example": "BEISPIEL",
+  "translation": "ÜBERSETZUNG",
+  "errorDeletingFlashcard": "Fehler beim Löschen der Karteikarte"
 }

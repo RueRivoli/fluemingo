@@ -246,7 +246,15 @@
   "errorUpdatingReferenceLanguage": "Não foi possível atualizar o idioma de referência",
   "errorLoggingOut": "Falha ao sair",
   "authenticationError": "Erro de autenticação",
+  "incompleteAccountSetup": "A configuração da sua conta está incompleta. Conclua o onboarding.",
   "signInFailed": "Falha ao entrar",
   "noParagraphsAvailable": "Nenhum parágrafo disponível",
-  "supabaseConfigMissing": "Configuração do Supabase ausente. Inicie o app com --dart-define-from-file=.env"
+  "supabaseConfigMissing": "Configuração do Supabase ausente. Inicie o app com --dart-define-from-file=.env",
+  "flashcardsDeckTitle": "Flashcards {category}",
+  "allDone": "Tudo pronto!",
+  "flashcardsReviewedCount": "Você revisou todas as {count} flashcards",
+  "reveal": "Revelar",
+  "example": "EXEMPLO",
+  "translation": "TRADUÇÃO",
+  "errorDeletingFlashcard": "Erro ao excluir a flashcard"
 }

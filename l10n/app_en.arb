@@ -246,7 +246,15 @@
   "errorUpdatingReferenceLanguage": "Failed to update reference language",
   "errorLoggingOut": "Failed to log out",
   "authenticationError": "Authentication error",
+  "incompleteAccountSetup": "Your account setup is incomplete. Please finish onboarding.",
   "signInFailed": "Sign-in failed",
   "noParagraphsAvailable": "No paragraphs available",
-  "supabaseConfigMissing": "Supabase configuration missing. Launch the app with --dart-define-from-file=.env"
+  "supabaseConfigMissing": "Supabase configuration missing. Launch the app with --dart-define-from-file=.env",
+  "flashcardsDeckTitle": "{category} Flashcards",
+  "allDone": "All done!",
+  "flashcardsReviewedCount": "You've reviewed all {count} flashcards",
+  "reveal": "Reveal",
+  "example": "EXAMPLE",
+  "translation": "TRANSLATION",
+  "errorDeletingFlashcard": "Error deleting flashcard"
 }

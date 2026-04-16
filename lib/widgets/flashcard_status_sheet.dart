@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../constants/app_colors.dart';
 import '../services/flashcard_service.dart';
+import '../l10n/app_localizations.dart';
 
 /// Bottom sheet to edit the flashcard category (status) for a vocabulary item.
 /// Shows the word and four status buttons: Saved, Difficult, Training, Mastered.
@@ -83,41 +84,50 @@ class FlashcardStatusSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          _StatusButton(
-            label: 'Saved',
-            status: FlashcardStatus.saved.value,
-            icon: FontAwesomeIcons.floppyDisk,
-            color: AppColors.primary,
-            isCurrent: currentStatus == FlashcardStatus.saved.value,
-            onTap: () => onStatusSelected?.call(FlashcardStatus.saved.value),
-          ),
-          const SizedBox(height: 10),
-          _StatusButton(
-            label: 'Difficult',
-            status: FlashcardStatus.difficult.value,
-            icon: FontAwesomeIcons.triangleExclamation,
-            color: AppColors.error,
-            isCurrent: currentStatus == FlashcardStatus.difficult.value,
-            onTap: () => onStatusSelected?.call(FlashcardStatus.difficult.value),
-          ),
-          const SizedBox(height: 10),
-          _StatusButton(
-            label: 'Training',
-            status: FlashcardStatus.training.value,
-            icon: FontAwesomeIcons.dumbbell,
-            color: AppColors.secondary,
-            isCurrent: currentStatus == FlashcardStatus.training.value,
-            onTap: () => onStatusSelected?.call(FlashcardStatus.training.value),
-          ),
-          const SizedBox(height: 10),
-          _StatusButton(
-            label: 'Mastered',
-            status: FlashcardStatus.mastered.value,
-            icon: FontAwesomeIcons.badgeCheck,
-            color: AppColors.success,
-            isCurrent: currentStatus == FlashcardStatus.mastered.value,
-            onTap: () => onStatusSelected?.call(FlashcardStatus.mastered.value),
-          ),
+          Builder(builder: (context) {
+            final l10n = AppLocalizations.of(context)!;
+            return Column(children: [
+              _StatusButton(
+                label: l10n.saved,
+                status: FlashcardStatus.saved.value,
+                icon: FontAwesomeIcons.floppyDisk,
+                color: AppColors.primary,
+                isCurrent: currentStatus == FlashcardStatus.saved.value,
+                onTap: () =>
+                    onStatusSelected?.call(FlashcardStatus.saved.value),
+              ),
+              const SizedBox(height: 10),
+              _StatusButton(
+                label: l10n.difficult,
+                status: FlashcardStatus.difficult.value,
+                icon: FontAwesomeIcons.triangleExclamation,
+                color: AppColors.error,
+                isCurrent: currentStatus == FlashcardStatus.difficult.value,
+                onTap: () =>
+                    onStatusSelected?.call(FlashcardStatus.difficult.value),
+              ),
+              const SizedBox(height: 10),
+              _StatusButton(
+                label: l10n.training,
+                status: FlashcardStatus.training.value,
+                icon: FontAwesomeIcons.dumbbell,
+                color: AppColors.secondary,
+                isCurrent: currentStatus == FlashcardStatus.training.value,
+                onTap: () =>
+                    onStatusSelected?.call(FlashcardStatus.training.value),
+              ),
+              const SizedBox(height: 10),
+              _StatusButton(
+                label: l10n.mastered,
+                status: FlashcardStatus.mastered.value,
+                icon: FontAwesomeIcons.badgeCheck,
+                color: AppColors.success,
+                isCurrent: currentStatus == FlashcardStatus.mastered.value,
+                onTap: () =>
+                    onStatusSelected?.call(FlashcardStatus.mastered.value),
+              ),
+            ]);
+          }),
         ],
       ),
     );

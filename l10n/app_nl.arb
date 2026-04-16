@@ -246,7 +246,15 @@
   "errorUpdatingReferenceLanguage": "Referentietaal kon niet worden bijgewerkt",
   "errorLoggingOut": "Uitloggen mislukt",
   "authenticationError": "Authenticatiefout",
+  "incompleteAccountSetup": "Je account-instellingen zijn onvolledig. Rond de onboarding af.",
   "signInFailed": "Inloggen mislukt",
   "noParagraphsAvailable": "Geen paragrafen beschikbaar",
-  "supabaseConfigMissing": "Supabase-configuratie ontbreekt. Start de app met --dart-define-from-file=.env"
+  "supabaseConfigMissing": "Supabase-configuratie ontbreekt. Start de app met --dart-define-from-file=.env",
+  "flashcardsDeckTitle": "{category} flashcards",
+  "allDone": "Klaar!",
+  "flashcardsReviewedCount": "Je hebt alle {count} flashcards bekeken",
+  "reveal": "Onthullen",
+  "example": "VOORBEELD",
+  "translation": "VERTALING",
+  "errorDeletingFlashcard": "Fout bij het verwijderen van de flashcard"
 }

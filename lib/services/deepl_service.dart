@@ -23,13 +23,7 @@ class DeeplService {
         'tokenLength=${session?.accessToken.length ?? 0}');
     // print('token ==> ${session?.accessToken}');
 
-      final token = session?.accessToken ?? '';                                                                                                   
-  const chunkSize = 800;                                    
-  for (var i = 0; i < token.length; i += chunkSize) {                                                                                         
-    final end = (i + chunkSize < token.length) ? i + chunkSize : token.length;
-    print('token[$i..$end] ==> ${token.substring(i, end)}');                                                                                  
-  }                                                         
-    
+
 
     if (session == null || session.accessToken.trim().isEmpty) {
       try {

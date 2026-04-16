@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter/gestures.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../constants/app_colors.dart';
 import '../../config/supabase_config.dart';
@@ -16,7 +17,9 @@ import '../../l10n/app_localizations.dart';
 import '../../services/profile_service.dart';
 import '../../services/notification_token_sync_service.dart';
 import '../../services/onesignal_notification_service.dart';
+import '../../stores/profile_store.dart';
 import '../../utils/avatar.dart';
+import 'welcome_page.dart';
 
 enum RegistrationFlowMode { onboarding, loginOnly }
 
@@ -85,54 +88,11 @@ class _RegistrationPageState extends State<RegistrationPage> {
   @override
   void initState() {
     super.initState();
-    // Listen for auth state changes
     _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen(
       (data) {
-        final AuthChangeEvent event = data.event;
-        final Session? session = data.session;
-
-        if (event == AuthChangeEvent.signedIn && session != null) {
-          // User successfully signed in
+        if (data.event == AuthChangeEvent.signedIn && data.session != null) {
           if (mounted) {
-            // First, ensure profile exists (in case trigger failed)
-            _ensureProfileExists(session.user).then((_) async {
-              if (widget.isLoginOnly) return;
-              // In onboarding flow, update profile with onboarding preferences.
-              await _updateProfileWithLanguages(session.user);
-            }).then((_) async {
-              await _oneSignalNotificationService.initialize();
-              await _oneSignalNotificationService
-                  .loginWithSupabaseUserId(session.user.id);
-              await _oneSignalNotificationService.requestPermission();
-              await _oneSignalNotificationService.syncSubscriptionIdToProfile();
-            }).then((_) {
-              // Backward-compatible fallback for older locally stored token keys.
-              return _notificationTokenSyncService.syncIfAvailable();
-            }).then((_) {
-              if (mounted) {
-                setState(() {
-                  _resetLoadingStates();
-                });
-                widget.onComplete?.call();
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const HomePage()),
-                  (route) => false,
-                );
-              }
-            }).catchError((error) {
-              // Log error but don't block navigation
-              debugPrint('Error ensuring profile/login flow: $error');
-              if (mounted) {
-                setState(() {
-                  _resetLoadingStates();
-                });
-                widget.onComplete?.call();
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const HomePage()),
-                  (route) => false,
-                );
-              }
-            });
+            _handleSignedIn(data.session!.user);
           }
         }
       },
@@ -151,6 +111,65 @@ class _RegistrationPageState extends State<RegistrationPage> {
         }
       },
     );
+  }
+
+  Future<void> _handleSignedIn(User user) async {
+    try {
+      await _upsertProfileFromOnboarding(user);
+
+      // Fresh social signup on the login screen yields an incomplete profile.
+      // Send those users through onboarding instead of into the main app.
+      if (widget.isLoginOnly) {
+        final complete = await _profileService.isProfileComplete();
+        if (!complete) {
+          await _redirectToOnboarding();
+          return;
+        }
+      }
+
+      await _oneSignalNotificationService.initialize();
+      await _oneSignalNotificationService.loginWithSupabaseUserId(user.id);
+      await _oneSignalNotificationService.requestPermission();
+      await _oneSignalNotificationService.syncSubscriptionIdToProfile();
+      await _notificationTokenSyncService.syncIfAvailable();
+
+      // Populate ProfileStore before HomePage renders so premium-gated UI
+      // (locker icons, paywalls) reflects the real subscription state from
+      // the first frame instead of briefly flashing as free-tier.
+      if (!mounted) return;
+      try {
+        await ProfileStoreScope.of(context).load();
+      } catch (e) {
+        debugPrint('Profile preload before HomePage navigation failed: $e');
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _resetLoadingStates();
+      });
+      widget.onComplete?.call();
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => const ProfileLoader(child: HomePage()),
+        ),
+        (route) => false,
+      );
+    } catch (error) {
+      debugPrint('Error during signed-in flow: $error');
+      if (!mounted) return;
+      setState(() {
+        _resetLoadingStates();
+      });
+      // Onboarding mode: profile write may have failed. Keep the user on this
+      // screen so they can retry instead of landing in HomePage with a broken
+      // profile. loginOnly mode also surfaces the error without navigating.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.authenticationError),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -777,128 +796,87 @@ class _RegistrationPageState extends State<RegistrationPage> {
     }
   }
 
-  /// Ensures the user profile exists in the database
-  /// This handles cases where the database trigger might have failed
-  Future<void> _ensureProfileExists(User user) async {
-    try {
-      // Check if profile exists
-      final response = await Supabase.instance.client
-          .from('profiles')
-          .select('id')
-          .eq('id', user.id)
-          .maybeSingle();
+  /// Writes the profile row atomically with whatever onboarding data is
+  /// available. In loginOnly mode only basic identity fields are written so
+  /// existing language/goal settings are preserved.
+  Future<void> _upsertProfileFromOnboarding(User user) async {
+    final metadata = user.userMetadata ?? {};
+    final nameFromMetadata =
+        metadata['full_name'] ?? metadata['name'] ?? metadata['user_name'];
+    final firstName = metadata['first_name'] ?? '';
+    final lastName = metadata['last_name'] ?? '';
+    final nameFromParts = '$firstName $lastName'.trim();
+    final fullNameRaw = nameFromMetadata ??
+        (nameFromParts.isNotEmpty ? nameFromParts : null) ??
+        user.email?.split('@').first ??
+        'User';
+    final fullName =
+        fullNameRaw is String && fullNameRaw.isEmpty ? 'User' : fullNameRaw;
+    final metadataAvatarUrl = metadata['avatar_url'] ??
+        metadata['picture'] ??
+        metadata['picture_url'];
 
-      // If profile doesn't exist, create it
-      if (response == null) {
-        // Extract user data from metadata (handles different OAuth providers)
-        final metadata = user.userMetadata ?? {};
+    final data = <String, dynamic>{
+      'id': user.id,
+      'email': user.email ?? user.phone,
+      'full_name': fullName,
+      'avatar': _selectedAvatar,
+      'avatar_url': _selectedAvatarUrl ?? metadataAvatarUrl,
+      'updated_at': DateTime.now().toIso8601String(),
+    };
 
-        // Extract name from different OAuth provider metadata formats
-        final nameFromMetadata =
-            metadata['full_name'] ?? metadata['name'] ?? metadata['user_name'];
-        final firstName = metadata['first_name'] ?? '';
-        final lastName = metadata['last_name'] ?? '';
-        final nameFromParts = '$firstName $lastName'.trim();
-        final fullName = nameFromMetadata ??
-            (nameFromParts.isNotEmpty ? nameFromParts : null) ??
-            user.email?.split('@').first ??
-            'User';
-
-        final avatarUrl = metadata['avatar_url'] ??
-            metadata['picture'] ??
-            metadata['picture_url'];
-
-        final profileData = {
-          'id': user.id,
-          'email': user.email ?? user.phone,
-          'full_name': fullName.isEmpty ? 'User' : fullName,
-          'avatar': _selectedAvatar,
-          'avatar_url': _selectedAvatarUrl ?? avatarUrl,
-          'created_at': DateTime.now().toIso8601String(),
-          'updated_at': DateTime.now().toIso8601String(),
-        };
-        await _profileService.insertProfile(profileData);
+    if (!widget.isLoginOnly) {
+      if (widget.targetLanguage != null) {
+        data['target_language'] = widget.targetLanguage;
       }
-    } catch (e) {
-      debugPrint('Error ensuring profile exists: $e');
-      // Don't rethrow - we'll try to update anyway
-    }
-  }
-
-  /// Updates the user profile with language preferences from onboarding
-  /// This is called after successful OAuth authentication
-  Future<void> _updateProfileWithLanguages(User user) async {
-    if (widget.isLoginOnly) return;
-    final targetLanguage = widget.targetLanguage;
-    final nativeLanguage = widget.nativeLanguage;
-    if (targetLanguage == null || nativeLanguage == null) return;
-
-    try {
-      // Update profile with language preferences
-      // The profile should already exist (either from trigger or _ensureProfileExists)
-      final updateData = <String, dynamic>{
-        'target_language': targetLanguage,
-        'native_language': nativeLanguage,
-        'updated_at': DateTime.now().toIso8601String(),
-      };
-      if (_selectedAvatar != null) {
-        updateData['avatar'] = _selectedAvatar;
-        updateData['avatar_url'] = _selectedAvatarUrl;
+      if (widget.nativeLanguage != null) {
+        data['native_language'] = widget.nativeLanguage;
       }
       if (widget.weeklyGoalXP != null) {
-        updateData['weekly_goal'] = widget.weeklyGoalXP;
+        data['weekly_goal'] = widget.weeklyGoalXP;
       }
       if (widget.favoriteThemes != null && widget.favoriteThemes!.isNotEmpty) {
         final themes = widget.favoriteThemes!.take(5).toList();
         for (var i = 0; i < 5; i++) {
-          updateData['theme_interest_${i + 1}'] =
+          data['theme_interest_${i + 1}'] =
               i < themes.length ? themes[i] : null;
         }
       }
-      await _profileService.updateProfileData(updateData);
-    } catch (e) {
-      debugPrint('Error updating profile with languages: $e');
-      // If update fails, try to create the profile with all data
-      try {
-        final metadata = user.userMetadata ?? {};
-        final nameFromMetadata =
-            metadata['full_name'] ?? metadata['name'] ?? metadata['user_name'];
-        final firstName = metadata['first_name'] ?? '';
-        final lastName = metadata['last_name'] ?? '';
-        final nameFromParts = '$firstName $lastName'.trim();
-        final fullName = nameFromMetadata ??
-            (nameFromParts.isNotEmpty ? nameFromParts : null) ??
-            user.email?.split('@').first ??
-            'User';
-
-        final avatarUrl = metadata['avatar_url'] ??
-            metadata['picture'] ??
-            metadata['picture_url'];
-
-        final insertData = <String, dynamic>{
-          'id': user.id,
-          'email': user.email ?? user.phone,
-          'full_name': fullName.isEmpty ? 'User' : fullName,
-          'avatar': _selectedAvatar,
-          'avatar_url': _selectedAvatarUrl ?? avatarUrl,
-          'target_language': targetLanguage,
-          'native_language': nativeLanguage,
-          'created_at': DateTime.now().toIso8601String(),
-          'updated_at': DateTime.now().toIso8601String(),
-        };
-        if (widget.favoriteThemes != null &&
-            widget.favoriteThemes!.isNotEmpty) {
-          final themes = widget.favoriteThemes!.take(5).toList();
-          for (var i = 0; i < 5; i++) {
-            insertData['theme_interest_${i + 1}'] =
-                i < themes.length ? themes[i] : null;
-          }
-        }
-        await _profileService.insertProfile(insertData);
-      } catch (insertError) {
-        debugPrint('Error creating profile with languages: $insertError');
-        // Don't rethrow - allow user to continue even if profile update fails
-      }
     }
+
+    await _profileService.upsertProfile(data);
+  }
+
+  /// Bail out of a loginOnly session that turned out to be a fresh signup:
+  /// sign out, reset has_seen_welcome, and push the welcome flow.
+  Future<void> _redirectToOnboarding() async {
+    try {
+      await _oneSignalNotificationService.logout();
+    } catch (e) {
+      debugPrint('OneSignal logout during redirect failed: $e');
+    }
+    try {
+      await Supabase.instance.client.auth.signOut();
+    } catch (e) {
+      debugPrint('Supabase signOut during redirect failed: $e');
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_seen_welcome', false);
+
+    if (!mounted) return;
+    ProfileStoreScope.of(context).clear();
+    setState(() {
+      _resetLoadingStates();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!.incompleteAccountSetup),
+      ),
+    );
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const WelcomePage()),
+      (route) => false,
+    );
   }
 }

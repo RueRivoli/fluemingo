@@ -794,6 +794,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get authenticationError => 'Errore di autenticazione';
 
   @override
+  String get incompleteAccountSetup =>
+      'La configurazione del tuo account è incompleta. Completa l\'onboarding.';
+
+  @override
   String get signInFailed => 'Accesso fallito';
 
   @override
@@ -802,4 +806,30 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get supabaseConfigMissing =>
       'Configurazione Supabase mancante. Avvia l\'app con --dart-define-from-file=.env';
+
+  @override
+  String flashcardsDeckTitle(Object category) {
+    return 'Flashcard $category';
+  }
+
+  @override
+  String get allDone => 'Fatto!';
+
+  @override
+  String flashcardsReviewedCount(Object count) {
+    return 'Hai rivisto tutte le $count flashcard';
+  }
+
+  @override
+  String get reveal => 'Rivela';
+
+  @override
+  String get example => 'ESEMPIO';
+
+  @override
+  String get translation => 'TRADUZIONE';
+
+  @override
+  String get errorDeletingFlashcard =>
+      'Errore durante l\'eliminazione della flashcard';
 }

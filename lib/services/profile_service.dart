@@ -149,6 +149,34 @@ class ProfileService {
     }
   }
 
+  /// Atomically create-or-update the profile row with any allowed field.
+  /// Prevents the split-state window where INSERT succeeds but UPDATE fails.
+  Future<void> upsertProfile(Map<String, dynamic> profileData) async {
+    final allowed = <String>{..._allowedInsertFields, ..._allowedProfileFields};
+    final sanitized = Map<String, dynamic>.fromEntries(
+      profileData.entries.where((e) => allowed.contains(e.key)),
+    );
+    if (sanitized.isEmpty) return;
+    await _supabase.from('profiles').upsert(sanitized, onConflict: 'id');
+  }
+
+  /// True iff target_language, native_language and weekly_goal are all set
+  /// for the currently authenticated user.
+  Future<bool> isProfileComplete() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return false;
+    final row = await _supabase
+        .from('profiles')
+        .select('target_language, native_language, weekly_goal')
+        .eq('id', user.id)
+        .maybeSingle();
+    if (row == null) return false;
+    final target = (row['target_language'] as String?)?.trim() ?? '';
+    final native = (row['native_language'] as String?)?.trim() ?? '';
+    final weeklyGoal = row['weekly_goal'];
+    return target.isNotEmpty && native.isNotEmpty && weeklyGoal != null;
+  }
+
   Future<void> updateProfile(String avatarUrl) async {
     try {
       final user = _supabase.auth.currentUser;

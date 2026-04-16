@@ -773,6 +773,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get authenticationError => '認証エラー';
 
   @override
+  String get incompleteAccountSetup => 'アカウントの設定が未完了です。オンボーディングを完了してください。';
+
+  @override
   String get signInFailed => 'ログインに失敗しました';
 
   @override
@@ -781,4 +784,29 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get supabaseConfigMissing =>
       'Supabaseの設定がありません。--dart-define-from-file=.envでアプリを起動してください';
+
+  @override
+  String flashcardsDeckTitle(Object category) {
+    return '$categoryのフラッシュカード';
+  }
+
+  @override
+  String get allDone => '完了!';
+
+  @override
+  String flashcardsReviewedCount(Object count) {
+    return 'すべての$count枚のフラッシュカードを復習しました';
+  }
+
+  @override
+  String get reveal => '表示';
+
+  @override
+  String get example => '例文';
+
+  @override
+  String get translation => '翻訳';
+
+  @override
+  String get errorDeletingFlashcard => 'フラッシュカードの削除に失敗しました';
 }

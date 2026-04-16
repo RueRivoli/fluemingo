@@ -246,7 +246,15 @@
   "errorUpdatingReferenceLanguage": "参照言語を更新できませんでした",
   "errorLoggingOut": "ログアウトに失敗しました",
   "authenticationError": "認証エラー",
+  "incompleteAccountSetup": "アカウントの設定が未完了です。オンボーディングを完了してください。",
   "signInFailed": "ログインに失敗しました",
   "noParagraphsAvailable": "段落がありません",
-  "supabaseConfigMissing": "Supabaseの設定がありません。--dart-define-from-file=.envでアプリを起動してください"
+  "supabaseConfigMissing": "Supabaseの設定がありません。--dart-define-from-file=.envでアプリを起動してください",
+  "flashcardsDeckTitle": "{category}のフラッシュカード",
+  "allDone": "完了!",
+  "flashcardsReviewedCount": "すべての{count}枚のフラッシュカードを復習しました",
+  "reveal": "表示",
+  "example": "例文",
+  "translation": "翻訳",
+  "errorDeletingFlashcard": "フラッシュカードの削除に失敗しました"
 }
