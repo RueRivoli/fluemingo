@@ -236,6 +236,7 @@
   "enterEmailAndPassword": "Gib deine E-Mail und dein Passwort ein, um dich anzumelden.",
   "signIn": "Anmelden",
   "start": "Starten",
+  "alreadyHaveAccount": "Hast du bereits ein Konto? Anmelden",
   "downloadFailed": "Download fehlgeschlagen",
   "errorPlayingAudio": "Fehler beim Abspielen des Audios",
   "errorSeekingAudio": "Fehler beim Positionieren des Audios",

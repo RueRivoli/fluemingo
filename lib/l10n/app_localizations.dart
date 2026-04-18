@@ -1496,6 +1496,12 @@ abstract class AppLocalizations {
   /// **'Start'**
   String get start;
 
+  /// No description provided for @alreadyHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account? Log in'**
+  String get alreadyHaveAccount;
+
   /// No description provided for @downloadFailed.
   ///
   /// In en, this message translates to:

@@ -236,6 +236,7 @@
   "enterEmailAndPassword": "Voer je e-mail en wachtwoord in om in te loggen.",
   "signIn": "Inloggen",
   "start": "Beginnen",
+  "alreadyHaveAccount": "Heb je al een account? Log in",
   "downloadFailed": "Download mislukt",
   "errorPlayingAudio": "Fout bij het afspelen van audio",
   "errorSeekingAudio": "Fout bij het positioneren van audio",

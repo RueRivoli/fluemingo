@@ -765,6 +765,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get start => 'Empezar';
 
   @override
+  String get alreadyHaveAccount => '¿Ya tienes una cuenta? Inicia sesión';
+
+  @override
   String get downloadFailed => 'Error en la descarga';
 
   @override

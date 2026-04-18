@@ -236,6 +236,7 @@
   "enterEmailAndPassword": "Inserisci email e password per accedere.",
   "signIn": "Accedi",
   "start": "Inizia",
+  "alreadyHaveAccount": "Hai già un account? Accedi",
   "downloadFailed": "Download fallito",
   "errorPlayingAudio": "Errore nella riproduzione audio",
   "errorSeekingAudio": "Errore nel posizionamento audio",

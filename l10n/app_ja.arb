@@ -236,6 +236,7 @@
   "enterEmailAndPassword": "メールアドレスとパスワードを入力してログインしてください。",
   "signIn": "ログイン",
   "start": "始める",
+  "alreadyHaveAccount": "すでにアカウントをお持ちですか？ ログイン",
   "downloadFailed": "ダウンロードに失敗しました",
   "errorPlayingAudio": "オーディオの再生エラー",
   "errorSeekingAudio": "オーディオのシークエラー",

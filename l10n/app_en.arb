@@ -236,6 +236,7 @@
   "enterEmailAndPassword": "Enter your email and password to sign in.",
   "signIn": "Sign in",
   "start": "Start",
+  "alreadyHaveAccount": "Already have an account? Log in",
   "downloadFailed": "Download failed",
   "errorPlayingAudio": "Error playing audio",
   "errorSeekingAudio": "Error seeking audio",

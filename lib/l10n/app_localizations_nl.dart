@@ -766,6 +766,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get start => 'Beginnen';
 
   @override
+  String get alreadyHaveAccount => 'Heb je al een account? Log in';
+
+  @override
   String get downloadFailed => 'Download mislukt';
 
   @override

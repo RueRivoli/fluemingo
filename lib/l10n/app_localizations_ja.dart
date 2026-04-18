@@ -743,6 +743,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get start => '始める';
 
   @override
+  String get alreadyHaveAccount => 'すでにアカウントをお持ちですか？ ログイン';
+
+  @override
   String get downloadFailed => 'ダウンロードに失敗しました';
 
   @override
