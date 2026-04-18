@@ -46,8 +46,7 @@ class OfflineContentService {
       final dynamic decoded = jsonDecode(jsonString);
       if (decoded is! Map<String, dynamic>) return null;
       return _articleFromMap(decoded);
-    } catch (e) {
-      debugPrint('Error reading cached article: $e');
+    } catch (_) {
       return null;
     }
   }
@@ -147,8 +146,7 @@ class OfflineContentService {
       final file = File(targetFilePath);
       await file.writeAsBytes(bytes, flush: true);
       return file.path;
-    } catch (e) {
-      debugPrint('Error downloading offline file: $e');
+    } catch (_) {
       return null;
     }
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../constants/app_colors.dart';
 import 'target_language_page.dart';
+import 'registration_page.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -161,6 +162,34 @@ class WelcomePage extends StatelessWidget {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => RegistrationPage.loginOnly(
+                            onComplete: onComplete,
+                          ),
+                        ),
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 8),
+                      minimumSize: const Size(0, 0),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context)!.alreadyHaveAccount,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        decoration: TextDecoration.underline,
+                        decorationColor: Colors.white,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -172,9 +201,9 @@ class WelcomePage extends StatelessWidget {
 
   Widget _buildFrenchContentRow() {
     const imagePaths = [
-      'assets/img/french/leroisoleil.jpg',
-      'assets/img/french/lesmiserables.jpg',
-      'assets/img/french/tour-du-monde.jpg',
+      'assets/images/fr/leroisoleil.jpg',
+      'assets/images/fr/lesmiserables.jpg',
+      'assets/images/fr/tour-du-monde.jpg',
     ];
 
     return Row(

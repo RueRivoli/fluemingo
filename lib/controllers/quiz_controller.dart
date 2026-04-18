@@ -82,8 +82,7 @@ class QuizController extends ChangeNotifier {
         isLoading = false;
         notifyListeners();
       }
-    } catch (e) {
-      debugPrint('Error initializing quiz: $e');
+    } catch (_) {
       isLoading = false;
       notifyListeners();
     }

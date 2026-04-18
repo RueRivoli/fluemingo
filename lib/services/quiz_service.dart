@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/quiz_question.dart';
 import 'language_table_resolver.dart';
@@ -70,8 +69,7 @@ class QuizService {
       }).select('id, filled_out').single();
 
       return newQuiz;
-    } catch (e) {
-      debugPrint('Error creating quiz result: $e');
+    } catch (_) {
       return null;
     }
   }
@@ -99,8 +97,7 @@ class QuizService {
         'type': 2,
       }).select('id, filled_out').single();
       return newQuiz;
-    } catch (e) {
-      debugPrint('Error creating chapter quiz result: $e');
+    } catch (_) {
       return null;
     }
   }
@@ -138,8 +135,7 @@ class QuizService {
           .maybeSingle();
 
       return response;
-    } catch (e) {
-      debugPrint('Error fetching quiz result: $e');
+    } catch (_) {
       return null;
     }
   }

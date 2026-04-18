@@ -94,13 +94,12 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
         await _audioPlayer.setUrl(audioUrl);
         await _audioPlayer.play();
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isPlaying = false;
         });
       }
-      debugPrint('Error playing audio: $e');
     }
   }
 
@@ -478,7 +477,7 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
                       }
                       try {
                         await widget.onIconToggle();
-                      } catch (e) {
+                      } catch (_) {
                         if (mounted) {
                           setState(() {
                             _status = previousStatus;
@@ -490,7 +489,6 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
                         }
                         widget.item.status = _status;
                         widget.item.isAddedByUser = _isAddedByUser;
-                        debugPrint('Error in onIconToggle: $e');
                       }
                     },
                     borderRadius: BorderRadius.circular(20),

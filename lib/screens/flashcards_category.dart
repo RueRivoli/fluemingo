@@ -86,9 +86,7 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
         setState(() {
           _flashcards = refreshed;
         });
-      } catch (e) {
-        debugPrint('Audio poll refresh failed: $e');
-      }
+      } catch (_) {}
       if (!_hasMissingAudio() || _audioPollAttempts >= _audioPollMaxAttempts) {
         _audioPollTimer?.cancel();
         if (mounted) setState(() => _audioPollTimer = null);

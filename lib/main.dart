@@ -1,3 +1,4 @@
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -24,6 +25,11 @@ void main() async {
     runApp(const _ConfigurationErrorApp());
     return;
   }
+
+  // Configure audio session so audiobook playback continues when the screen
+  // is locked and the app is backgrounded.
+  final audioSession = await AudioSession.instance;
+  await audioSession.configure(const AudioSessionConfiguration.speech());
 
   // Initialize RevenueCat (no-op on non-iOS/Android)
   await initializeRevenueCat();

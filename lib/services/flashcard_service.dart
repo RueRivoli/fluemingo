@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/vocabulary_item.dart';
 import '../utils/flashcards.dart';
@@ -237,8 +236,7 @@ class FlashcardService {
           .insert(newFlashcardRow)
           .select()
           .single();
-    } catch (e) {
-      debugPrint('Error adding flashcard: $e');
+    } catch (_) {
       return null;
     }
   }
@@ -300,8 +298,7 @@ class FlashcardService {
             .maybeSingle();
       }
       return response;
-    } catch (e) {
-      debugPrint('Error checking if vocabulary item is saved: $e');
+    } catch (_) {
       return null;
     }
   }

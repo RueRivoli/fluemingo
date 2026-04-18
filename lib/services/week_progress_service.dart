@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/week_progress.dart';
 import 'language_table_resolver.dart';
@@ -132,8 +131,7 @@ class WeekProgressService {
         weekXP: weekXP,
         daysRemainingInWeek: daysLeft,
       );
-    } catch (e) {
-      debugPrint('Error fetching week progress: $e');
+    } catch (_) {
       return empty;
     }
   }
@@ -201,8 +199,7 @@ class WeekProgressService {
         weekQuizzesCompletedCount: quizzesCount.toString(),
         weekXP: totalXP,
       );
-    } catch (e) {
-      debugPrint('Error fetching overall progress: $e');
+    } catch (_) {
       return empty;
     }
   }

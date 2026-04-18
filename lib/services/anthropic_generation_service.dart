@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../constants/languages.dart';
 import 'edge_function_auth_exception.dart';
@@ -86,8 +85,6 @@ class AnthropicGenerationService {
       );
 
       if (response.status >= 400) {
-        debugPrint(
-            'generate-sentence edge function error (${response.status}): ${response.data}');
         return null;
       }
 
@@ -106,7 +103,6 @@ class AnthropicGenerationService {
     } catch (e) {
       if (e is EdgeFunctionReauthRequiredException) rethrow;
       if (e is RateLimitExceededException) rethrow;
-      debugPrint('Sentence generation request failed: $e');
       return null;
     }
   }
