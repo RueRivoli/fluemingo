@@ -349,6 +349,9 @@ class AppLocalizationsNl extends AppLocalizations {
       'Geen audio beschikbaar voor dit artikel';
 
   @override
+  String get novel => 'Novel';
+
+  @override
   String get noQuizAvailableForThisArticle =>
       'Geen quiz beschikbaar voor dit artikel';
 

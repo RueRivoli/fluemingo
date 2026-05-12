@@ -350,6 +350,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Pas d\'audio disponible pour cet article';
 
   @override
+  String get novel => 'Novel';
+
+  @override
   String get noQuizAvailableForThisArticle =>
       'Pas de quiz disponible pour cet article';
 

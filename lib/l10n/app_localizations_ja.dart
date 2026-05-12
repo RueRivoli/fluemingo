@@ -347,6 +347,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get noAudioAvailableForThisArticle => 'この記事の音声はありません';
 
   @override
+  String get novel => 'Novel';
+
+  @override
   String get noQuizAvailableForThisArticle => 'この記事のクイズはありません';
 
   @override

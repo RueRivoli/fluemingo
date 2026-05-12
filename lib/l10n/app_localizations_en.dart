@@ -348,6 +348,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'No audio available for this article';
 
   @override
+  String get novel => 'Novel';
+
+  @override
   String get noQuizAvailableForThisArticle =>
       'No quiz available for this article';
 

@@ -722,6 +722,12 @@ abstract class AppLocalizations {
   /// **'No audio available for this article'**
   String get noAudioAvailableForThisArticle;
 
+  /// No description provided for @novel.
+  ///
+  /// In en, this message translates to:
+  /// **'Novel'**
+  String get novel;
+
   /// No description provided for @noQuizAvailableForThisArticle.
   ///
   /// In en, this message translates to:

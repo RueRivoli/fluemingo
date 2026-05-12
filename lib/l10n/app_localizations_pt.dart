@@ -350,6 +350,9 @@ class AppLocalizationsPt extends AppLocalizations {
       'Nenhum áudio disponível para este artigo';
 
   @override
+  String get novel => 'Novel';
+
+  @override
   String get noQuizAvailableForThisArticle =>
       'Nenhum questionário disponível para este artigo';
 
