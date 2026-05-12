@@ -207,14 +207,16 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
 
   void _scrollToSentence(int sentenceIndex) {
     final key = _sentenceKeys[sentenceIndex];
-    if (key?.currentContext != null) {
-      Scrollable.ensureVisible(
-        key!.currentContext!,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-        alignment: 0.4,
-      );
-    }
+    final ctx = key?.currentContext;
+    if (ctx == null) return;
+    // Only scroll when the sentence is not already on screen, so the page
+    // doesn't jump every time the highlighted sentence advances.
+    Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+      alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+    );
   }
 
   Future<void> _updatePlaybackSpeed() async {
@@ -383,6 +385,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
     return Scaffold(
       backgroundColor: _getBackgroundColor(),
       body: SafeArea(
@@ -408,18 +411,23 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
                 physics: const NeverScrollableScrollPhysics(),
                 controller: _tabController,
                 children: [
-                  ArticleParagraphsView(
-                    paragraphs: widget.article.paragraphs,
-                    scrollController: _scrollController,
-                    sentenceKeys: _sentenceKeys,
-                    currentHighlightedSentenceIndex:
-                        _currentHighlightedSentenceIndex,
-                    fontSize: _fontSize,
-                    showTranslation: _showTranslation,
-                    showUnitsAsChips: _showUnitChips,
-                    showTranslationAfterParagraph:
-                        _showTranslationAfterParagraph,
-                    onUnitTap: _showVocabularyBottomSheet,
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isTablet ? 80 : 0,
+                    ),
+                    child: ArticleParagraphsView(
+                      paragraphs: widget.article.paragraphs,
+                      scrollController: _scrollController,
+                      sentenceKeys: _sentenceKeys,
+                      currentHighlightedSentenceIndex:
+                          _currentHighlightedSentenceIndex,
+                      fontSize: _fontSize,
+                      showTranslation: _showTranslation,
+                      showUnitsAsChips: _showUnitChips,
+                      showTranslationAfterParagraph:
+                          _showTranslationAfterParagraph,
+                      onUnitTap: _showVocabularyBottomSheet,
+                    ),
                   ),
                   _buildVocabularyContent(),
                   _buildQuizContent(),
@@ -445,8 +453,14 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
   }
 
   Widget _buildActionButtons() {
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+    // On tablet, align with the first character of the article text:
+    // 80 (outer paragraph wrapper padding) + 20 (ArticleParagraphsView inner padding).
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 100 : 16,
+        vertical: 12,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -531,36 +545,57 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
   }
 
   Widget _buildVocabularyContent() {
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+    final items = widget.article.orderedListOfVocabularyItems;
+
+    VocabularyItemCard buildCard(VocabularyItem item) => VocabularyItemCard(
+          item: item,
+          isAudioPending: item.flashcardId != null &&
+              _pendingAudioFlashcardIds.contains(item.flashcardId),
+          onIconToggle: () async {
+            await _updateMainVocabularyItemInFlashcards(item);
+          },
+        );
+
+    if (isTablet) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const gap = 12.0;
+            final itemWidth = (constraints.maxWidth - gap) / 2;
+            return Wrap(
+              spacing: gap,
+              runSpacing: 0,
+              children: items
+                  .map((item) => SizedBox(
+                        width: itemWidth,
+                        child: buildCard(item),
+                      ))
+                  .toList(),
+            );
+          },
+        ),
+      );
+    }
+
     return ListView(
       padding: const EdgeInsets.all(20),
-      children: [
-        ...widget.article.orderedListOfVocabularyItems.map((item) {
-          return VocabularyItemCard(
-            item: item,
-            isAudioPending: item.flashcardId != null &&
-                _pendingAudioFlashcardIds.contains(item.flashcardId),
-            onIconToggle: () async {
-              await _updateMainVocabularyItemInFlashcards(item);
-            },
-          );
-        }),
-      ],
+      children: items.map(buildCard).toList(),
     );
   }
 
   Widget _buildQuizContent() {
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+    final Widget content;
     if (_quizController.isLoading) {
-      return const Center(
+      content = const Center(
         child: CircularProgressIndicator(color: Colors.white),
       );
-    }
-
-    if (_quizController.isCompleted) {
-      return QuizCompletedView(quizController: _quizController);
-    }
-
-    if (!_quizController.hasQuestions) {
-      return Center(
+    } else if (_quizController.isCompleted) {
+      content = QuizCompletedView(quizController: _quizController);
+    } else if (!_quizController.hasQuestions) {
+      content = Center(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Text(
@@ -569,12 +604,20 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
           ),
         ),
       );
+    } else {
+      content = QuizContentWidget(
+        questions: _quizController.questions,
+        onQuizComplete: _quizController.onQuizComplete,
+      );
     }
 
-    return QuizContentWidget(
-      questions: _quizController.questions,
-      onQuizComplete: _quizController.onQuizComplete,
-    );
+    if (isTablet) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 120, vertical: 32),
+        child: content,
+      );
+    }
+    return content;
   }
 
   // ─── Dialogs ──────────────────────────────────────────────────────────────

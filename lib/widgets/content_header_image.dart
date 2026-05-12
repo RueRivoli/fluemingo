@@ -97,3 +97,82 @@ class ContentHeaderImage extends StatelessWidget {
     );
   }
 }
+
+/// Landscape (3:2) header image with rounded corners and a status badge,
+/// used on tablet layouts where the image sits to the right of the info section.
+class ContentSideImage extends StatelessWidget {
+  final String imageUrl;
+  final String? status;
+  final bool showStatusMenu;
+  final void Function(String newStatus)? onStatusChange;
+  final double width;
+  final double height;
+
+  const ContentSideImage({
+    super.key,
+    required this.imageUrl,
+    this.status,
+    this.showStatusMenu = false,
+    this.onStatusChange,
+    this.width = 533,
+    this.height = 400,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final normalizedPath = imageUrl.startsWith('file://')
+        ? imageUrl.replaceFirst('file://', '')
+        : imageUrl;
+    final isLocal = normalizedPath.startsWith('/');
+
+    return SizedBox(
+      width: width,
+      height: height,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: isLocal
+                  ? Image.file(
+                      File(normalizedPath),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          _buildPlaceholder(),
+                    )
+                  : Image.network(
+                      normalizedPath,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          _buildPlaceholder(),
+                    ),
+            ),
+            Positioned(
+              bottom: 12,
+              left: 12,
+              child: ContentStatusBadge(
+                status: status,
+                compact: false,
+                showStatusMenu: showStatusMenu,
+                onStatusChange: onStatusChange,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      color: Colors.grey[300],
+      child: const Center(
+        child: Icon(
+          Icons.image_outlined,
+          size: 48,
+          color: Colors.grey,
+        ),
+      ),
+    );
+  }
+}

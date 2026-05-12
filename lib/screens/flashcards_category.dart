@@ -360,96 +360,107 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
               if (!_isLoading &&
                   _errorMessage == null &&
                   _flashcards.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-                  child: Column(
-                    children: [
-                      // Test your knowledge button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // TODO: Implement test your knowledge functionality
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => FlashcardsDeckPage(
-                                  flashcards: _flashcards,
-                                  categoryName: widget.categoryName,
-                                  hideMeanings: true,
-                                ),
-                              ),
-                            ).then((_) {
-                              _loadFlashcards();
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey[400],
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const FaIcon(
-                                FontAwesomeIcons.blockQuestion,
-                                color: Colors.black,
-                                size: 22,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                AppLocalizations.of(context)!.testYourKnowledge,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ],
+                Builder(builder: (context) {
+                  final isTablet =
+                      MediaQuery.of(context).size.shortestSide >= 600;
+
+                  final testButton = ElevatedButton(
+                    onPressed: () {
+                      // TODO: Implement test your knowledge functionality
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => FlashcardsDeckPage(
+                            flashcards: _flashcards,
+                            categoryName: widget.categoryName,
+                            hideMeanings: true,
                           ),
                         ),
+                      ).then((_) {
+                        _loadFlashcards();
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey[400],
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(height: 12),
-                      // Read Flashcards button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _onReadFlashcards,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.secondary,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const FaIcon(
-                                FontAwesomeIcons.cardsBlank,
-                                color: Colors.black,
-                                size: 22,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                AppLocalizations.of(context)!.readFlashcards,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ],
+                      elevation: 0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const FaIcon(
+                          FontAwesomeIcons.blockQuestion,
+                          color: Colors.black,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          AppLocalizations.of(context)!.testYourKnowledge,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
                           ),
                         ),
+                      ],
+                    ),
+                  );
+
+                  final readButton = ElevatedButton(
+                    onPressed: _onReadFlashcards,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.secondary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ],
-                  ),
-                ),
+                      elevation: 0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const FaIcon(
+                          FontAwesomeIcons.cardsBlank,
+                          color: Colors.black,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          AppLocalizations.of(context)!.readFlashcards,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  return Container(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                    child: isTablet
+                        ? Row(
+                            children: [
+                              Expanded(child: testButton),
+                              const SizedBox(width: 12),
+                              Expanded(child: readButton),
+                            ],
+                          )
+                        : Column(
+                            children: [
+                              SizedBox(
+                                  width: double.infinity, child: testButton),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                  width: double.infinity, child: readButton),
+                            ],
+                          ),
+                  );
+                }),
             ],
           ),
         ),

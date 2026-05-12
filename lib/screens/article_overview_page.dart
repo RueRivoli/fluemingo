@@ -209,276 +209,345 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
     FlashcardSnackbar.show(context, 'added');
   }
 
+  Future<void> _handleStatusChange(String newStatus) async {
+    final article = _fullArticle ?? widget.article;
+    if (widget.article.contentType == 1) {
+      await _articleService.editArticleStatus(article, newStatus);
+    } else if (widget.article.contentType == 2) {
+      final audiobookId = _fullArticle?.id ?? widget.article.id;
+      final chapterId =
+          widget.article.chapterId ?? _fullArticle?.chapterId;
+      if (chapterId != null && chapterId.isNotEmpty) {
+        await _articleService.editChapterStatus(
+          audiobookId: audiobookId,
+          chapterId: chapterId,
+          status: newStatus,
+        );
+      }
+    }
+    await _loadFullArticle();
+    if (newStatus == 'finished' && mounted) {
+      final xp = widget.article.contentType == 1
+          ? XP_PER_ARTICLE
+          : XP_PER_AUDIOBOOK_CHAPTER;
+      FeedbackService.instance.playSuccess();
+      await XpRewardBottomSheet.show(context, xp: xp);
+    }
+  }
+
+  Widget _buildTitleRow() {
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Builder(
+            builder: (context) {
+              final isAudiobookChapter = widget.article.contentType == 2;
+              final orderId = widget.article.orderId ?? 0;
+              final numberIcon = isAudiobookChapter
+                  ? figureToFontAwesomeIcon(orderId)
+                  : null;
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (isAudiobookChapter) ...[
+                    if (numberIcon != null)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 10),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Icon(numberIcon,
+                                size: 24, color: AppColors.textPrimary),
+                            Text(
+                              '.',
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Padding(
+                        padding: const EdgeInsets.only(right: 10),
+                        child: Text(
+                          '$orderId.',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
+                  ],
+                  Expanded(
+                    child: Text(
+                      widget.article.title,
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        if (_fullArticle?.contentType == 1 || widget.showLocker) ...[
+          const SizedBox(width: 8),
+          FavoriteToggleButton(
+            isFavorite: _fullArticle?.isFavorite ?? false,
+            showLocker: widget.showLocker,
+            onTap: () async {
+              if (widget.showLocker) {
+                await presentPaywall();
+                if (mounted) {
+                  ProfileStoreScope.of(context).load();
+                }
+                return;
+              }
+              widget.onFavoriteToggle();
+              setState(() {
+                if (_fullArticle == null) return;
+                _fullArticle!.isFavorite = !_fullArticle!.isFavorite;
+              });
+            },
+          ),
+        ],
+        if (!isTablet) ...[
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () async {
+              if (_isOpeningReader) return;
+              if (widget.showLocker) {
+                await presentPaywall();
+                if (mounted) {
+                  ProfileStoreScope.of(context).load();
+                }
+                return;
+              }
+              _isOpeningReader = true;
+              try {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ArticleReadingPage(
+                      article: _fullArticle ?? widget.article,
+                    ),
+                  ),
+                );
+              } finally {
+                _isOpeningReader = false;
+              }
+              // After returning from reading: refresh vocabulary and maybe ask for review
+              if (mounted) {
+                setState(() {
+                  final currentArticle = _fullArticle ?? widget.article;
+                  vocabulary = currentArticle.vocabulary;
+                  vocabularyList =
+                      currentArticle.orderedListOfVocabularyItems;
+                  addedByUserVocabulary =
+                      currentArticle.addedByUserVocabularyItems;
+                });
+                AppReviewService.instance.requestReviewIfAppropriate();
+              }
+            },
+            child: const Icon(
+              FontAwesomeIcons.chevronRight,
+              size: 28,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildChipsWrap(BuildContext context) {
+    final chipMaxWidth = MediaQuery.of(context).size.width - 80;
+    return Wrap(
+      spacing: 8,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 6,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Text(
+            widget.article.level,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        ContentCategoryChip(
+          category: widget.article.category1,
+          maxWidth: chipMaxWidth,
+          maxLines: 2,
+          horizontalPadding: 10,
+          verticalPadding: 6,
+          borderRadius: 6,
+        ),
+        if (widget.article.category2 != null &&
+            widget.article.category2!.isNotEmpty)
+          ContentCategoryChip(
+            category: widget.article.category2!,
+            maxWidth: chipMaxWidth,
+            maxLines: 2,
+            horizontalPadding: 10,
+            verticalPadding: 6,
+            borderRadius: 6,
+          ),
+        if (widget.article.category3 != null &&
+            widget.article.category3!.isNotEmpty)
+          ContentCategoryChip(
+            category: widget.article.category3!,
+            maxWidth: chipMaxWidth,
+            maxLines: 2,
+            horizontalPadding: 10,
+            verticalPadding: 6,
+            borderRadius: 6,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildTabletBackButton(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                FontAwesomeIcons.chevronLeft,
+                color: AppColors.textPrimary,
+                size: 24,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final displayArticle = _fullArticle ?? widget.article;
     final rawHeaderImagePath = displayArticle.imageUrl.isNotEmpty
         ? displayArticle.imageUrl
         : widget.article.imageUrl;
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+
+    final titleRow = _buildTitleRow();
+    final chipsWrap = _buildChipsWrap(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
         children: [
+          if (isTablet) _buildTabletBackButton(context),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header Image
-                  ContentHeaderImage(
-                    imageUrl: rawHeaderImagePath,
-                    status: _fullArticle?.readingStatus,
-                    showStatusMenu: true,
-                    onStatusChange: (newStatus) async {
-                      final article = _fullArticle ?? widget.article;
-                      if (widget.article.contentType == 1) {
-                        await _articleService.editArticleStatus(
-                          article,
-                          newStatus,
-                        );
-                      } else if (widget.article.contentType == 2) {
-                        final audiobookId =
-                            _fullArticle?.id ?? widget.article.id;
-                        final chapterId = widget.article.chapterId ??
-                            _fullArticle?.chapterId;
-                        if (chapterId != null && chapterId.isNotEmpty) {
-                          await _articleService.editChapterStatus(
-                            audiobookId: audiobookId,
-                            chapterId: chapterId,
-                            status: newStatus,
-                          );
-                        }
-                      }
-                      await _loadFullArticle();
-                      if (newStatus == 'finished' && mounted) {
-                        final xp = widget.article.contentType == 1
-                            ? XP_PER_ARTICLE
-                            : XP_PER_AUDIOBOOK_CHAPTER;
-                        FeedbackService.instance.playSuccess();
-                        await XpRewardBottomSheet.show(context, xp: xp);
-                      }
-                    },
-                  ),
+                  // Header Image (mobile only — on tablet the image moves
+                  // next to the info section below)
+                  if (!isTablet)
+                    ContentHeaderImage(
+                      imageUrl: rawHeaderImagePath,
+                      status: _fullArticle?.readingStatus,
+                      showStatusMenu: true,
+                      onStatusChange: _handleStatusChange,
+                    ),
 
                   // Content
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                    padding: EdgeInsets.fromLTRB(20, isTablet ? 16 : 10, 20, 20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Title row (arrow centered on title only)
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: Builder(
-                                builder: (context) {
-                                  final isAudiobookChapter =
-                                      widget.article.contentType == 2;
-                                  final orderId = widget.article.orderId ?? 0;
-                                  final numberIcon = isAudiobookChapter
-                                      ? figureToFontAwesomeIcon(orderId)
-                                      : null;
-                                  return Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      if (isAudiobookChapter) ...[
-                                        if (numberIcon != null)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                right: 10),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              children: [
-                                                Icon(numberIcon,
-                                                    size: 24,
-                                                    color:
-                                                        AppColors.textPrimary),
-                                                Text(
-                                                  '.',
-                                                  style: const TextStyle(
-                                                    fontSize: 28,
-                                                    fontWeight: FontWeight.w700,
-                                                    color:
-                                                        AppColors.textPrimary,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          )
-                                        else
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                right: 10),
-                                            child: Text(
-                                              '$orderId.',
-                                              style: const TextStyle(
-                                                fontSize: 28,
-                                                fontWeight: FontWeight.w700,
-                                                color: AppColors.textPrimary,
-                                                letterSpacing: -0.5,
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                      Expanded(
-                                        child: Text(
-                                          widget.article.title,
-                                          style: const TextStyle(
-                                            fontSize: 26,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.textPrimary,
-                                            letterSpacing: -0.5,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            ),
-                            if (_fullArticle?.contentType == 1 ||
-                                widget.showLocker) ...[
-                              const SizedBox(width: 8),
-                              FavoriteToggleButton(
-                                isFavorite: _fullArticle?.isFavorite ?? false,
-                                showLocker: widget.showLocker,
-                                onTap: () async {
-                                  if (widget.showLocker) {
-                                    await presentPaywall();
-                                    if (mounted) {
-                                      ProfileStoreScope.of(context).load();
-                                    }
-                                    return;
-                                  }
-                                  widget.onFavoriteToggle();
-                                  setState(() {
-                                    if (_fullArticle == null) return;
-                                    _fullArticle!.isFavorite =
-                                        !_fullArticle!.isFavorite;
-                                  });
-                                },
-                              ),
-                            ],
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () async {
-                                if (_isOpeningReader) return;
-                                if (widget.showLocker) {
-                                  await presentPaywall();
-                                  if (mounted) {
-                                    ProfileStoreScope.of(context).load();
-                                  }
-                                  return;
-                                }
-                                _isOpeningReader = true;
-                                try {
-                                  await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ArticleReadingPage(
-                                        article:
-                                            _fullArticle ?? widget.article,
+                        if (isTablet)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    titleRow,
+                                    const SizedBox(height: 12),
+                                    chipsWrap,
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      widget.article.description,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.grey[600],
+                                        height: 1.5,
                                       ),
                                     ),
-                                  );
-                                } finally {
-                                  _isOpeningReader = false;
-                                }
-                                // After returning from reading: refresh vocabulary and maybe ask for review
-                                if (mounted) {
-                                  setState(() {
-                                    final currentArticle =
-                                        _fullArticle ?? widget.article;
-                                    vocabulary = currentArticle.vocabulary;
-                                    vocabularyList = currentArticle
-                                        .orderedListOfVocabularyItems;
-                                    addedByUserVocabulary = currentArticle
-                                        .addedByUserVocabularyItems;
-                                  });
-                                  AppReviewService.instance
-                                      .requestReviewIfAppropriate();
-                                }
-                              },
-                              child: const Icon(
-                                FontAwesomeIcons.chevronRight,
-                                size: 28,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 6,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                widget.article.level,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  ],
                                 ),
                               ),
-                            ),
-                            ContentCategoryChip(
-                              category: widget.article.category1,
-                              maxWidth: MediaQuery.of(context).size.width - 80,
-                              maxLines: 2,
-                              horizontalPadding: 10,
-                              verticalPadding: 6,
-                              borderRadius: 6,
-                            ),
-                            if (widget.article.category2 != null &&
-                                widget.article.category2!.isNotEmpty)
-                              ContentCategoryChip(
-                                category: widget.article.category2!,
-                                maxWidth:
-                                    MediaQuery.of(context).size.width - 80,
-                                maxLines: 2,
-                                horizontalPadding: 10,
-                                verticalPadding: 6,
-                                borderRadius: 6,
+                              const SizedBox(width: 16),
+                              ContentSideImage(
+                                imageUrl: rawHeaderImagePath,
+                                status: _fullArticle?.readingStatus,
+                                showStatusMenu: true,
+                                onStatusChange: _handleStatusChange,
                               ),
-                            if (widget.article.category3 != null &&
-                                widget.article.category3!.isNotEmpty)
-                              ContentCategoryChip(
-                                category: widget.article.category3!,
-                                maxWidth:
-                                    MediaQuery.of(context).size.width - 80,
-                                maxLines: 2,
-                                horizontalPadding: 10,
-                                verticalPadding: 6,
-                                borderRadius: 6,
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Description
-                        Text(
-                          widget.article.description,
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: Colors.grey[600],
-                            height: 1.5,
+                            ],
+                          )
+                        else ...[
+                          titleRow,
+                          const SizedBox(height: 12),
+                          chipsWrap,
+                          const SizedBox(height: 16),
+                          Text(
+                            widget.article.description,
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey[600],
+                              height: 1.5,
+                            ),
                           ),
-                        ),
+                        ],
                         const SizedBox(height: 28),
 
                         // Vocabulary Section
@@ -571,17 +640,11 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                                       ),
                                     ),
                                   )
-                                : Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      ...(_showPersonalVocabularyOnly
-                                              ? addedByUserVocabulary
-                                              : vocabularyList)
-                                          .map((item) {
-                                        return _buildVocabularyItem(item);
-                                      }),
-                                    ],
+                                : _buildVocabularyList(
+                                    _showPersonalVocabularyOnly
+                                        ? addedByUserVocabulary
+                                        : vocabularyList,
+                                    isTablet,
                                   ),
 
                         const SizedBox(height: 24),
@@ -619,13 +682,15 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
             decoration: BoxDecoration(
               color: AppColors.background,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -4),
-                ),
-              ],
+              boxShadow: isTablet
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -4),
+                      ),
+                    ],
             ),
             child: SafeArea(
               top: false,
@@ -636,11 +701,15 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                   GestureDetector(
                     onTap: _isDownloadingOffline ? null : _downloadForOffline,
                     child: Container(
-                      width: double.infinity,
+                      width: isTablet ? 400 : double.infinity,
                       height: 52,
                       decoration: BoxDecoration(
-                        color: AppColors.textGrey,
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.textPrimary,
+                          width: 1,
+                        ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -654,7 +723,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                             size: 20,
                             color: _isOfflineAvailable
                                 ? AppColors.success
-                                : Colors.grey[700],
+                                : AppColors.textPrimary,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -669,7 +738,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                               fontWeight: FontWeight.w600,
                               color: _isOfflineAvailable
                                   ? AppColors.success
-                                  : Colors.grey[700],
+                                  : AppColors.textPrimary,
                             ),
                           ),
                         ],
@@ -742,7 +811,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                       }
                     },
                     child: Container(
-                      width: double.infinity,
+                      width: isTablet ? 400 : double.infinity,
                       height: 52,
                       decoration: BoxDecoration(
                         color: AppColors.secondary,
@@ -775,6 +844,31 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildVocabularyList(List<VocabularyItem> items, bool isTablet) {
+    if (isTablet) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          const gap = 12.0;
+          final itemWidth = (constraints.maxWidth - gap) / 2;
+          return Wrap(
+            spacing: gap,
+            runSpacing: 0,
+            children: items
+                .map((item) => SizedBox(
+                      width: itemWidth,
+                      child: _buildVocabularyItem(item),
+                    ))
+                .toList(),
+          );
+        },
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: items.map(_buildVocabularyItem).toList(),
     );
   }
 

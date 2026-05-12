@@ -453,6 +453,28 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
       );
     }
 
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+    final dotIndicators = SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(_flashcards.length, (i) {
+          final isActive = i == _currentIndex;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: isActive ? 10 : 6,
+            height: isActive ? 10 : 6,
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isActive
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.35),
+            ),
+          );
+        }),
+      ),
+    );
     return Scaffold(
       backgroundColor: widget.categoryName == 'saved'
           ? AppColors.primary
@@ -506,35 +528,18 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
               ),
             ),
 
-            // Dot indicators
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(_flashcards.length, (i) {
-                    final isActive = i == _currentIndex;
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: isActive ? 10 : 6,
-                      height: isActive ? 10 : 6,
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isActive
-                            ? Colors.white
-                            : Colors.white.withValues(alpha: 0.35),
-                      ),
-                    );
-                  }),
-                ),
+            // Dot indicators — mobile only.
+            // On tablet they sit directly above the deck (see Expanded below).
+            if (!isTablet)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: dotIndicators,
               ),
-            ),
 
             // Flashcard area with stacked cards
             Expanded(
-              child: GestureDetector(
+              child: Builder(builder: (context) {
+                final deckGesture = GestureDetector(
                 onHorizontalDragUpdate: (details) {
                   if (_transitionDirection == 0) {
                     setState(() {
@@ -616,7 +621,28 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                     );
                   },
                 ),
-              ),
+                );
+                if (isTablet) {
+                  return Center(
+                    child: SizedBox(
+                      width: 480,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          dotIndicators,
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height:
+                                MediaQuery.of(context).size.height * 0.6,
+                            child: deckGesture,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                return Center(child: deckGesture);
+              }),
             ),
           ],
         ),
