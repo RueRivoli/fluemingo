@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/audiobook.dart';
 import '../models/article.dart';
@@ -197,6 +196,12 @@ class AudiobookService {
       final chapters = sortedChapters.map((chapterJson) {
         final chapterIdValue = chapterJson['id'];
         final chapterId = chapterIdValue is num ? chapterIdValue.toInt() : null;
+        final chapterImgPath =
+            (chapterJson['image_url'] ?? chapterJson['img_url'])?.toString();
+        final chapterImageUrl =
+            (chapterImgPath != null && chapterImgPath.isNotEmpty)
+                ? _getImageUrl(chapterImgPath)
+                : imageUrl;
         return Article(
           id: audiobookResponse['id'].toString(),
           chapterId: chapterId?.toString(),
@@ -205,7 +210,7 @@ class AudiobookService {
           description: ArticleService.localizedDescription(
               chapterJson, referenceLanguageCode),
           author: audiobookResponse['author'] ?? '',
-          imageUrl: imageUrl,
+          imageUrl: chapterImageUrl,
           level: audiobookResponse['level']?.toString() ?? 'A1',
           category1: audiobookResponse['category_1'] ?? '',
           category2: audiobookResponse['category_2'] ?? '',
@@ -241,8 +246,7 @@ class AudiobookService {
         isFree: audiobookResponse['is_free'] == true,
         isNew: JsonUtils.readIsNew(audiobookResponse),
       );
-    } catch (e) {
-      debugPrint('Error fetching audiobook: $e');
+    } catch (_) {
       return null;
     }
   }
@@ -338,9 +342,7 @@ class AudiobookService {
       if (status == 'finished') {
         await _setAllChaptersFinished(contentId, user.id);
       }
-    } catch (e) {
-      debugPrint('Error editing audiobook status: $e');
-    }
+    } catch (_) {}
   }
 
   /// Toggle favorite (is_liked) for an audiobook in fr_progress
@@ -376,8 +378,6 @@ class AudiobookService {
       } else {
         await _supabase.from(_table('progress')).insert(payload);
       }
-    } catch (e) {
-      debugPrint('Error toggling audiobook favorite: $e');
-    }
+    } catch (_) {}
   }
 }

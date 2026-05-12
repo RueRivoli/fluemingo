@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Shared helper for constructing Supabase Storage public URLs.
@@ -24,8 +23,7 @@ class StorageUrlHelper {
 
     try {
       return supabase.storage.from(_storageBucket).getPublicUrl(cleanPath);
-    } catch (e) {
-      debugPrint('Error constructing storage URL: $e');
+    } catch (_) {
       return '';
     }
   }

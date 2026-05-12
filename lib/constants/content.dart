@@ -3,7 +3,7 @@ import '../l10n/app_localizations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 final List<String> AUDIOBOOK_TYPES = [
-    'Fiction', 'Biography', 'Literature', 'Poetry', 'Travel', 'Tale'
+    'Fiction', 'Biography', 'Literature', 'Novel', 'Poetry', 'Travel', 'Tale'
 ];
 
 /// A theme option with a stable [id] (for l10n/storage) and optional [icon].

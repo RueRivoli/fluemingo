@@ -94,8 +94,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
       });
       _maybeStartAudioPoll();
       await _refreshOfflineAvailability();
-    } catch (e) {
-      debugPrint('Error loading full article: $e');
+    } catch (_) {
       setState(() {
         _isLoadingVocabulary = false;
       });
@@ -130,9 +129,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
             addedByUserVocabulary = refreshed.addedByUserVocabularyItems;
           });
         }
-      } catch (e) {
-        debugPrint('Audio poll refresh failed: $e');
-      }
+      } catch (_) {}
       if (!_hasMissingAudio() || _audioPollAttempts >= _audioPollMaxAttempts) {
         _audioPollTimer?.cancel();
         if (mounted) setState(() => _audioPollTimer = null);
@@ -697,9 +694,8 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                       _isOpeningReader = true;
                       try {
                         if (widget.article.contentType == 1) {
-                          await _articleService.editArticleStatus(
-                              widget.article, 'started');
-                          if (!mounted) return;
+                          unawaited(_articleService.editArticleStatus(
+                              widget.article, 'started'));
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -724,13 +720,12 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                           final chapterId = widget.article.chapterId ??
                               _fullArticle?.chapterId;
                           if (chapterId != null && chapterId.isNotEmpty) {
-                            await _articleService.editChapterStatus(
+                            unawaited(_articleService.editChapterStatus(
                               audiobookId: audiobookId,
                               chapterId: chapterId,
                               status: 'started',
-                            );
+                            ));
                           }
-                          if (!mounted) return;
                           await Navigator.push(
                             context,
                             MaterialPageRoute(

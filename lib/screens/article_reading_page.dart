@@ -156,9 +156,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
         if (_repeatMode) {
           await _audioPlayer.setLoopMode(LoopMode.one);
         }
-      } catch (e) {
-        debugPrint('Error loading audio: $e');
-      }
+      } catch (_) {}
     }
   }
 
@@ -222,9 +220,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
   Future<void> _updatePlaybackSpeed() async {
     try {
       await _audioPlayer.setSpeed(_playbackSpeed);
-    } catch (e) {
-      debugPrint('Error updating playback speed: $e');
-    }
+    } catch (_) {}
   }
 
   Future<void> _seekBy(Duration offset) async {
@@ -257,8 +253,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
       }
 
       await _audioPlayer.seek(targetPosition);
-    } catch (e) {
-      debugPrint('Error seeking audio: $e');
+    } catch (_) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context)!.errorSeekingAudio)),
       );
@@ -290,8 +285,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
         await _updatePlaybackSpeed();
         await _audioPlayer.play();
       }
-    } catch (e) {
-      debugPrint('Error toggling playback: $e');
+    } catch (_) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context)!.errorPlayingAudio)),
       );
@@ -304,9 +298,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     });
     try {
       await _audioPlayer.setLoopMode(_repeatMode ? LoopMode.one : LoopMode.off);
-    } catch (e) {
-      debugPrint('Error setting repeat mode: $e');
-    }
+    } catch (_) {}
   }
 
   @override
@@ -894,7 +886,6 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
       if (user == null) return false;
       final contentId = int.tryParse(widget.article.id);
       if (contentId == null) {
-        debugPrint('Invalid content id: ${widget.article.id}');
         return false;
       }
       final chapterId = widget.article.chapterId != null
@@ -1021,8 +1012,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     } on EdgeFunctionReauthRequiredException {
       await _handleEdgeFunctionReauthRequired();
       return false;
-    } catch (e) {
-      debugPrint('Error updating flashcard ${item.flashcardId}: $e');
+    } catch (_) {
       return false;
     }
   }
@@ -1086,9 +1076,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
           _showFlashcardAddedSnackBar();
         }
       }
-    } catch (e) {
-      debugPrint('Error updating flashcard ${item.flashcardId}: $e');
-    }
+    } catch (_) {}
   }
 
   Future<void> _deleteVocabularyItem(VocabularyItem item) async {
@@ -1105,8 +1093,6 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
             .removeWhere((element) => element.flashcardId == flashcardId);
         _listOfVocabularyItems = widget.article.listOfVocabularyItems;
       });
-    } catch (e) {
-      debugPrint('Error deleting flashcard ${item.flashcardId}: $e');
-    }
+    } catch (_) {}
   }
 }

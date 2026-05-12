@@ -49,9 +49,7 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
           _audiobook = audioBook;
         });
       }
-    } catch (e) {
-      debugPrint('Error loading audiobook: $e');
-    }
+    } catch (_) {}
   }
 
   /// Format duration in seconds to MM:SS format

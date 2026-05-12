@@ -43,15 +43,11 @@ class _HomePageState extends State<HomePage> {
       }
       await _oneSignalNotificationService.requestPermission();
       await _oneSignalNotificationService.syncSubscriptionIdToProfile();
-    } catch (e) {
-      debugPrint('OneSignal notification setup failed: $e');
-    }
+    } catch (_) {}
     try {
       // Backward-compatible fallback for older locally stored token keys.
       await _notificationTokenSyncService.syncIfAvailable();
-    } catch (e) {
-      debugPrint('Fallback notification token sync failed: $e');
-    }
+    } catch (_) {}
   }
 
   List<Widget> get _pages => [

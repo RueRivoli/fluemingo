@@ -22,6 +22,7 @@ const WORD_TYPES_FR = {
     "num": "nombre",
     "lettre euphonique": "lettre euphonique",
     "expr": "expression",
+    "id expr": "expression idiomatique",
     "art": "article"
 };
 
@@ -37,6 +38,7 @@ const WORD_SHORT_TYPES_FR = {
     "adj": "adj.",
     "adj poss": "adj pos.",
     "adv": "adv.",
+    "loc": "locution",
     "prép": "prép.",
     "conj": "conj.",
     "inter": "interj.",
@@ -47,7 +49,7 @@ const WORD_SHORT_TYPES_FR = {
     "ppassé": "p. passé",
     "pprésent": "p. present",
     "num": "num.",
-    "lettre euphonique": "let euph.",
+    "let euph.": "lettre euphonique",
     "expr": "expr.",
     "art": "art.",
     "properName": "nom propre"

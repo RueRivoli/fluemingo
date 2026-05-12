@@ -149,9 +149,7 @@ class _LibraryPageState extends State<LibraryPage> {
           setState(() {
             article.isFavorite = !article.isFavorite;
           });
-        } catch (e) {
-          debugPrint('Error toggling favorite: $e');
-        }
+        } catch (_) {}
       },
     );
   }

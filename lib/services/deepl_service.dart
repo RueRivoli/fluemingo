@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'edge_function_auth_exception.dart';
 import 'rate_limit_exception.dart';
@@ -19,19 +18,12 @@ class DeeplService {
   }) async {
     final client = Supabase.instance.client;
     var session = client.auth.currentSession;
-    debugPrint('[_invoke:$functionName] session exists=${session != null}, '
-        'tokenLength=${session?.accessToken.length ?? 0}');
-    // print('token ==> ${session?.accessToken}');
-
-
 
     if (session == null || session.accessToken.trim().isEmpty) {
       try {
         final refreshed = await client.auth.refreshSession();
         session = refreshed.session;
-      } catch (e) {
-        debugPrint('[_invoke:$functionName] refresh FAILED: $e');
-      }
+      } catch (_) {}
       if (session == null || session.accessToken.trim().isEmpty) {
         throw EdgeFunctionReauthRequiredException(
           functionName: functionName,
@@ -43,11 +35,8 @@ class DeeplService {
     try {
       final response = await client.functions
           .invoke(functionName, body: body, headers: _authHeaders(client));
-      debugPrint('[_invoke:$functionName] SUCCESS status=${response.status}');
       return response;
     } on FunctionException catch (e) {
-      debugPrint('[_invoke:$functionName] FunctionException '
-          'status=${e.status} reason=${e.reasonPhrase} details=${e.details}');
       if (e.status == 401) {
         try {
           await client.auth.refreshSession();
@@ -62,8 +51,7 @@ class DeeplService {
             );
           }
           rethrow;
-        } catch (retryErr) {
-          debugPrint('[_invoke:$functionName] RETRY error: $retryErr');
+        } catch (_) {
           throw EdgeFunctionReauthRequiredException(
             functionName: functionName,
             reason: 'unauthorized',
@@ -107,7 +95,6 @@ class DeeplService {
     } catch (e) {
       if (e is EdgeFunctionReauthRequiredException) rethrow;
       if (e is RateLimitExceededException) rethrow;
-      debugPrint('Translation request failed: $e');
       return null;
     }
   }

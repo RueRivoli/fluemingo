@@ -96,8 +96,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
           }
         }
       },
-      onError: (error) {
-        debugPrint('Auth state change error: $error');
+      onError: (_) {
         if (mounted) {
           setState(() {
             _resetLoadingStates();
@@ -139,9 +138,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
       if (!mounted) return;
       try {
         await ProfileStoreScope.of(context).load();
-      } catch (e) {
-        debugPrint('Profile preload before HomePage navigation failed: $e');
-      }
+      } catch (_) {}
 
       if (!mounted) return;
       setState(() {
@@ -154,8 +151,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
         ),
         (route) => false,
       );
-    } catch (error) {
-      debugPrint('Error during signed-in flow: $error');
+    } catch (_) {
       if (!mounted) return;
       setState(() {
         _resetLoadingStates();
@@ -759,16 +755,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
             // but we update it here to ensure the fullName is saved
             try {
               await _profileService.updateFullName(fullName);
-            } catch (e) {
-              // If update fails, try to insert (profile might not exist yet)
-              debugPrint(
-                  'Profile update failed, will be created by listener: $e');
-            }
+            } catch (_) {}
           }
-        } catch (e) {
-          debugPrint('Error updating profile with fullName: $e');
-          // Continue anyway - _ensureProfileExists will handle it
-        }
+        } catch (_) {}
       }
 
       // The auth state listener in initState will handle the callback
@@ -852,14 +841,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
   Future<void> _redirectToOnboarding() async {
     try {
       await _oneSignalNotificationService.logout();
-    } catch (e) {
-      debugPrint('OneSignal logout during redirect failed: $e');
-    }
+    } catch (_) {}
     try {
       await Supabase.instance.client.auth.signOut();
-    } catch (e) {
-      debugPrint('Supabase signOut during redirect failed: $e');
-    }
+    } catch (_) {}
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('has_seen_welcome', false);

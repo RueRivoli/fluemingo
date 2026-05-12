@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/article.dart';
 import '../models/audiobook.dart';
@@ -429,8 +428,7 @@ class ProfileService {
         profileRow?['theme_interest_4'],
         profileRow?['theme_interest_5'],
       ].whereType<String>().where((s) => s.isNotEmpty).toList();
-    } catch (e) {
-      debugPrint('Error fetching theme interests: $e');
+    } catch (_) {
       return [];
     }
   }

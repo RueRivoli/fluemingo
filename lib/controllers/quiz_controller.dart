@@ -102,9 +102,7 @@ class QuizController extends ChangeNotifier {
           resultId: quizResultId!,
           numberCorrectAnswers: correctAnswers,
         );
-      } catch (e) {
-        debugPrint('Error updating quiz result: $e');
-      }
+      } catch (_) {}
     }
   }
 

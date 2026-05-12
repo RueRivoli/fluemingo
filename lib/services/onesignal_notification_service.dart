@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -26,9 +25,7 @@ class OneSignalNotificationService {
       OneSignal.initialize(appId);
       _isInitialized = true;
       _observeSubscriptionChanges();
-    } catch (e) {
-      debugPrint('OneSignal initialization failed: $e');
-    }
+    } catch (_) {}
   }
 
   Future<void> loginWithSupabaseUserId(String userId) async {
@@ -37,18 +34,14 @@ class OneSignalNotificationService {
 
     try {
       OneSignal.login(normalized);
-    } catch (e) {
-      debugPrint('OneSignal login failed: $e');
-    }
+    } catch (_) {}
   }
 
   Future<void> requestPermission() async {
     if (!_isInitialized) return;
     try {
       await OneSignal.Notifications.requestPermission(true);
-    } catch (e) {
-      debugPrint('OneSignal permission request failed: $e');
-    }
+    } catch (_) {}
   }
 
   Future<void> syncSubscriptionIdToProfile() async {
@@ -56,18 +49,14 @@ class OneSignalNotificationService {
     try {
       final subscriptionId = OneSignal.User.pushSubscription.id;
       await _persistAndSync(subscriptionId);
-    } catch (e) {
-      debugPrint('OneSignal subscription sync failed: $e');
-    }
+    } catch (_) {}
   }
 
   Future<void> logout() async {
     if (!_isInitialized) return;
     try {
       OneSignal.logout();
-    } catch (e) {
-      debugPrint('OneSignal logout failed: $e');
-    }
+    } catch (_) {}
   }
 
   void _observeSubscriptionChanges() {
@@ -83,14 +72,10 @@ class OneSignalNotificationService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_prefsOneSignalSubscriptionIdKey, normalized);
-    } catch (e) {
-      debugPrint('Failed to persist OneSignal subscription id locally: $e');
-    }
+    } catch (_) {}
 
     try {
       await _profileService.registerNotificationToken(normalized);
-    } catch (e) {
-      debugPrint('Failed to sync OneSignal subscription id to profile: $e');
-    }
+    } catch (_) {}
   }
 }

@@ -188,8 +188,7 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
           FeedbackService.instance.playSuccess();
         }
       }
-    } catch (e) {
-      debugPrint('Error updating flashcard status: $e');
+    } catch (_) {
       _moveToNext();
       return;
     }
@@ -814,9 +813,7 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                                               _currentIndex--;
                                             }
                                           });
-                                        } catch (e) {
-                                          debugPrint(
-                                              'Error deleting flashcard: $e');
+                                        } catch (_) {
                                           if (mounted) {
                                             ScaffoldMessenger.of(context)
                                                 .showSnackBar(

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/article.dart';
@@ -169,8 +168,7 @@ class ArticleService {
         isFree: articleResponse['is_free'] ?? false,
         isNew: JsonUtils.readIsNew(articleResponse),
       );
-    } catch (e) {
-      debugPrint('Error fetching article: $e');
+    } catch (_) {
       return _offlineContentService.getCachedArticle(
         contentType: 1,
         contentId: id,
@@ -223,9 +221,7 @@ class ArticleService {
       } else {
         await _supabase.from(_table('progress')).insert(payload);
       }
-    } catch (e) {
-      debugPrint('Error editing article status: $e');
-    }
+    } catch (_) {}
   }
 
   /// Update reading status for a specific audiobook chapter in fr_progress.
@@ -288,9 +284,7 @@ class ArticleService {
         audiobookId: contentId,
         userId: user.id,
       );
-    } catch (e) {
-      debugPrint('Error editing chapter status: $e');
-    }
+    } catch (_) {}
   }
 
   /// If all chapters of an audiobook are finished for a user, mark the overall
@@ -427,6 +421,12 @@ class ArticleService {
             .eq('user_id', user.id)
             .filter('vocabulary_id', 'is', 'null')
             .order('status', ascending: true, nullsFirst: false),
+        _supabase
+            .from(_table('content'))
+            .select('img_url')
+            .eq('id', parsedContentId)
+            .eq('content_type', 2)
+            .maybeSingle(),
       ];
       final results = await Future.wait(futures);
 
@@ -435,6 +435,16 @@ class ArticleService {
       final chapterProgress = results[2] as Map<String, dynamic>?;
       final mainVocabularyResponse = results[3] as List;
       final vocabularyAddedByUser = results[4] as List;
+      final audiobookResponse = results[5] as Map<String, dynamic>?;
+
+      final chapterImgPath =
+          (chapterResponse['image_url'] ?? chapterResponse['img_url'])
+              ?.toString();
+      final audiobookImgPath = audiobookResponse?['img_url']?.toString();
+      final resolvedImgPath =
+          (chapterImgPath != null && chapterImgPath.isNotEmpty)
+              ? chapterImgPath
+              : audiobookImgPath;
 
       final vocabulary = _parseVocabulary(
         mainVocabularyResponse: mainVocabularyResponse,
@@ -458,7 +468,7 @@ class ArticleService {
         description:
             localizedDescription(chapterResponse, referenceLanguageCode),
         author: '',
-        imageUrl: _getImageUrl(chapterResponse['img_url']),
+        imageUrl: _getImageUrl(resolvedImgPath),
         readingStatus: chapterProgress?['reading_status'] ?? null,
         level: chapterResponse['level'] ?? 'A1',
         category1: chapterResponse['category_1'] ?? '',
@@ -474,8 +484,7 @@ class ArticleService {
         isNew: JsonUtils.readIsNew(chapterResponse),
         // isFree: chapterResponse['is_free'] ?? false,
       );
-    } catch (e) {
-      debugPrint('Error fetching chapter: $e');
+    } catch (_) {
       return _offlineContentService.getCachedArticle(
         contentType: 2,
         contentId: contentId,
@@ -589,15 +598,12 @@ class ArticleService {
         parsed = contentMulti;
       }
 
-      // Expect an object with "paragraphs" key
       if (parsed is! Map) {
-        debugPrint('Error: parsed is not a Map, it is: ${parsed.runtimeType}');
         return [];
       }
 
       final paragraphsData = parsed['paragraphs'];
       if (paragraphsData == null || paragraphsData is! List) {
-        debugPrint('Error: paragraphs key not found or not a List');
         return [];
       }
 
@@ -679,8 +685,7 @@ class ArticleService {
           .whereType<ArticleParagraph>()
           .where((paragraph) => paragraph.sentences.isNotEmpty)
           .toList();
-    } catch (e) {
-      debugPrint('Error parsing content_multi: $e');
+    } catch (_) {
       return [];
     }
   }
@@ -765,8 +770,6 @@ class ArticleService {
       } else {
         await _supabase.from(_table('progress')).insert(payload);
       }
-    } catch (e) {
-      debugPrint('Error toggling favorite: $e');
-    }
+    } catch (_) {}
   }
 }
