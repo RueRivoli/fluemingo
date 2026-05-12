@@ -1028,6 +1028,7 @@ export type Database = {
           description: string | null
           duration: number | null
           id: number
+          image_url: string | null
           long_format_id: number | null
           order_id: number | null
           reviewed: number | null
@@ -1048,6 +1049,7 @@ export type Database = {
           description?: string | null
           duration?: number | null
           id?: number
+          image_url?: string | null
           long_format_id?: number | null
           order_id?: number | null
           reviewed?: number | null
@@ -1068,6 +1070,7 @@ export type Database = {
           description?: string | null
           duration?: number | null
           id?: number
+          image_url?: string | null
           long_format_id?: number | null
           order_id?: number | null
           reviewed?: number | null
