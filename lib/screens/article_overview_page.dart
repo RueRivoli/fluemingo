@@ -430,41 +430,6 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
     );
   }
 
-  Widget _buildTabletBackButton(BuildContext context) {
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                FontAwesomeIcons.chevronLeft,
-                color: AppColors.textPrimary,
-                size: 24,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final displayArticle = _fullArticle ?? widget.article;
@@ -480,75 +445,38 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          if (isTablet) _buildTabletBackButton(context),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header Image (mobile only — on tablet the image moves
-                  // next to the info section below)
-                  if (!isTablet)
-                    ContentHeaderImage(
-                      imageUrl: rawHeaderImagePath,
-                      status: _fullArticle?.readingStatus,
-                      showStatusMenu: true,
-                      onStatusChange: _handleStatusChange,
-                    ),
+                  // Header Image — full width, on top (mobile-style on both
+                  // phone and tablet so the article reads as a single column).
+                  ContentHeaderImage(
+                    imageUrl: rawHeaderImagePath,
+                    status: _fullArticle?.readingStatus,
+                    showStatusMenu: true,
+                    onStatusChange: _handleStatusChange,
+                  ),
 
                   // Content
                   Padding(
-                    padding: EdgeInsets.fromLTRB(20, isTablet ? 16 : 10, 20, 20),
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (isTablet)
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    titleRow,
-                                    const SizedBox(height: 12),
-                                    chipsWrap,
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      widget.article.description,
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        color: Colors.grey[600],
-                                        height: 1.5,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              ContentSideImage(
-                                imageUrl: rawHeaderImagePath,
-                                status: _fullArticle?.readingStatus,
-                                showStatusMenu: true,
-                                onStatusChange: _handleStatusChange,
-                              ),
-                            ],
-                          )
-                        else ...[
-                          titleRow,
-                          const SizedBox(height: 12),
-                          chipsWrap,
-                          const SizedBox(height: 16),
-                          Text(
-                            widget.article.description,
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.grey[600],
-                              height: 1.5,
-                            ),
+                        titleRow,
+                        const SizedBox(height: 12),
+                        chipsWrap,
+                        const SizedBox(height: 16),
+                        Text(
+                          widget.article.description,
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.grey[600],
+                            height: 1.5,
                           ),
-                        ],
+                        ),
                         const SizedBox(height: 28),
 
                         // Vocabulary Section

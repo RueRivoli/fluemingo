@@ -48,7 +48,7 @@ class LevelChipRow extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: isSelected
                         ? (isAll ? AppColors.textPrimary : Colors.white)
-                        : (isAll ? AppColors.textSecondary : accent),
+                        : AppColors.textSecondary,
                   ),
                 ),
               ),

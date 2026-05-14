@@ -151,10 +151,15 @@ Deno.serve(async (req: Request) => {
       },
       body: JSON.stringify({
         text: `${sanitizedWord}.`,
-        model_id: "eleven_multilingual_v2",
+        // Eleven v3 (alpha) — higher fidelity, stronger respect of `language_code`
+        // so the word is pronounced in the user's target language regardless of
+        // the voice's native locale.
+        model_id: "eleven_v3",
         language_code: language,
         voice_settings: {
-          stability: 0.85,
+          // v3 stability presets: 0.0 (creative) / 0.5 (natural) / 1.0 (robust).
+          // Natural keeps prosody consistent for single-word vocabulary playback.
+          stability: 0.5,
           similarity_boost: 0.75,
           style: 0.0,
           use_speaker_boost: false,
