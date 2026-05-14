@@ -584,6 +584,8 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     final store = ProfileStoreScope.of(context);
     final profile = store.profile;
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+    final contentHPadding = isTablet ? 120.0 : 20.0;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -614,7 +616,14 @@ class _ProfilePageState extends State<ProfilePage> {
                           fullName: profile?.fullName),
                     ),
                     const SizedBox(width: 16),
-                    Expanded(child: _buildWeekProgress(profile)),
+                    Expanded(
+                      child: Center(
+                        child: SizedBox(
+                          width: isTablet ? 360 : double.infinity,
+                          child: _buildWeekProgress(profile),
+                        ),
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     SizedBox(
                       width: 56,
@@ -644,8 +653,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
                 ),
               ),
+              if (isTablet) const SizedBox(height: 40),
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                padding: EdgeInsets.fromLTRB(contentHPadding, 0, contentHPadding, 8),
                 child: Row(
                   children: [
                     Flexible(
@@ -684,12 +694,12 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               // Your weekly Progress
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                padding: EdgeInsets.fromLTRB(contentHPadding, 12, contentHPadding, 16),
                 child: _buildWeeklyProgressSection(),
               ),
               // Continue Reading to Earn XP
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                padding: EdgeInsets.fromLTRB(contentHPadding, 8, contentHPadding, 12),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -704,31 +714,36 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               // Three vertical buttons: In Progress | Favorite | Content you may Like
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
+                padding: EdgeInsets.symmetric(horizontal: contentHPadding),
+                child: Builder(builder: (context) {
+                  Widget wrapBtn(Widget btn) => isTablet
+                      ? FractionallySizedBox(widthFactor: 0.5, child: btn)
+                      : btn;
+                  return Column(
                   children: [
-                    _buildVerticalMenuButton(
+                    wrapBtn(_buildVerticalMenuButton(
                       AppLocalizations.of(context)!.contentInProgress,
                       ContentMenu.inProgress,
                       icon: FontAwesomeIcons.barProgressHalf,
                       iconColor: AppColors.textPrimary,
-                    ),
+                    )),
                     const SizedBox(height: 12),
-                    _buildVerticalMenuButton(
+                    wrapBtn(_buildVerticalMenuButton(
                         AppLocalizations.of(context)!.favoriteContent,
                         ContentMenu.favorite,
                         icon: FontAwesomeIcons.solidHeart,
-                        iconColor: AppColors.primary),
+                        iconColor: AppColors.primary)),
                     const SizedBox(height: 12),
-                    _buildVerticalMenuButton(
+                    wrapBtn(_buildVerticalMenuButton(
                       AppLocalizations.of(context)!.forYou,
                       ContentMenu.interesting,
                       icon: FontAwesomeIcons.solidBolt,
                       iconColor: AppColors.secondary,
-                    ),
+                    )),
                     const SizedBox(height: 70),
                   ],
-                ),
+                );
+                }),
               ),
             ],
           ),

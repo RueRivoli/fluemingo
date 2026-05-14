@@ -555,6 +555,8 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+    final whiteSectionHPadding = isTablet ? 200.0 : 24.0;
     return Scaffold(
       backgroundColor: AppColors.secondary,
       body: isLoading
@@ -569,7 +571,10 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                     alignment: Alignment.center,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(top: 8, bottom: 24),
+                        padding: EdgeInsets.only(
+                          top: isTablet ? 48 : 8,
+                          bottom: isTablet ? 64 : 24,
+                        ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -639,9 +644,9 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                     ),
                     child: SingleChildScrollView(
                       padding: EdgeInsets.fromLTRB(
-                        24,
+                        whiteSectionHPadding,
                         28,
-                        24,
+                        whiteSectionHPadding,
                         32 + MediaQuery.of(context).padding.bottom,
                       ),
                       child: Column(

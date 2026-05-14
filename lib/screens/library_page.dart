@@ -118,6 +118,7 @@ class _LibraryPageState extends State<LibraryPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: double.infinity),
       builder: (ctx) => ContentFilterSheet(
         selectedLevel: selectedLevel,
         onLevelChanged: (v) => setState(() => selectedLevel = v),

@@ -309,9 +309,7 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
       child: box,
     );
 
-    return isTablet
-        ? Align(alignment: Alignment.centerLeft, child: tappable)
-        : tappable;
+    return tappable;
   }
 
   Widget _buildTabletBackButton(BuildContext context) {
@@ -356,74 +354,45 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
     final status =
         _audiobook?.readingStatus ?? widget.audiobook.readingStatus;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          if (isTablet) _buildTabletBackButton(context),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header Image (mobile only — on tablet the image moves
-                  // next to the info section below)
-                  if (!isTablet)
-                    ContentHeaderImage(
-                      imageUrl: imageUrl,
-                      status: status,
-                      showStatusMenu: true,
-                      onStatusChange: _handleStatusChange,
-                    ),
+    final chaptersHeader = Text(
+      AppLocalizations.of(context)!.chapters,
+      style: const TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textPrimary,
+      ),
+    );
 
-                  // Content
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(20, isTablet ? 16 : 10, 20, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (isTablet)
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    _buildTitle(),
-                                    const SizedBox(height: 8),
-                                    _buildAuthor(),
-                                    const SizedBox(height: 12),
-                                    _buildChipsWrap(),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      (_audiobook ?? widget.audiobook)
-                                          .description,
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        color: Colors.grey[600],
-                                        height: 1.5,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              ContentSideImage(
-                                imageUrl: imageUrl,
-                                status: status,
-                                showStatusMenu: true,
-                                onStatusChange: _handleStatusChange,
-                              ),
-                            ],
-                          )
-                        else ...[
-                          Row(
-                            children: [
-                              Expanded(child: _buildTitle()),
-                            ],
-                          ),
+    final chapterTiles = _audiobook == null
+        ? [const ChapterListSkeleton()]
+        : _audiobook!.chapters
+            .asMap()
+            .entries
+            .map((entry) => _buildChapterTile(
+                  chapter: entry.value,
+                  chapterNumber: entry.key + 1,
+                  isTablet: isTablet,
+                ))
+            .toList();
+
+    if (isTablet) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: Column(
+          children: [
+            _buildTabletBackButton(context),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildTitle(),
                           const SizedBox(height: 8),
                           _buildAuthor(),
                           const SizedBox(height: 12),
@@ -438,38 +407,87 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
                             ),
                           ),
                         ],
-                        const SizedBox(height: 28),
-
-                        // Chapters section
-                        Text(
-                          AppLocalizations.of(context)!.chapters,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    ContentSideImage(
+                      imageUrl: imageUrl,
+                      status: status,
+                      showStatusMenu: true,
+                      onStatusChange: _handleStatusChange,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 80, 20, 20),
+                child: SingleChildScrollView(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        chaptersHeader,
                         const SizedBox(height: 12),
-                        if (_audiobook == null)
-                          const ChapterListSkeleton()
-                        else if (_audiobook!.chapters.isNotEmpty) ...[
-                          ..._audiobook!.chapters
-                              .asMap()
-                              .entries
-                              .map((entry) => _buildChapterTile(
-                                    chapter: entry.value,
-                                    chapterNumber: entry.key + 1,
-                                    isTablet: isTablet,
-                                  )),
-                        ],
+                        ...chapterTiles,
                       ],
                     ),
                   ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ContentHeaderImage(
+              imageUrl: imageUrl,
+              status: status,
+              showStatusMenu: true,
+              onStatusChange: _handleStatusChange,
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: _buildTitle()),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  _buildAuthor(),
+                  const SizedBox(height: 12),
+                  _buildChipsWrap(),
+                  const SizedBox(height: 16),
+                  Text(
+                    (_audiobook ?? widget.audiobook).description,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey[600],
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  chaptersHeader,
+                  const SizedBox(height: 12),
+                  ...chapterTiles,
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

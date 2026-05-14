@@ -757,7 +757,9 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                 children: [
                   // Scrollable content so card doesn't overflow on small screens
                   Expanded(
-                    child: SingleChildScrollView(
+                    child: Stack(
+                      children: [
+                        SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
@@ -974,51 +976,6 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                             ),
                             ),
                           ),
-                          if (!showHiddenValues &&
-                              widget.hideMeanings &&
-                              isTopCard) ...[
-                            const SizedBox(height: 54),
-                            Center(
-                              child: ElevatedButton.icon(
-                                onPressed: _isRevealAnimating
-                                    ? null
-                                    : _revealHiddenValues,
-                                icon: _isRevealAnimating
-                                    ? const SizedBox(
-                                        width: 14,
-                                        height: 14,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Icon(
-                                        FontAwesomeIcons.arrowRotateRight,
-                                        size: 14,
-                                        color: Colors.white,
-                                      ),
-                                label: Text(
-                                  AppLocalizations.of(context)!.reveal,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 10,
-                                  ),
-                                  backgroundColor:
-                                      getColorPlayIcon(card.status),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
                           if (showHiddenValues) ...[
                             const SizedBox(height: 34),
                             _buildExampleBlock(
@@ -1037,6 +994,37 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                           ],
                         ],
                       ),
+                    ),
+                        if (!showHiddenValues &&
+                            widget.hideMeanings &&
+                            isTopCard)
+                          Positioned.fill(
+                            child: Center(
+                              child: TextButton(
+                                onPressed: _isRevealAnimating
+                                    ? null
+                                    : _revealHiddenValues,
+                                child: _isRevealAnimating
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.black,
+                                        ),
+                                      )
+                                    : Text(
+                                        AppLocalizations.of(context)!.reveal,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),

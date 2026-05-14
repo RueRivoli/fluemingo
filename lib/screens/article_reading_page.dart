@@ -658,11 +658,13 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
       context: context,
       backgroundColor: Colors.white,
       isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: double.infinity),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) {
+          final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
           final vocabularyItem = VocabularyItem(
             word: unit.text,
             translation: currentTranslation,
@@ -833,6 +835,47 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
                               ),
                   ),
                 if (!isItemAlreadyInMainVocabulary) const SizedBox(height: 4),
+                if (isTablet)
+                  FractionallySizedBox(
+                    widthFactor: 0.5,
+                    child: VocabularyItemCard(
+                      item: vocabularyItem,
+                      displayType: 'text',
+                      hideAddAction:
+                          isItemAlreadyInMainVocabulary ? true : false,
+                      onIconToggle: () async {
+                        if (localIsAdded) {
+                          final savedItem = widget.article.vocabulary
+                              .where((v) =>
+                                  v.word == unit.text && v.type == unit.type)
+                              .firstOrNull;
+                          if (savedItem != null) {
+                            await _deleteVocabularyItem(savedItem);
+                          }
+                          setSheetState(() => localIsAdded = false);
+                        } else {
+                          setSheetState(() => localIsAdded = true);
+                          final added =
+                              await _createFlashcardFromTextExpression(
+                                  vocabularyItem);
+                          if (!added) {
+                            setSheetState(() => localIsAdded = false);
+                            if (!context.mounted) return;
+                            if (!mounted) return;
+                            if (_isHandlingReauthRequired) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'Impossible d’ajouter ce mot pour le moment.'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                  )
+                else
                 VocabularyItemCard(
                   item: vocabularyItem,
                   displayType: 'text',
