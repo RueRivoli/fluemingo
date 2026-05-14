@@ -69,6 +69,8 @@ class _AvatarSelectionPageState extends State<AvatarSelectionPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final progress = _avatarSelectionStep / _onboardingTotalSteps;
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+    final mainPad = isTablet ? 80.0 : 0.0;
 
     return Scaffold(
       backgroundColor: AppColors.secondary,
@@ -112,9 +114,9 @@ class _AvatarSelectionPageState extends State<AvatarSelectionPage> {
                 ],
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 32),
-              child: Text(
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32 + mainPad),
+              child: const Text(
                 'Choose your avatar',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -138,7 +140,7 @@ class _AvatarSelectionPageState extends State<AvatarSelectionPage> {
             const SizedBox(height: 24),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: EdgeInsets.symmetric(horizontal: 24 + mainPad),
                 child: GridView.builder(
                   itemCount: _avatarSeeds.length,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -157,7 +159,7 @@ class _AvatarSelectionPageState extends State<AvatarSelectionPage> {
                         children: [
                           Expanded(
                             child: FractionallySizedBox(
-                              widthFactor: 0.65,
+                              widthFactor: 0.55,
                               child: AspectRatio(
                               aspectRatio: 1,
                               child: Container(

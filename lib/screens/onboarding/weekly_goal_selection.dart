@@ -34,6 +34,8 @@ class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
   @override
   Widget build(BuildContext context) {
     final progress = _weeklyGoalStep / _onboardingTotalSteps;
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+    final mainPad = isTablet ? 80.0 : 0.0;
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: SafeArea(
@@ -81,9 +83,9 @@ class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
 
             // Title
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
+              padding: EdgeInsets.symmetric(horizontal: 40 + mainPad),
               child: Text(
-                AppLocalizations.of(context)!.dailyGoal,
+                AppLocalizations.of(context)!.practisingGoal,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w600,
@@ -97,7 +99,7 @@ class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
 
             // Subtitle
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
+              padding: EdgeInsets.symmetric(horizontal: 40 + mainPad),
               child: Text(
                 AppLocalizations.of(context)!.selectGoal,
                 style: TextStyle(
@@ -113,7 +115,7 @@ class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
             // Goal options list (card style: icon + title + subtitle)
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: EdgeInsets.symmetric(horizontal: 24 + mainPad),
                 child: ListView.separated(
                   itemCount: DAILY_PRACTICE_GOALS.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 14),

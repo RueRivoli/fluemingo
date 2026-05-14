@@ -111,6 +111,8 @@ class _FavoriteThemesSelectionPageState
   @override
   Widget build(BuildContext context) {
     final progress = _favoriteThemesStep / _onboardingTotalSteps;
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+    final mainPad = isTablet ? 80.0 : 0.0;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -158,7 +160,7 @@ class _FavoriteThemesSelectionPageState
 
             // Title + selected count (X / 5)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
+              padding: EdgeInsets.symmetric(horizontal: 40 + mainPad),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -189,7 +191,7 @@ class _FavoriteThemesSelectionPageState
 
             // Subtitle
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
+              padding: EdgeInsets.symmetric(horizontal: 40 + mainPad),
               child: Text(
                 AppLocalizations.of(context)!.selectUpToThemes(_maxSelections),
                 style: TextStyle(
@@ -205,7 +207,7 @@ class _FavoriteThemesSelectionPageState
             // Theme chips grid
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: EdgeInsets.symmetric(horizontal: 24 + mainPad),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final rows = _buildThemeRows(context, constraints.maxWidth);

@@ -134,7 +134,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get culture => '文化';
 
   @override
-  String get dailyGoal => 'デイリー目標';
+  String get practisingGoal => '練習目標';
 
   @override
   String get definition => '定義';

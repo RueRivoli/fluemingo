@@ -184,6 +184,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
     return Scaffold(
       body: Container(
         constraints: BoxConstraints(
@@ -201,8 +202,17 @@ class _RegistrationPageState extends State<RegistrationPage> {
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 24),
-            child: Column(
+            padding: EdgeInsets.only(
+              bottom: 24,
+              left: isTablet ? 80 : 0,
+              right: isTablet ? 80 : 0,
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isTablet ? 560 : double.infinity,
+                ),
+                child: Column(
             children: [
               const SizedBox(height: 36),
 
@@ -363,8 +373,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
               ),
             ],
           ),
+              ),
+            ),
+          ),
         ),
-      ),
       ),
     );
   }

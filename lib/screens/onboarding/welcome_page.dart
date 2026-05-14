@@ -201,9 +201,9 @@ class WelcomePage extends StatelessWidget {
 
   Widget _buildFrenchContentRow() {
     const imagePaths = [
-      'assets/images/fr/leroisoleil.jpg',
-      'assets/images/fr/lesmiserables.jpg',
-      'assets/images/fr/tour-du-monde.jpg',
+      'assets/images/fr/petit-prince-min.png',
+      'assets/images/fr/roi-soleil-min.jpg',
+      'assets/images/fr/tour-du-monde-min.png',
     ];
 
     return Row(

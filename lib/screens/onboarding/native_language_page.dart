@@ -32,6 +32,8 @@ class _NativeLanguagePageState extends State<NativeLanguagePage> {
     final l10n = AppLocalizations.of(context)!;
     final languages = getReferenceLanguages(context);
     final progress = _nativeLanguageStep / _onboardingTotalSteps;
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+    final mainPad = isTablet ? 80.0 : 0.0;
 
     return Scaffold(
       backgroundColor: AppColors.primary,
@@ -79,7 +81,7 @@ class _NativeLanguagePageState extends State<NativeLanguagePage> {
 
             // Title (rounded, bold sans-serif like the goals screen)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
+              padding: EdgeInsets.symmetric(horizontal: 32 + mainPad),
               child: Text(
                 l10n.whichLanguageDoYouSpeakTheBest,
                 textAlign: TextAlign.center,
@@ -110,7 +112,7 @@ class _NativeLanguagePageState extends State<NativeLanguagePage> {
             // Language options (screenshot-style: rounded cards, lighter than background)
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: EdgeInsets.symmetric(horizontal: 24 + mainPad),
                 child: SingleChildScrollView(
                   child: Column(
                     children: languages.map((lang) {

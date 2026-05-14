@@ -344,11 +344,11 @@ abstract class AppLocalizations {
   /// **'Culture'**
   String get culture;
 
-  /// No description provided for @dailyGoal.
+  /// No description provided for @practisingGoal.
   ///
   /// In en, this message translates to:
-  /// **'Daily Goal'**
-  String get dailyGoal;
+  /// **'Practice Goal'**
+  String get practisingGoal;
 
   /// No description provided for @definition.
   ///

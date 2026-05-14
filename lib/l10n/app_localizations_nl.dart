@@ -134,7 +134,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get culture => 'Cultuur';
 
   @override
-  String get dailyGoal => 'Dagelijks doel';
+  String get practisingGoal => 'Oefendoel';
 
   @override
   String get definition => 'Definitie';

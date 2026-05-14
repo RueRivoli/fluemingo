@@ -134,7 +134,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get culture => 'Kultur';
 
   @override
-  String get dailyGoal => 'Tagesziel';
+  String get practisingGoal => 'Übungsziel';
 
   @override
   String get definition => 'Definition';

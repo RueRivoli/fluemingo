@@ -63,9 +63,6 @@ class AudiobookCard extends StatelessWidget {
                   width: width,
                   height: height,
                   color: Colors.grey[200],
-                  child: const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
                 );
               },
             )

@@ -26,6 +26,8 @@ class _TargetLanguagePageState extends State<TargetLanguagePage> {
     final l10n = AppLocalizations.of(context)!;
     final languages = getTargetLanguages(context);
     final progress = _targetLanguageStep / _onboardingTotalSteps;
+    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+    final mainPad = isTablet ? 80.0 : 0.0;
 
     return Scaffold(
       backgroundColor: AppColors.secondary,
@@ -73,7 +75,7 @@ class _TargetLanguagePageState extends State<TargetLanguagePage> {
 
             // Title (rounded, bold sans-serif like the goals screen)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
+              padding: EdgeInsets.symmetric(horizontal: 32 + mainPad),
               child: Text(
                 l10n.whichLanguageDoYouWantToLearn,
                 textAlign: TextAlign.center,
@@ -104,7 +106,7 @@ class _TargetLanguagePageState extends State<TargetLanguagePage> {
             // Language options (screenshot-style: rounded cards, lighter than background)
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: EdgeInsets.symmetric(horizontal: 24 + mainPad),
                 child: SingleChildScrollView(
                   child: Column(
                     children: languages.map((lang) {
