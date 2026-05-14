@@ -7,6 +7,7 @@ import '../models/article.dart';
 import '../models/vocabulary_item.dart';
 import '../models/grammar_point.dart';
 import '../constants/app_colors.dart';
+import '../constants/levels.dart';
 import '../services/article_service.dart';
 import 'article_reading_page.dart';
 import '../widgets/vocabulary_item_card.dart';
@@ -385,7 +386,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
             vertical: 6,
           ),
           decoration: BoxDecoration(
-            color: AppColors.primary,
+            color: levelColor(widget.article.level),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(

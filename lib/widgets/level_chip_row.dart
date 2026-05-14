@@ -21,6 +21,8 @@ class LevelChipRow extends StatelessWidget {
       child: Row(
         children: LEVELS.map((level) {
           final isSelected = selectedLevel == level;
+          final isAll = level == 'All';
+          final accent = isAll ? AppColors.secondary : levelColor(level);
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
@@ -31,22 +33,22 @@ class LevelChipRow extends StatelessWidget {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.secondary : Colors.white,
-                  border: isSelected
-                      ? Border.all(color: AppColors.borderBlack)
-                      : Border.all(color: Colors.white),
+                  color: isSelected ? accent : Colors.white,
+                  border: Border.all(
+                    color: isSelected
+                        ? (isAll ? AppColors.borderBlack : accent)
+                        : Colors.white,
+                  ),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  level == 'All'
-                      ? AppLocalizations.of(context)!.allLevels
-                      : level,
+                  isAll ? AppLocalizations.of(context)!.allLevels : level,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: isSelected
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
+                        ? (isAll ? AppColors.textPrimary : Colors.white)
+                        : (isAll ? AppColors.textSecondary : accent),
                   ),
                 ),
               ),

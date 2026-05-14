@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/article.dart';
 import '../screens/article_overview_page.dart';
 import '../constants/app_colors.dart';
+import '../constants/levels.dart';
 import 'content_status_badge.dart';
 import 'content_category_chip.dart';
 import 'favorite_toggle_button.dart';
@@ -41,7 +42,7 @@ class ArticleCard extends StatelessWidget {
             vertical: 6,
           ),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.95),
+            color: levelColor(article.level).withOpacity(0.95),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
@@ -210,7 +211,7 @@ class ArticleCard extends StatelessWidget {
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.95),
+                                  color: levelColor(article.level).withOpacity(0.95),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(

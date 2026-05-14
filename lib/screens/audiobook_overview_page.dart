@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/revenue_cat_config.dart';
 import '../constants/app_colors.dart';
+import '../constants/levels.dart';
 import '../widgets/content_header_image.dart';
 import '../widgets/content_category_chip.dart';
 import '../widgets/favorite_toggle_button.dart';
@@ -101,7 +102,7 @@ class _AudiobookOverviewPageState extends State<AudiobookOverviewPage> {
             vertical: 8,
           ),
           decoration: BoxDecoration(
-            color: AppColors.primary,
+            color: levelColor(widget.audiobook.level),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(

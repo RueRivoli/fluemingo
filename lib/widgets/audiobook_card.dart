@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/audiobook.dart';
 import '../screens/audiobook_overview_page.dart';
 import '../constants/app_colors.dart';
+import '../constants/levels.dart';
 import 'favorite_toggle_button.dart';
 
 // If showLocker is true, the locker icon is shown.
@@ -113,7 +114,7 @@ class AudiobookCard extends StatelessWidget {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.95),
+                      color: levelColor(book.level).withOpacity(0.95),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
