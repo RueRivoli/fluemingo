@@ -778,21 +778,30 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
 
   Widget _buildVocabularyList(List<VocabularyItem> items, bool isTablet) {
     if (isTablet) {
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          const gap = 12.0;
-          final itemWidth = (constraints.maxWidth - gap) / 2;
-          return Wrap(
-            spacing: gap,
-            runSpacing: 0,
-            children: items
-                .map((item) => SizedBox(
-                      width: itemWidth,
-                      child: _buildVocabularyItem(item),
-                    ))
-                .toList(),
-          );
-        },
+      // Two independent columns: each flows on its own so cards stack with
+      // no extra vertical gap (no row-alignment to the tallest sibling).
+      final leftItems = <VocabularyItem>[];
+      final rightItems = <VocabularyItem>[];
+      for (var i = 0; i < items.length; i++) {
+        (i.isEven ? leftItems : rightItems).add(items[i]);
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: leftItems.map(_buildVocabularyItem).toList(),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: rightItems.map(_buildVocabularyItem).toList(),
+            ),
+          ),
+        ],
       );
     }
     return Column(

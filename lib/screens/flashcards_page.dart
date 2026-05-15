@@ -104,11 +104,10 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
               ),
             ),
 
-            // Three colored boxes
+            // Three colored boxes — single column on both phone and tablet.
             Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final isTabletLayout = constraints.maxWidth >= 700;
+              child: Builder(
+                builder: (context) {
                   final sections = <Widget>[
                     _buildFlashcardBox(
                       context: context,
@@ -169,33 +168,16 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                     ),
                   ];
 
-                  if (!isTabletLayout) {
-                    return SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        children: [
-                          for (int i = 0; i < sections.length; i++) ...[
-                            sections[i],
-                            if (i < sections.length - 1)
-                              const SizedBox(height: 12),
-                          ],
-                        ],
-                      ),
-                    );
-                  }
-
-                  final sectionWidth = (constraints.maxWidth - 40 - 12) / 2;
                   return SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: sections
-                          .map((section) => SizedBox(
-                                width: sectionWidth,
-                                child: section,
-                              ))
-                          .toList(),
+                    child: Column(
+                      children: [
+                        for (int i = 0; i < sections.length; i++) ...[
+                          sections[i],
+                          if (i < sections.length - 1)
+                            const SizedBox(height: 12),
+                        ],
+                      ],
                     ),
                   );
                 },
