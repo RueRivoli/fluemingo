@@ -20,6 +20,7 @@ dependencies:
   onesignal_flutter: ^5.3.4
   flutter_svg: ^2.0.9
   just_audio: ^0.9.40
+  audio_session: ^0.1.21
   google_sign_in: ^7.2.0
   sign_in_with_apple: ^6.1.1
   font_awesome_flutter: ^10.7.0
@@ -38,6 +39,7 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.3
 
 flutter:
   generate: true
@@ -48,7 +50,6 @@ flutter:
     - assets/images/fr/
     - assets/images/en/
     - assets/images/es/
-    - assets/img/french/
     - assets/images/languages/
     - assets/images/flashcards/
     - assets/logo/
@@ -64,3 +65,12 @@ flutter_launcher_icons:
   remove_alpha_ios: true
   adaptive_icon_background: "#FFFFFF"
   adaptive_icon_foreground: "assets/logo/app-logo.png"
+
+flutter_native_splash:
+  color: "#849bff"
+  image: assets/logo/splash.png
+  android_12:
+    color: "#849bff"
+    image: assets/logo/splash.png
+  ios: true
+  android: true

@@ -108,6 +108,8 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
             Expanded(
               child: Builder(
                 builder: (context) {
+                  final isTablet =
+                      MediaQuery.of(context).size.shortestSide >= 600;
                   final sections = <Widget>[
                     _buildFlashcardBox(
                       context: context,
@@ -175,7 +177,7 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                       children: [
                         for (int i = 0; i < sections.length; i++) ...[
                           FractionallySizedBox(
-                            widthFactor: 0.5,
+                            widthFactor: isTablet ? 0.5 : 1.0,
                             child: sections[i],
                           ),
                           if (i < sections.length - 1)
