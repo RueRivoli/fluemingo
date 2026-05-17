@@ -46,6 +46,14 @@ class ContentHeaderImage extends StatelessWidget {
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) =>
                     _buildPlaceholder(),
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 280,
+                    width: double.infinity,
+                    color: Colors.grey[200],
+                  );
+                },
               ),
         // Back button
         Positioned(
@@ -145,6 +153,10 @@ class ContentSideImage extends StatelessWidget {
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
                           _buildPlaceholder(),
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(color: Colors.grey[200]);
+                      },
                     ),
             ),
             Positioned(

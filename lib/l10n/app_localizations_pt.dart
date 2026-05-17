@@ -313,6 +313,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get light => 'Leve';
 
   @override
+  String get main => 'Principal';
+
+  @override
   String get mainVocabulary => 'Vocabulário principal';
 
   @override
@@ -350,7 +353,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Nenhum áudio disponível para este artigo';
 
   @override
-  String get novel => 'Novel';
+  String get novel => 'Romance';
 
   @override
   String get noQuizAvailableForThisArticle =>

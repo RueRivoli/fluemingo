@@ -171,9 +171,13 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                   return SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         for (int i = 0; i < sections.length; i++) ...[
-                          sections[i],
+                          FractionallySizedBox(
+                            widthFactor: 0.5,
+                            child: sections[i],
+                          ),
                           if (i < sections.length - 1)
                             const SizedBox(height: 12),
                         ],

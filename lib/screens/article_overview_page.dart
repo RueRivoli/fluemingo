@@ -508,7 +508,7 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 6, vertical: 4),
                                 child: Text(
-                                  AppLocalizations.of(context)!.all,
+                                  AppLocalizations.of(context)!.main,
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w500,
@@ -752,15 +752,15 @@ class _ArticleOverviewPageState extends State<ArticleOverviewPage> {
                           const Icon(
                             FontAwesomeIcons.bookOpen,
                             size: 22,
-                            color: AppColors.textSecondary,
+                            color: AppColors.textPrimary,
                           ),
                           const SizedBox(width: 8),
                           Text(
                             AppLocalizations.of(context)!.startToRead,
                             style: TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                         ],

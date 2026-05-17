@@ -113,13 +113,13 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
   }
 
   String displayTypeToText(String word, String wordType, bool properName) {
-    if (wordType.isNotEmpty) {
-      return WORD_SHORT_TYPES_FR.containsKey(wordType) && wordType.length > 0
-          ? (WORD_SHORT_TYPES_FR[wordType]!.toLowerCase())
-          : properName == true ? WORD_SHORT_TYPES_FR['properName'] as String : wordType.toLowerCase();
-    } else {
-      return WORD_SHORT_TYPES_FR['expr'] as String;
+    if (wordType.isEmpty) return '';
+    if (WORD_SHORT_TYPES_FR.containsKey(wordType)) {
+      return WORD_SHORT_TYPES_FR[wordType]!.toLowerCase();
     }
+    return properName == true
+        ? WORD_SHORT_TYPES_FR['properName'] as String
+        : wordType.toLowerCase();
   }
 
   Color getColorPlayIcon() {
@@ -275,6 +275,10 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
   Widget build(BuildContext context) {
     final isAddedByUser = _isAddedByUser == true;
     final basisText = _normalizedBasisText();
+    final typeText = _showType
+        ? displayTypeToText(
+            widget.item.word, widget.item.type, widget.item.properName)
+        : '';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -348,14 +352,14 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
                             color: AppColors.textPrimary,
                           ),
                         ),
-                        if (_showType)
+                        if (typeText.isNotEmpty)
                           Text(
-                            ' · ${displayTypeToText(widget.item.word, widget.item.type, widget.item.properName)}',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 0.8,
-                              color: AppColors.textPrimary,
+                            '  $typeText',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.grey[500],
                             ),
                           ),
                         if (isAddedByUser) ...[

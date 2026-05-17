@@ -311,6 +311,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get light => 'ライト';
 
   @override
+  String get main => 'メイン';
+
+  @override
   String get mainVocabulary => 'メイン単語帳';
 
   @override
@@ -347,7 +350,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get noAudioAvailableForThisArticle => 'この記事の音声はありません';
 
   @override
-  String get novel => 'Novel';
+  String get novel => '小説';
 
   @override
   String get noQuizAvailableForThisArticle => 'この記事のクイズはありません';

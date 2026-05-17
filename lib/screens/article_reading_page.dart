@@ -6,6 +6,7 @@ import '../models/vocabulary_item.dart';
 import '../models/unit.dart';
 import '../constants/app_colors.dart';
 import '../widgets/vocabulary_item_card.dart';
+import '../widgets/two_column_masonry.dart';
 import '../widgets/quiz_content_widget.dart';
 import '../widgets/playback_speed_dialog.dart';
 import '../widgets/article_reading_top_bar.dart';
@@ -560,21 +561,8 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
     if (isTablet) {
       return SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            const gap = 12.0;
-            final itemWidth = (constraints.maxWidth - gap) / 2;
-            return Wrap(
-              spacing: gap,
-              runSpacing: 0,
-              children: items
-                  .map((item) => SizedBox(
-                        width: itemWidth,
-                        child: buildCard(item),
-                      ))
-                  .toList(),
-            );
-          },
+        child: TwoColumnMasonry(
+          children: items.map(buildCard).toList(),
         ),
       );
     }
@@ -665,13 +653,17 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) {
           final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+          final originVerb = unit.originVerb?.trim() ?? '';
+          final fallbackBasis = unit.basis?.trim() ?? '';
+          final resolvedBasis =
+              originVerb.isNotEmpty ? originVerb : fallbackBasis;
           final vocabularyItem = VocabularyItem(
             word: unit.text,
             translation: currentTranslation,
             type: unit.type,
             properName: unit.properName ?? false,
             audioUrl: '',
-            basis: unit.originVerb ?? unit.basis,
+            basis: resolvedBasis.isNotEmpty ? resolvedBasis : null,
             isAddedByUser: localIsAdded && !isItemAlreadyInMainVocabulary,
             status: null,
           );

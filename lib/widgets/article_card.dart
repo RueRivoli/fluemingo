@@ -154,12 +154,6 @@ class ArticleCard extends StatelessWidget {
                             color: Colors.grey[200],
                             borderRadius: BorderRadius.circular(borderRadius),
                           ),
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.primary,
-                            ),
-                          ),
                         );
                       },
                     ),
@@ -319,12 +313,6 @@ class ArticleCard extends StatelessWidget {
                       return Container(
                         height: imageHeight,
                         color: Colors.grey[200],
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.primary,
-                          ),
-                        ),
                       );
                     },
                   ),

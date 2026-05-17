@@ -312,6 +312,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get light => 'Licht';
 
   @override
+  String get main => 'Hoofd';
+
+  @override
   String get mainVocabulary => 'Hoofdwoordenschat';
 
   @override
@@ -349,7 +352,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Geen audio beschikbaar voor dit artikel';
 
   @override
-  String get novel => 'Novel';
+  String get novel => 'Roman';
 
   @override
   String get noQuizAvailableForThisArticle =>

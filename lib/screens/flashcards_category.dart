@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/vocabulary_item.dart';
 import '../widgets/vocabulary_item_card.dart';
 import '../widgets/vocabulary_item_skeleton.dart';
+import '../widgets/two_column_masonry.dart';
 import '../constants/app_colors.dart';
 import '../services/flashcard_service.dart';
 import 'flashcards_deck.dart';
@@ -334,21 +335,12 @@ class _FlashcardsCategoryPageState extends State<FlashcardsCategoryPage> {
                                     );
                                   }
 
-                                  final itemWidth =
-                                      (constraints.maxWidth - 40 - 12) / 2;
                                   return SingleChildScrollView(
                                     padding: const EdgeInsets.fromLTRB(
                                         20, 0, 20, 100),
-                                    child: Wrap(
-                                      spacing: 12,
-                                      runSpacing: 0,
+                                    child: TwoColumnMasonry(
                                       children: _flashcards
-                                          .map((item) => SizedBox(
-                                                width: itemWidth,
-                                                child:
-                                                    _buildDismissibleFlashcardItem(
-                                                        item),
-                                              ))
+                                          .map(_buildDismissibleFlashcardItem)
                                           .toList(),
                                     ),
                                   );

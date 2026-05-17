@@ -311,6 +311,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get light => 'Light';
 
   @override
+  String get main => 'Main';
+
+  @override
   String get mainVocabulary => 'Main vocabulary';
 
   @override

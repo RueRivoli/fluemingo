@@ -650,6 +650,12 @@ abstract class AppLocalizations {
   /// **'Light'**
   String get light;
 
+  /// No description provided for @main.
+  ///
+  /// In en, this message translates to:
+  /// **'Main'**
+  String get main;
+
   /// No description provided for @mainVocabulary.
   ///
   /// In en, this message translates to:
