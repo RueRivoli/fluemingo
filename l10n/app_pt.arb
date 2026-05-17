@@ -31,12 +31,13 @@
   "completedQuizzes": "Questionários concluídos",
   "confirm": "Confirmar",
   "contentInProgress": "Conteúdo em andamento",
+  "continueReadingToEarnXP": "Continue lendo para ganhar XP",
   "continueButton": "Continuar",
+  "contentFittingYou": "Conteúdo que combina perfeitamente com você:",
   "connexion": "Conexão",
   "continueWithApple": "Continuar com Apple",
   "continueWithFacebook": "Continuar com Facebook",
   "continueWithGoogle": "Continuar com Google",
-  "continueReadingToEarnXP": "Continue lendo para ganhar XP",
   "culture": "Cultura",
   "practisingGoal": "Objetivo de prática",
   "definition": "Definição",
@@ -89,6 +90,7 @@
   "literature": "Literatura",
   "level": "Nível",
   "light": "Leve",
+  "main": "Principal",
   "mainVocabulary": "Vocabulário principal",
   "mastered": "Dominado",
   "masteredFlashcards": "Cartões aprendidos",
@@ -101,6 +103,7 @@
   "noAudiobooksFound": "Nenhum audiolivro encontrado",
   "noArticlesFound": "Nenhum artigo encontrado",
   "noAudioAvailableForThisArticle": "Nenhum áudio disponível para este artigo",
+  "novel": "Romance",
   "noQuizAvailableForThisArticle": "Nenhum questionário disponível para este artigo",
   "noVocabularyItemsFound": "Nenhum item de vocabulário encontrado",
   "news": "Atualidades",
@@ -158,16 +161,18 @@
   "daysRemaining": "{days} {days, plural, =1{dia restante} other{dias restantes}}",
   "@daysRemaining": {
     "placeholders": {
-      "days": { "type": "int" }
+      "days": {
+        "type": "int"
+      }
     }
   },
   "weekGoal": "Objetivo semanal",
   "whichLanguageDoYouWantToLearn": "Qual idioma você quer aprender?",
   "selectOne": "Selecione um",
   "whichLanguageDoYouSpeakTheBest": "Qual idioma você gostaria de usar como referência?",
-  "unknown": "Desconhecido",
-  "withYour": "com o seu",
   "withWord": "Com",
+  "withYour": "com o seu",
+  "unknown": "Desconhecido",
   "xpPerWeek": "XP por semana",
   "yoga": "Yoga",
   "yourSavedVocabulary": "Vocabulário salvo",
@@ -215,9 +220,8 @@
   "no": "Não",
   "vocabularyAddedToList": "Vocabulário adicionado à lista",
   "retranslate": "Retraduzir",
-  "contentFittingYou": "Conteúdo que combina perfeitamente com você:",
-  "yourTaste": "seu gosto, seu nível, seu ritmo",
   "withContent": "com conteúdo",
+  "yourTaste": "seu gosto, seu nível, seu ritmo",
   "fitTasteLevel": "que se adapta ao seu gosto e nível",
   "deleteAccount": "Excluir conta",
   "deleteAccountConfirmation": "Tem certeza de que deseja excluir sua conta? Esta ação é irreversível e todos os seus dados serão excluídos permanentemente.",
