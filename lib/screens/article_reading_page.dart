@@ -663,6 +663,7 @@ class _ArticleReadingPageState extends State<ArticleReadingPage>
             type: unit.type,
             properName: unit.properName ?? false,
             audioUrl: '',
+            note: unit.note,
             basis: resolvedBasis.isNotEmpty ? resolvedBasis : null,
             isAddedByUser: localIsAdded && !isItemAlreadyInMainVocabulary,
             status: null,

@@ -42,7 +42,7 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
   bool _isRevealAnimating = false;
   double _revealTurns = 0.0;
 
-  static const _transitionDuration = Duration(milliseconds: 280);
+  static const _transitionDuration = Duration(milliseconds: 230);
   static const _revealDuration = Duration(milliseconds: 650);
   late AnimationController _transitionController;
   late Animation<double> _transitionAnimation;
@@ -549,13 +549,23 @@ class _FlashcardsDeckPageState extends State<FlashcardsDeckPage>
                 },
                 onHorizontalDragEnd: (details) {
                   if (_transitionDirection != 0) return;
-                  if (_dragOffset > 100 && _currentIndex > 0) {
+                  // Commit a swipe on either a short drag OR a quick flick,
+                  // so the user no longer needs a long, forceful gesture.
+                  const distanceThreshold = 45.0; // px
+                  const velocityThreshold = 220.0; // px/s
+                  final velocity = details.primaryVelocity ?? 0.0;
+                  final goPrevious = _dragOffset > distanceThreshold ||
+                      velocity > velocityThreshold;
+                  final goNext = _dragOffset < -distanceThreshold ||
+                      velocity < -velocityThreshold;
+
+                  if (goPrevious && _currentIndex > 0) {
                     _moveToPrevious();
-                  } else if (_dragOffset < -100 &&
+                  } else if (goNext &&
                       _currentIndex < _flashcards.length - 1) {
                     _moveToNext();
-                  } else if (_currentIndex == _flashcards.length - 1 &&
-                      _dragOffset < -100) {
+                  } else if (goNext &&
+                      _currentIndex == _flashcards.length - 1) {
                     _moveToNext(); // go to "all done"
                   } else {
                     setState(() {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/feedback_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import 'native_language_page.dart';
@@ -117,6 +118,7 @@ class _TargetLanguagePageState extends State<TargetLanguagePage> {
                           name: lang['name']!,
                           isSelected: false,
                           onTap: () {
+                            FeedbackService.instance.tapNext();
                             Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) => NativeLanguagePage(

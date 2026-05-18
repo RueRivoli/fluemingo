@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/feedback_service.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/weekly_goals.dart';
 import '../../l10n/app_localizations.dart';
@@ -127,11 +128,15 @@ class _WeeklyGoalSelectionPageState extends State<WeeklyGoalSelectionPage> {
                     final xp = goal['xp'] as int? ?? 0;
                     final week = l10n.week;
                     final iconKey = goal['icon'] as String? ?? 'bolt';
+                    final intensity =
+                        l10n.goalIntensity(goal['intensity'] as String? ?? '');
                     return _WeeklyGoalCard(
                       icon: goalIconData(iconKey),
                       title: duration,
                       subtitle: '$xp XP/$week',
+                      intensity: intensity,
                       onTap: () {
+                        FeedbackService.instance.tapNext();
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => RegistrationPage.onboarding(
@@ -164,12 +169,14 @@ class _WeeklyGoalCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final String intensity;
   final VoidCallback onTap;
 
   const _WeeklyGoalCard({
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.intensity,
     required this.onTap,
   });
 
@@ -226,6 +233,16 @@ class _WeeklyGoalCard extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              intensity,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
               ),
             ),
           ],

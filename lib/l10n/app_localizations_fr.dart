@@ -212,10 +212,10 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.selectLogic(
       intensity,
       {
-        'light': 'léger',
-        'regular': 'régulier',
-        'high': 'élevé',
-        'extreme': 'extrême',
+        'light': 'Décontracté',
+        'regular': 'Régulier',
+        'high': 'Sérieux',
+        'extreme': 'Assidu',
         'other': '',
       },
     );
@@ -372,7 +372,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notStarted => 'Pas commencé';
 
   @override
-  String get people => 'People';
+  String get people => 'Personnalités';
 
   @override
   String get philosophy => 'Philosophie';
@@ -546,6 +546,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get selectOne => 'Choisissez une option';
+
+  @override
+  String get chooseYourAvatar => 'Choisis ton avatar';
 
   @override
   String get whichLanguageDoYouSpeakTheBest =>

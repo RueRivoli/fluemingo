@@ -210,10 +210,10 @@ class AppLocalizationsJa extends AppLocalizations {
     String _temp0 = intl.Intl.selectLogic(
       intensity,
       {
-        'light': 'ライト',
-        'regular': 'レギュラー',
-        'high': '高い',
-        'extreme': 'エクストリーム',
+        'light': '気軽',
+        'regular': '普通',
+        'high': '真剣',
+        'extreme': '本気',
         'other': '',
       },
     );
@@ -531,6 +531,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get selectOne => '1つ選んでください';
+
+  @override
+  String get chooseYourAvatar => 'アバターを選ぶ';
 
   @override
   String get whichLanguageDoYouSpeakTheBest => '参照言語として使用したい言語はどれですか？';

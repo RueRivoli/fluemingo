@@ -336,6 +336,7 @@ class OfflineContentService {
       'properName': unit.properName,
       'originVerb': unit.originVerb,
       'basis': unit.basis,
+      'note': unit.note,
     };
   }
 
@@ -348,6 +349,7 @@ class OfflineContentService {
       properName: map['properName'] as bool?,
       originVerb: map['originVerb']?.toString(),
       basis: map['basis']?.toString(),
+      note: map['note']?.toString(),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/feedback_service.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -53,6 +54,7 @@ class _AvatarSelectionPageState extends State<AvatarSelectionPage> {
 
   void _goToNextStep() {
     if (_selectedAvatarSeed == null) return;
+    FeedbackService.instance.tapNext();
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => FavoriteThemesSelectionPage(
@@ -116,10 +118,10 @@ class _AvatarSelectionPageState extends State<AvatarSelectionPage> {
             ),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 32 + mainPad),
-              child: const Text(
-                'Choose your avatar',
+              child: Text(
+                l10n.chooseYourAvatar,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,

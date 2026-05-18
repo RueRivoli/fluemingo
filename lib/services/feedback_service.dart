@@ -7,6 +7,12 @@ class FeedbackService {
 
   AudioPlayer? _player;
 
+  /// Light haptic tick, e.g. when advancing to the next onboarding step.
+  /// Haptic only — no sound.
+  void tapNext() {
+    HapticFeedback.lightImpact();
+  }
+
   Future<void> playSuccess() async {
     HapticFeedback.mediumImpact();
     try {

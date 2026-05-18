@@ -7,6 +7,9 @@ class VocabularyItem {
   final String? exampleTranslation;
   final String audioUrl;
   final String? basis;
+
+  /// Encyclopedic note for proper names, in the user's source language.
+  final String? note;
   bool properName = false;
   int? flashcardId;
   String? status; // "saved", "difficult", "training", "mastered"
@@ -21,6 +24,7 @@ class VocabularyItem {
     this.exampleTranslation,
     required this.audioUrl,
     this.basis,
+    this.note,
     this.properName = false,
     this.flashcardId,
     this.status,

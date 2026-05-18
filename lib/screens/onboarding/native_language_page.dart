@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/feedback_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/app_colors.dart';
 import 'avatar_selection.dart';
@@ -122,6 +123,7 @@ class _NativeLanguagePageState extends State<NativeLanguagePage> {
                           languageCode: lang['code']!,
                           name: lang['name']!,
                           onTap: () {
+                            FeedbackService.instance.tapNext();
                             ProfileStoreScope.of(context)
                                 .setUiLanguageOverride(lang['code']!);
                             Navigator.of(context).push(

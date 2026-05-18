@@ -241,7 +241,9 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
           ? AppColors.primary.withOpacity(0.8)
           : Colors.black.withOpacity(0.2);
     } else if (widget.displayType == 'text') {
-      return Colors.black.withOpacity(0.2);
+      return widget.item.properName == true
+          ? Colors.transparent
+          : Colors.black.withOpacity(0.2);
     }
     return Colors.black.withOpacity(0.2);
   }
@@ -425,6 +427,18 @@ class _VocabularyItemCardState extends State<VocabularyItemCard> {
                         ),
                       ],
                     )
+                  ],
+                  if (widget.item.properName == true &&
+                      (widget.item.note?.trim().isNotEmpty ?? false)) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      widget.item.note!.trim(),
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.5,
+                        color: Colors.grey[700],
+                      ),
+                    ),
                   ],
                 ],
               ),

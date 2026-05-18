@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/feedback_service.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/content.dart';
 import '../../widgets/theme_chip.dart';
@@ -256,6 +257,7 @@ class _FavoriteThemesSelectionPageState
               child: GestureDetector(
                 onTap: _hasSelection
                     ? () {
+                        FeedbackService.instance.tapNext();
                         final themesToSave = _selectedThemes.toList();
                         Navigator.of(context).push(
                           MaterialPageRoute(

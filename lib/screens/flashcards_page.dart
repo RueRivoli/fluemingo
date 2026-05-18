@@ -130,7 +130,7 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                       backgroundColor: Colors.white,
                       borderColor: Colors.white,
                       textColor: Colors.black,
-                      imagePath: 'assets/images/flashcards/difficult_red.png',
+                      imagePath: 'assets/images/flashcards/firee.png',
                       title: AppLocalizations.of(context)!.oops,
                       bodyText:
                           AppLocalizations.of(context)!.difficultVocabulary,
@@ -145,7 +145,7 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                       borderColor: Colors.white,
                       textColor: Colors.black,
                       imagePath:
-                          'assets/images/flashcards/training_secondary.png',
+                          'assets/images/flashcards/trainingg.png',
                       title: AppLocalizations.of(context)!.repeat,
                       bodyText:
                           AppLocalizations.of(context)!.vocabularyForTraining,
@@ -159,7 +159,7 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                       backgroundColor: Colors.white,
                       borderColor: Colors.white,
                       textColor: Colors.black,
-                      imagePath: 'assets/images/flashcards/achieved_green.png',
+                      imagePath: 'assets/images/flashcards/achieve.png',
                       title: AppLocalizations.of(context)!.mastered,
                       bodyText:
                           AppLocalizations.of(context)!.vocabularyAcquired,
@@ -276,16 +276,9 @@ class _FlashcardsPageState extends State<FlashcardsPage> {
                     angle: -0.2, // Rotate approximately -11.5 degrees
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
-                      child: Container(
+                      child: SizedBox(
                         width: 80,
                         height: 80,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
-                            width: 2,
-                          ),
-                        ),
                         child: Image.asset(
                           imagePath,
                           fit: BoxFit.cover,

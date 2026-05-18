@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/feedback_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../constants/app_colors.dart';
 import 'target_language_page.dart';
@@ -122,6 +123,7 @@ class WelcomePage extends StatelessWidget {
                 children: [
                   GestureDetector(
                     onTap: () {
+                      FeedbackService.instance.tapNext();
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => TargetLanguagePage(

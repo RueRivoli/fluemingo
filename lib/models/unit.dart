@@ -7,6 +7,10 @@ class Unit {
   final String? originVerb;
   final String? basis;
 
+  /// Encyclopedic note for proper names, already resolved to the user's
+  /// source (reference) language. Empty/absent when there is no note.
+  final String? note;
+
   Unit({
     required this.text,
     required this.translatedText,
@@ -15,6 +19,7 @@ class Unit {
     this.properName,
     this.originVerb,
     this.basis,
+    this.note,
   });
 }
 

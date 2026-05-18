@@ -491,7 +491,7 @@ abstract class AppLocalizations {
   /// No description provided for @goalIntensity.
   ///
   /// In en, this message translates to:
-  /// **'{intensity, select, light{light} regular{regular} high{high} extreme{extreme} other{}}'**
+  /// **'{intensity, select, light{Casual} regular{Regular} high{Serious} extreme{Dedicated} other{}}'**
   String goalIntensity(String intensity);
 
   /// No description provided for @goalDuration.
@@ -1081,6 +1081,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Select one'**
   String get selectOne;
+
+  /// No description provided for @chooseYourAvatar.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your avatar'**
+  String get chooseYourAvatar;
 
   /// No description provided for @whichLanguageDoYouSpeakTheBest.
   ///

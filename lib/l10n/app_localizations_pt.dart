@@ -212,10 +212,10 @@ class AppLocalizationsPt extends AppLocalizations {
     String _temp0 = intl.Intl.selectLogic(
       intensity,
       {
-        'light': 'leve',
-        'regular': 'regular',
-        'high': 'alto',
-        'extreme': 'extremo',
+        'light': 'Casual',
+        'regular': 'Regular',
+        'high': 'Sério',
+        'extreme': 'Dedicado',
         'other': '',
       },
     );
@@ -544,6 +544,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get selectOne => 'Selecione um';
+
+  @override
+  String get chooseYourAvatar => 'Escolha seu avatar';
 
   @override
   String get whichLanguageDoYouSpeakTheBest =>

@@ -652,6 +652,12 @@ class ArticleService {
                         punctuation: unitJson['punctuation'] == true,
                         properName: unitJson['properName'] == true,
                         originVerb: unitJson['originVerb']?.toString(),
+                        basis: unitJson['basis']?.toString(),
+                        note: _localizedContentFieldValue(
+                          source: unitJson,
+                          baseField: 'note',
+                          referenceLanguageCode: referenceLanguageCode,
+                        ),
                       ));
                     }
                   }
