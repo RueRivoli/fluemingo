@@ -6,14 +6,14 @@
   "oneHourADay": "'1 hr/day'",
   "activeFilters": "Active filters",
   "addedByUser": "Added by you",
-   "all": "All",
+  "all": "All",
   "allLevels": "All",
   "answers": "answers",
   "appTitle": "Fluemingo",
   "apply": "Apply",
   "areYouSureYouWantToDeleteWord": "Are you sure you want to delete {word} from the vocabulary list?",
   "areYouSureYouWantToDeleteReferenceLanguage": "Are you sure you want to change your reference language to {languageName}?\n\nThis change will have an effect on the previous translated words.",
-    "areYouSureYouWantToDeleteTargetLanguage": "Are you sure you want to change your target language to {languageName}?\n\nThis change will have an effect on the previous translated words.",
+  "areYouSureYouWantToDeleteTargetLanguage": "Are you sure you want to change your target language to {languageName}?\n\nThis change will have an effect on the previous translated words.",
   "art": "Art",
   "article": "Article",
   "audiobooks": "Audiobooks",
@@ -63,7 +63,7 @@
   "finishedChaptersAudiobooks": "Audio chapters",
   "flashcardsVocabulary": "Vocabulary flashcards",
   "fontSize": "Font size",
-  "goalIntensity": "{intensity, select, light{light} regular{regular} high{high} extreme{extreme} other{}}",
+  "goalIntensity": "{intensity, select, light{Casual} regular{Regular} high{Serious} extreme{Dedicated} other{}}",
   "goalDuration": "{duration, select, fiveMinutesADay{5 mins/day} fifteenMinutesADay{15 min/day} thirtyMinutesADay{30 min/day} oneHourADay{1 hr/day} other{}}",
   "gastronomy": "Gastronomy",
   "grammarPoints": "Grammar rules",
@@ -122,7 +122,7 @@
   "retry": "Retry",
   "dailyLimitReached": "Daily limit reached. Try again tomorrow.",
   "saved": "Saved",
-    "savedVocabulary": "Saved vocabulary",
+  "savedVocabulary": "Saved vocabulary",
   "science": "Science",
   "selectGoal": "Select a Goal to Remain Motivated",
   "selectUpToThemes": "Select up to {maxSelection} themes.",
@@ -161,12 +161,15 @@
   "daysRemaining": "{days} {days, plural, =1{day} other{days}} left",
   "@daysRemaining": {
     "placeholders": {
-      "days": { "type": "int" }
+      "days": {
+        "type": "int"
+      }
     }
   },
   "weekGoal": "Weekly goal",
   "whichLanguageDoYouWantToLearn": "Which language do you want to learn?",
   "selectOne": "Select one",
+  "chooseYourAvatar": "Choose your avatar",
   "whichLanguageDoYouSpeakTheBest": "Which language would you like to use as a reference?",
   "withWord": "With",
   "withYour": "with your",
